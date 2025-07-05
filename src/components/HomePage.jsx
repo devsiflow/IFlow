@@ -10,7 +10,7 @@ function HomePage() {
     // >
     // </section>
 
-        <section className="h-screen w-full relative overflow-hidden" data-aos="fade-in">
+        <section className="h-screen w-screen relative overflow-hidden" data-aos="fade-in">
       {/* Vídeo de fundo */}
       <video
         autoPlay

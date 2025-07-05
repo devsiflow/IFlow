@@ -4,8 +4,9 @@ import logo from "../assets/logo.jpg";
 function Footer() {
   return (
     <footer
-    data-aos="fade-left"
-    className=" text-[#1F1F1F] rounded-t-3xl mt-20">
+    id="contato"
+    data-aos="fade-up"
+    className=" text-[#1F1F1F] rounded-t-3xl bg-slate-100">
       <div className="max-w-7xl mx-auto py-10 px-6 grid grid-cols-1 md:grid-cols-4 gap-10">
         {/* Logo e texto */}
         <div>

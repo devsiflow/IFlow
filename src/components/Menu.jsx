@@ -1,6 +1,18 @@
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpg";
 
 function Menu() {
+  const navigate = useNavigate();
+
+  function  NavCadastro() {
+    navigate(`/cadastro`);
+
+  }
+
+   function  NavLogin() {
+    navigate(`/login`);
+
+  }
   return (
     <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between">
       {/* Logo e Links lado a lado */}
@@ -12,23 +24,33 @@ function Menu() {
         {/* Links */}
         <ul className="font-medium flex space-x-6">
           <li>
-            <a href="#" className="hover:text-gray-300">
+            <a href="#comoFunciona" className="hover:text-gray-300">
               Como Funciona
             </a>
           </li>
           <li>
-            <a href="#" className="hover:text-gray-300">
+            <a href="#objetivo" className="hover:text-gray-300">
               Objetivo
             </a>
           </li>
           <li>
-            <a href="#" className="hover:text-gray-300">
+            <a href="#sobreNos" className="hover:text-gray-300">
               Sobre nós
             </a>
           </li>
           <li>
-            <a href="#" className="hover:text-gray-300">
+            <a href="#contato" className="hover:text-gray-300">
               Contato
+            </a>
+          </li>
+          <li>
+            <a href="#contato" className="hover:text-gray-300">
+              Perdi um item
+            </a>
+          </li>
+          <li>
+            <a href="#contato" className="hover:text-gray-300">
+              Encontrei um item
             </a>
           </li>
         </ul>
@@ -36,8 +58,13 @@ function Menu() {
 
       {/* Botões */}
       <div className="flex items-center space-x-4">
-        <button className="hover:text-gray-300">Entrar</button>
-        <button className="bg-green-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded">
+        <button onClick={NavLogin} className="hover:text-gray-300">
+          Entrar
+        </button>
+        <button
+          onClick={NavCadastro}
+          className="bg-green-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
+        >
           Cadastro
         </button>
       </div>

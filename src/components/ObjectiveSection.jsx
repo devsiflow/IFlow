@@ -2,8 +2,10 @@ import objectiveImage from "../assets/ourObjective.jpg";
 
 function ObjectiveSection() {
   return (
-    <section data-aos="fade-left"
-    className="flex flex-col md:flex-row items-center justify-between px-8 py-12 text-center md:text-left">
+    <section
+    id="objetivo"
+    data-aos="fade-left" 
+    className=" flex flex-col md:flex-row items-center justify-between px-8 py-12 text-center md:text-left">
       {/* Imagem */}
       <div className="md:w-1/2 flex justify-center">
         <img src={objectiveImage} alt="Nosso Objetivo" className="w-full max-w-md" />

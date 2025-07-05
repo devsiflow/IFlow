@@ -4,13 +4,13 @@ function Menu() {
   return (
     <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between">
       {/* Logo e Links lado a lado */}
-      <div className="flex items-center space-x-8">
-        <img src={logo} alt="Logo" className="w-32" />
+      <div className="flex items-center space-x-5">
+        <img src={logo} alt="Logo" className="w-36" />
         {/* Logo */}
         <div className="text-2xl font-bold tracking-wide"></div>
 
         {/* Links */}
-        <ul className="flex space-x-6">
+        <ul className="font-medium flex space-x-6">
           <li>
             <a href="#" className="hover:text-gray-300">
               Como Funciona

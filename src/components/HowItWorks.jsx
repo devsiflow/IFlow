@@ -5,10 +5,11 @@ import Step2 from "../assets/howItWorks2.jpg";
 
 function HowItWorks() {
   return (
-    <section 
-    id="comoFunciona"
-    data-aos="fade-left"
-    className="px-8 py-12 text-center bg-slate-100">
+    <section
+      id="comoFunciona"
+      data-aos="fade-left"
+      className="px-8 py-12 text-center bg-slate-100 overflow-hidden"
+    >
       <h2 className="text-3xl font-bold mb-8">Como Funciona?</h2>
       <div className="flex-col mx-auto justify-center w-2/3">
         <img src={Step1}></img>

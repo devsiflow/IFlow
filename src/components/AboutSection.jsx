@@ -3,9 +3,9 @@ import image from "../assets/what's.jpg"; // Substitua pelo nome real da sua ima
 function AboutSection() {
   return (
     <section
-    id="sobreNos"
-    className="flex flex-col md:flex-row items-center justify-between gap-8 px-8 py-12"
-    data-aos="fade-right"
+      id="sobreNos"
+      className="flex flex-col md:flex-row items-center justify-between gap-8 px-8 py-12 overflow-hidden"
+      data-aos="fade-right"
     >
       {/* Texto */}
       <div className="md:w-1/2">

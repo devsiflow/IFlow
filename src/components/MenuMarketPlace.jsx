@@ -13,7 +13,10 @@ function Menu() {
   }
 
   function NavMarketPlace() {
-    navigate("/marketplace");
+    navigate("/marketpalce");
+  }
+  function NavCadastroItem() {
+    navigate("/cadastroitem");
   }
 
   return (
@@ -27,33 +30,23 @@ function Menu() {
         {/* Links */}
         <ul className="font-medium flex space-x-6">
           <li>
-            <a href="#sobreNos" className="hover:text-gray-300">
-              Sobre nós
+            <a href="/home" className="hover:text-gray-300">
+              Inicio
             </a>
           </li>
           <li>
-            <a href="#comoFunciona" className="hover:text-gray-300">
-              Como Funciona
-            </a>
-          </li>
-          <li>
-            <a href="#objetivo" className="hover:text-gray-300">
+            <a href="" className="hover:text-gray-300">
               Objetivo
             </a>
           </li>
           <li>
-            <a href="#contato" className="hover:text-gray-300">
-              Contato
+            <a href="" className="hover:text-gray-300">
+              Sobre nós
             </a>
           </li>
           <li>
-            <a onClick={NavMarketPlace} className="hover:text-gray-300">
-              Perdi um item
-            </a>
-          </li>
-          <li>
-            <a onClick={NavMarketPlace} className="hover:text-gray-300">
-              Encontrei um item
+            <a href="" className="hover:text-gray-300">
+              Meus Itens
             </a>
           </li>
         </ul>
@@ -61,14 +54,11 @@ function Menu() {
 
       {/* Botões */}
       <div className="flex items-center space-x-4">
-        <button onClick={NavLogin} className="hover:text-gray-300">
-          Entrar
-        </button>
         <button
-          onClick={NavCadastro}
+          onClick={NavCadastroItem}
           className="bg-green-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
         >
-          Cadastro
+          Cadastrar Item
         </button>
       </div>
     </nav>

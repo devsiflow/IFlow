@@ -1,4 +1,4 @@
-import backgroundImage from "../assets/backgroundImage.jpg";
+// import backgroundImage from "../assets/backgroundImage.jpg";
 import iflowlogo from "../assets/iflowlogopngwhite.png";
 
 function HomePage() {

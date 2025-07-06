@@ -7,8 +7,11 @@ function MenuOtherPages() {
   function NavHome() {
     navigate(`/home`);
   }
-  function NavLogin() {
+  function Navlogin() {
     navigate(`/login`);
+  }
+  function NavCadastro() {
+    navigate(`/cadastro`);
   }
 
   return (
@@ -22,11 +25,18 @@ function MenuOtherPages() {
         {/* Links */}
         <ul className="font-medium flex space-x-6">
           <li>
-           <button onClick={NavHome}>
-            Página Incial
-           </button>
+            <button onClick={NavHome}>Página Incial</button>
           </li>
         </ul>
+        <li>
+          <button className="font-semibold text-white" onClick={Navlogin}>Login</button>
+        </li>
+        <button
+          onClick={NavCadastro}
+          className="bg-green-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
+        >
+          Cadastro
+        </button>
       </div>
     </nav>
   );

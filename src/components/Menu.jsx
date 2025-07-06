@@ -47,14 +47,14 @@ function Menu() {
             </a>
           </li>
           <li>
-            <a onClick={NavMarketPlace} className="hover:text-gray-300">
+            <button onClick={NavMarketPlace} className="hover:text-gray-300">
               Perdi um item
-            </a>
+            </button>
           </li>
           <li>
-            <a onClick={NavMarketPlace} className="hover:text-gray-300">
+            <button onClick={NavMarketPlace} className="hover:text-gray-300">
               Encontrei um item
-            </a>
+            </button>
           </li>
         </ul>
       </div>

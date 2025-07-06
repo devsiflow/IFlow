@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Home } from "lucide-react"; // ✅ Ícone de voltar
 import logo from "../assets/logo.jpg";
-
 
 function Cadastro() {
   const navigate = useNavigate();
@@ -23,13 +23,24 @@ function Cadastro() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4">
-            <img
-        src={logo} // seu arquivo de logo
+    <div className="min-h-screen flex items-center justify-center bg-white px-4 relative">
+      {/* ✅ Botão de voltar para home */}
+      <button
+        onClick={() => navigate("/home")}
+        className="absolute top-4 left-4 flex items-center text-gray-600 hover:text-gray-900 z-50"
+      >
+        <Home className="h-5 w-5 mr-1" />
+        <span className="text-sm">Página Inicial</span>
+      </button>
+
+      {/* ✅ Logo */}
+      <img
+        src={logo}
         alt="Logo"
-        className="fixed top-0 left-0 mb-4 mr-4 h-12 w-auto z-50 object-contain"
+        className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 h-12 w-auto z-40 object-contain"
       />
-      <div className="w-full max-w-md space-y-6">
+
+      <div className="w-full max-w-md space-y-6 mt-16">
         {/* Título */}
         <div className="text-center">
           <h1 className="text-3xl font-semibold text-gray-900">
@@ -60,7 +71,7 @@ function Cadastro() {
           <div className="w-full h-px bg-gray-300" />
         </div>
 
-        {/* Campo de e-mail */}
+        {/* Formulário de e-mail */}
         <form onSubmit={handleEmailSubmit} className="space-y-4">
           <div>
             <label

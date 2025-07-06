@@ -5,7 +5,7 @@ function AboutSection() {
     <section
       id="sobreNos"
       className="flex flex-col md:flex-row items-center justify-between gap-8 px-8 py-12 overflow-hidden"
-      data-aos="fade-right"
+      data-aos="fade-up"
     >
       {/* Texto */}
       <div className="md:w-1/2">

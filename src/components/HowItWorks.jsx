@@ -7,7 +7,7 @@ function HowItWorks() {
   return (
     <section
       id="comoFunciona"
-      data-aos="fade-left"
+      data-aos="fade-up"
       className="px-8 py-12 text-center bg-slate-100 overflow-hidden"
     >
       <h2 className="text-3xl font-bold mb-8">Como Funciona?</h2>

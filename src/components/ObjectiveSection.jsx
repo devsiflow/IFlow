@@ -4,7 +4,7 @@ function ObjectiveSection() {
   return (
     <section
       id="objetivo"
-      data-aos="fade-left"
+      data-aos="fade-up"
       className=" flex flex-col md:flex-row items-center justify-between px-8 py-12 text-center md:text-left overflow-hidden"
     >
       {/* Imagem */}

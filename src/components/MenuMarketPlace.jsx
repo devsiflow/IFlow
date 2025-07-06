@@ -40,7 +40,7 @@ function Menu() {
             </a>
           </li>
           <li>
-            <a href="" className="hover:text-gray-300">
+            <a href="/home#sobreNos" className="hover:text-gray-300">
               Sobre nós
             </a>
           </li>

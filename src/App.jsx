@@ -5,18 +5,19 @@ import HomePage from "./components/HomePage";
 import AboutSection from "./components/AboutSection";
 import HowItWorks from "./components/HowItWorks";
 import ObjectiveSection from "./components/ObjectiveSection";
-import { useEffect } from 'react';
-import AOS from 'aos';
+import { useEffect } from "react";
+import AOS from "aos";
 import Cadastro from "./pages/Sign-inPage";
+import ScrollToTopButton from "./components/ScrollTopButton";
 
 function App() {
   useEffect(() => {
     AOS.init({
-      duration: 1000, 
-      once: false,    
+      duration: 1000,
+      once: false,
     });
   }, []);
-  
+
   return (
     <div>
       <Menu />
@@ -25,6 +26,7 @@ function App() {
       <HowItWorks />
       <ObjectiveSection />
       <Footer />
+      <ScrollToTopButton />
     </div>
   );
 }

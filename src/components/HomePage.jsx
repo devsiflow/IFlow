@@ -19,7 +19,7 @@ function HomePage() {
         playsInline
         className="absolute top-0 left-0 w-full h-full object-cover z-[-1]"
       >
-        <source src="https://cdn.pixabay.com/video/2020/11/13/56306-479205705_large.mp4" type="video/mp4" />
+        <source src="https://videos.pexels.com/video-files/3066427/3066427-uhd_2732_1440_24fps.mp4" type="video/mp4" />
         Seu navegador não suporta vídeos HTML5.
       </video>
 

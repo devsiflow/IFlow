@@ -1,4 +1,4 @@
-import image from "../assets/what's.jpg"; // Substitua pelo nome real da sua imagem
+import image from "../assets/what's.jpg"; 
 
 function AboutSection() {
   return (

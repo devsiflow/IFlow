@@ -69,7 +69,7 @@ function Menu() {
         </button>
         <button
           onClick={NavCadastro}
-          className="bg-green-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
+          className="bg-green-500 transiotion-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
         >
           Cadastro
         </button>

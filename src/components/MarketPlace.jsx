@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useItens } from "../hooks/useItens";
 import MenuMarketPlace from "./MenuMarketPlace";
 import livroImg from "../assets/livro.jpg";
+import { Search } from "lucide-react";
 
 function MarkePlace() {
   const { itens } = useItens();
@@ -19,11 +20,11 @@ function MarkePlace() {
     const statusMatch =
       statusFilter === "Todos" || item.status === statusFilter;
 
-    const localMatch =
-      item.local?.toLowerCase().includes(localFilter.toLowerCase());
+    const localMatch = item.local
+      ?.toLowerCase()
+      .includes(localFilter.toLowerCase());
 
-    const dateMatch =
-      !dateFilter || item.date?.includes(dateFilter); // permite parcial ou exata
+    const dateMatch = !dateFilter || item.date?.includes(dateFilter);
 
     return nameMatch && statusMatch && localMatch && dateMatch;
   });
@@ -32,38 +33,56 @@ function MarkePlace() {
     <div className="min-h-screen bg-gray-50">
       <MenuMarketPlace />
       <div className="p-6 max-w-7xl mx-auto">
-        {/* Filtros */}
+        {/* Filtros com ícones */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <input
-            type="text"
-            placeholder="Pesquisar por nome..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border rounded-lg"
-          />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg"
-          >
-            <option value="Todos">Todos os status</option>
-            <option value="Perdido">Perdido</option>
-            <option value="Encontrado">Encontrado</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Filtrar por local..."
-            value={localFilter}
-            onChange={(e) => setLocalFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg"
-          />
-          <input
-            type="date"
-            placeholder="Filtrar por data"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="px-4 py-2 border rounded-lg"
-          />
+          {/* Nome */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Pesquisar por nome..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg"
+            />
+          </div>
+
+          {/* Status */}
+          <div className="relative">
+            <Search className="absolute  left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg appearance-none"
+            >
+              <option value="Todos">Todos os status</option>
+              <option value="Perdido">Perdido</option>
+              <option value="Encontrado">Encontrado</option>
+            </select>
+          </div>
+
+          {/* Local */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Filtrar por local..."
+              value={localFilter}
+              onChange={(e) => setLocalFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg"
+            />
+          </div>
+
+          {/* Data */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg"
+            />
+          </div>
         </div>
 
         {/* Itens */}
@@ -104,7 +123,7 @@ function MarkePlace() {
                   >
                     {item.status}
                   </span>
-                  <button className="mt-4 w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition">
+                  <button className="mt-4 w-full transition-colors duration-500 bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition">
                     É meu
                   </button>
                 </div>

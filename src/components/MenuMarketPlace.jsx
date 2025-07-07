@@ -36,16 +36,6 @@ function Menu() {
           </li>
           <li>
             <a href="" className="hover:text-gray-300">
-              Objetivo
-            </a>
-          </li>
-          <li>
-            <a href="/home#sobreNos" className="hover:text-gray-300">
-              Sobre nós
-            </a>
-          </li>
-          <li>
-            <a href="" className="hover:text-gray-300">
               Meus Itens
             </a>
           </li>
@@ -56,7 +46,7 @@ function Menu() {
       <div className="flex items-center space-x-4">
         <button
           onClick={NavCadastroItem}
-          className="bg-green-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
+          className="bg-green-500 transition-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
         >
           Cadastrar Item
         </button>

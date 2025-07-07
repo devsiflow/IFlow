@@ -143,7 +143,7 @@ function CadastrarItem() {
             {/* Botão */}
             <button
               type="submit"
-              className="w-full bg-green-600 text-white font-semibold py-3 rounded-md hover:bg-green-700 transition"
+              className="w-full bg-green-600 transition-colors duration-500 text-white font-semibold py-3 rounded-md hover:bg-green-700 transition"
             >
               Cadastrar Item
             </button>

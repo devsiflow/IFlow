@@ -9,6 +9,7 @@ import Login from "./pages/LoginPage.jsx";
 import LandingPage from "./pages/LandingPages.jsx";
 import MarkePlace from "./components/MarketPlace.jsx";
 import CadastraItem from "./components/CadastrarItem.jsx";
+import FoundItem from "./pages/FoundItem.jsx";
 
 const router = createBrowserRouter([
   {
@@ -36,10 +37,15 @@ const router = createBrowserRouter([
     path: "/cadastroitem",
     element: <CadastraItem />,
   },
+   {
+    path: "/founditem",
+    element: <FoundItem />,
+  },
 ]);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <RouterProvider router={router} />
+    
   </StrictMode>
 );

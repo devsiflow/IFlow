@@ -15,6 +15,9 @@ function Menu() {
   function NavMarketPlace() {
     navigate("/marketplace");
   }
+  function NavFoundItem() {
+    navigate("/founditem");
+  }
 
   return (
     <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between">
@@ -52,7 +55,7 @@ function Menu() {
             </button>
           </li>
           <li>
-            <button onClick={NavMarketPlace} className="hover:text-gray-300">
+            <button onClick={NavFoundItem} className="hover:text-gray-300">
               Encontrei um item
             </button>
           </li>

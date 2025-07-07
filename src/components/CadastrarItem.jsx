@@ -4,154 +4,162 @@ import MenuOtherPages from "../components/MenuOtherPages";
 import { useItens } from "../hooks/useItens";
 
 function CadastrarItem() {
-  const navigate = useNavigate();
-  const { adicionarItem } = useItens();
+const navigate = useNavigate();
+const { adicionarItem } = useItens();
 
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    local: "",
-    status: "Perdido",
-    date: "",
-    image: "",
-  });
+const [form, setForm] = useState({
+name: "",
+description: "",
+local: "",
+status: "Perdido",
+date: "",
+image: "",
+});
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+const [isDragging, setIsDragging] = useState(false);
 
-  const handleImage = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setForm((prev) => ({ ...prev, image: reader.result }));
-    };
-    if (file) reader.readAsDataURL(file);
-  };
+const handleChange = (e) => {
+setForm({ ...form, [e.target.name]: e.target.value });
+};
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newItem = {
-      id: Date.now(),
-      ...form,
-      date: form.date || new Date().toLocaleDateString(),
-    };
-    adicionarItem(newItem);
-    navigate("/marketplace");
-  };
+const processImageFile = (file) => {
+const reader = new FileReader();
+reader.onloadend = () => {
+setForm((prev) => ({ ...prev, image: reader.result }));
+};
+if (file) reader.readAsDataURL(file);
+};
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      <MenuOtherPages />
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4 py-12">
-        <div className="bg-white shadow-md rounded-2xl max-w-md w-full p-8">
-          <h2 className="text-2xl font-bold mb-6 text-black">
-            Cadastre um Item Perdido ou Achado
-          </h2>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {/* Nome */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Nome do Item
-              </label>
-              <input
-                name="name"
-                type="text"
-                value={form.name}
-                onChange={handleChange}
-                required
-                placeholder="Ex: Mochila, Celular..."
-                className="w-full border rounded-md px-4 py-2"
-              />
-            </div>
+const handleImage = (e) => {
+const file = e.target.files[0];
+processImageFile(file);
+};
 
-            {/* Descrição */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Descrição
-              </label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                required
-                placeholder="Ex: Preta, com adesivo da Marvel..."
-                rows={3}
-                className="w-full border rounded-md px-4 py-2"
-              />
-            </div>
+const handleDrop = (e) => {
+e.preventDefault();
+setIsDragging(false);
+const file = e.dataTransfer.files[0];
+if (file && file.type.startsWith("image/")) {
+processImageFile(file);
+}
+};
 
-            {/* Local (texto livre) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Local onde foi perdido/encontrado
-              </label>
-              <input
-                name="local"
-                type="text"
-                value={form.local}
-                onChange={handleChange}
-                required
-                placeholder="Ex: Sala 101, Corredor perto do banheiro..."
-                className="w-full border rounded-md px-4 py-2"
-              />
-            </div>
+const handleSubmit = (e) => {
+e.preventDefault();
+const newItem = {
+id: Date.now(),
+...form,
+date: form.date || new Date().toLocaleDateString(),
+};
+adicionarItem(newItem);
+navigate("/marketplace");
+};
 
-            {/* Data */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Data (opcional)
-              </label>
-              <input
-                name="date"
-                type="date"
-                value={form.date}
-                onChange={handleChange}
-                className="w-full border rounded-md px-4 py-2"
-              />
-            </div>
-
-            {/* Imagem */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Foto do Item
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImage}
-                className="w-full file:py-2 file:px-4 file:rounded-md file:bg-green-500 file:text-white hover:file:bg-green-600"
-              />
-            </div>
-
-            {/* Status */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Status
-              </label>
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                className="w-full border rounded-md px-4 py-2"
-              >
-                <option value="Perdido">Perdido</option>
-                <option value="Encontrado">Encontrado</option>
-              </select>
-            </div>
-
-            {/* Botão */}
-            <button
-              type="submit"
-              className="w-full bg-green-600 transition-colors duration-500 text-white font-semibold py-3 rounded-md hover:bg-green-700 transition"
-            >
-              Cadastrar Item
-            </button>
-          </form>
+return (
+<div className="min-h-screen bg-white">
+<MenuOtherPages />
+<div className="flex justify-center items-center px-4 py-16">
+<div className="w-full max-w-2xl bg-white border border-gray-200 shadow-sm rounded-2xl p-10 space-y-6">
+<h2 className="text-3xl font-semibold text-neutral-900">📋 Cadastrar Item</h2>
+<form onSubmit={handleSubmit} className="space-y-5 text-neutral-800">
+<div>
+<label className="block text-sm font-medium text-gray-700 mb-1">Nome do Item</label>
+<input name="name" type="text" value={form.name} onChange={handleChange} required placeholder="Ex: Mochila, Celular..." className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm" />
+</div>
+<div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            required
+            placeholder="Ex: Preta, com adesivo da Marvel..."
+            rows={4}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+          />
         </div>
-      </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
+          <input
+            name="local"
+            type="text"
+            value={form.local}
+            onChange={handleChange}
+            required
+            placeholder="Ex: Sala 101, Corredor perto do banheiro..."
+            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Data (opcional)</label>
+          <input
+            name="date"
+            type="date"
+            value={form.date}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+          />
+        </div>
+
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          className={`w-full border-2 border-dashed ${
+            isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300"
+          } rounded-md p-6 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition`}
+        >
+          <label className="cursor-pointer text-center w-full">
+            {form.image ? (
+              <img
+                src={form.image}
+                alt="Preview"
+                className="max-h-40 mx-auto rounded-md object-contain mb-3"
+              />
+            ) : (
+              <span>
+                Arraste uma imagem aqui ou{" "}
+                <span className="underline text-indigo-600">clique para selecionar</span>
+              </span>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImage}
+              className="hidden"
+            />
+          </label>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
+          >
+            <option value="Perdido">Perdido</option>
+            <option value="Encontrado">Encontrado</option>
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          className="w-full py-3 bg-[#084808] hover:bg-[#066c06] text-white font-medium text-sm rounded-md transition-colors"
+        >
+          ✅ Cadastrar Item
+        </button>
+      </form>
     </div>
-  );
+  </div>
+</div>
+);
 }
 
 export default CadastrarItem;

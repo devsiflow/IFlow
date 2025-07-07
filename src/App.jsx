@@ -7,9 +7,7 @@ import HowItWorks from "./components/HowItWorks";
 import ObjectiveSection from "./components/ObjectiveSection";
 import { useEffect } from "react";
 import AOS from "aos";
-import Cadastro from "./pages/Sign-inPage";
 import ScrollToTopButton from "./components/ScrollTopButton";
-import MarkePlace from "./components/MarketPlace";
 
 function App() {
   useEffect(() => {

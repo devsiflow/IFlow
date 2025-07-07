@@ -36,7 +36,7 @@ function Footer() {
           <h4 className="font-semibold mb-3">Geral</h4>
           <ul className="space-y-1 text-sm">
             <li>
-              <a href="#">Cadastre-se</a>
+              <a href="/cadastro">Cadastre-se</a>
             </li>
             <li>
               <a href="#">Sobre nós</a>

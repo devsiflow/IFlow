@@ -3,9 +3,11 @@ import { useItens } from "../hooks/useItens";
 import MenuMarketPlace from "./MenuMarketPlace";
 import livroImg from "../assets/livro.jpg";
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function MarkePlace() {
   const { itens } = useItens();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
@@ -123,7 +125,12 @@ function MarkePlace() {
                   >
                     {item.status}
                   </span>
-                  <button className="mt-4 w-full transition-colors duration-500 bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition">
+
+                  {/* Botão com rota para validação */}
+                  <button
+                    className="mt-4 w-full transition-colors duration-500 bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition"
+                    onClick={() => navigate("/validacao")}
+                  >
                     É meu
                   </button>
                 </div>

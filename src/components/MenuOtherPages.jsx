@@ -13,6 +13,9 @@ function MenuOtherPages() {
   function NavCadastro() {
     navigate(`/cadastro`);
   }
+  function NavMarkePlace() {
+    navigate(`/marketplace`);
+  }
 
   return (
     <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between">
@@ -27,9 +30,14 @@ function MenuOtherPages() {
           <li>
             <button onClick={NavHome}>Página Incial</button>
           </li>
+          <li>
+            <button onClick={NavMarkePlace}>MarketPlace</button>
+          </li>
         </ul>
         <li>
-          <button className="font-semibold text-white" onClick={Navlogin}>Login</button>
+          <button className="font-semibold text-white" onClick={Navlogin}>
+            Login
+          </button>
         </li>
         <button
           onClick={NavCadastro}

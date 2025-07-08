@@ -9,7 +9,9 @@ import Login from "./pages/LoginPage.jsx";
 import LandingPage from "./pages/LandingPages.jsx";
 import MarkePlace from "./components/MarketPlace.jsx";
 import CadastraItem from "./components/CadastrarItem.jsx";
-import FoundItem from "./pages/FoundItem.jsx";
+import LostItem from "./pages/LostItem.jsx";
+import ValidarItem from "./pages/ValidarItem.jsx";
+import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
 
 const router = createBrowserRouter([
   {
@@ -37,9 +39,18 @@ const router = createBrowserRouter([
     path: "/cadastroitem",
     element: <CadastraItem />,
   },
-   {
-    path: "/founditem",
-    element: <FoundItem />,
+
+  {
+    path: "/lostitem",
+    element: <LostItem />,
+  },
+  {
+    path: "/validacao",
+    element: <ValidarItem />,
+  },
+  {
+    path: "/validacaoConfirmada",
+    element: <ValidacaoConfirmada />,
   },
 ]);
 

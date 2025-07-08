@@ -34,11 +34,6 @@ function Menu() {
               Inicio
             </a>
           </li>
-          <li>
-            <a href="" className="hover:text-gray-300">
-              Meus Itens
-            </a>
-          </li>
         </ul>
       </div>
 

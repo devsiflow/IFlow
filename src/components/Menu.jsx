@@ -15,8 +15,11 @@ function Menu() {
   function NavMarketPlace() {
     navigate("/marketplace");
   }
-  function NavFoundItem() {
-    navigate("/founditem");
+  function NavEncontreiItem() {
+    navigate("/cadastroitem");
+  }
+  function NavPerdiItem() {
+    navigate("/lostitem");
   }
 
   return (
@@ -50,12 +53,12 @@ function Menu() {
             </a>
           </li>
           <li>
-            <button onClick={NavMarketPlace} className="hover:text-gray-300">
+            <button onClick={NavPerdiItem} className="hover:text-gray-300">
               Perdi um item
             </button>
           </li>
           <li>
-            <button onClick={NavFoundItem} className="hover:text-gray-300">
+            <button onClick={NavEncontreiItem} className="hover:text-gray-300">
               Encontrei um item
             </button>
           </li>

@@ -1,0 +1,17 @@
+{
+  "languageOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module",
+    "globals": {
+      "process": true,
+      "__dirname": true,
+      "module": true,
+      "require": true
+    }
+  },
+  "rules": {
+    "no-undef": "off"
+  }
+  
+}
+

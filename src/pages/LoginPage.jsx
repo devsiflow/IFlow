@@ -1,21 +1,39 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home } from "lucide-react"; // Ícone de voltar
+import { Home } from "lucide-react";
 import logo from "../assets/logo.jpg";
 
-function Login() {
+export default function Login() {
   const navigate = useNavigate();
   const [matricula, setMatricula] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [error, setError] = useState("");
 
-  function NavCadastro() {
-    navigate("/cadastro");
-  }
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login:", { matricula, email, senha });
+    setError("");
+
+    try {
+      const res = await fetch("http://localhost:5174/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matricula, email, password: senha }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Erro ao fazer login");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      navigate("/home");
+    } catch (err) {
+      console.log(err);
+
+      setError("Erro de conexão com o servidor");
+    }
   };
 
   return (
@@ -24,8 +42,7 @@ function Login() {
         onClick={() => navigate("/home")}
         className="absolute top-4 left-4 flex items-center text-gray-600 hover:text-gray-900 z-50"
       >
-        <Home className="h-5 w-5 mr-1" />
-        <span className="text-sm">Página Inicial</span>
+        <Home className="h-5 w-5 mr-1" /> Página Inicial
       </button>
 
       <img
@@ -35,47 +52,45 @@ function Login() {
       />
 
       <div className="w-full max-w-md space-y-6 mt-16">
-        <div className="text-center">
-          <h1 className="text-3xl font-semibold text-gray-900">Fazer login</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Acesse com suas credenciais institucionais
-          </p>
-        </div>
-
+        <h1 className="text-3xl font-semibold text-gray-900 text-center">
+          Fazer login
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
             placeholder="Matrícula"
             value={matricula}
             onChange={(e) => setMatricula(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 border rounded-md"
+            required
           />
           <input
             type="email"
             placeholder="E-mail institucional"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 border rounded-md"
+            required
           />
           <input
             type="password"
             placeholder="Senha"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 border rounded-md"
+            required
           />
-
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-[#084808] hover:bg-[#066c06] text-white py-2 rounded-md text-sm font-medium transition"
+            className="w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-md"
           >
             Entrar
           </button>
-
           <button
             type="button"
-            onClick={NavCadastro}
-            className="w-full text-sm text-gray-500 hover:text-gray-700 transition text-center mt-2"
+            onClick={() => navigate("/cadastro")}
+            className="w-full text-sm text-gray-500 mt-2"
           >
             Criar uma conta
           </button>
@@ -84,5 +99,3 @@ function Login() {
     </div>
   );
 }
-
-export default Login;

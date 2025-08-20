@@ -47,9 +47,15 @@ function Menu() {
               Objetivo
             </a>
           </li>
+
           <li>
             <a href="#contato" className="hover:text-gray-300">
               Contato
+            </a>
+          </li>
+          <li>
+            <a href="#contato" className="hover:text-gray-300 pointer-events-none">
+              |
             </a>
           </li>
           <li>
@@ -67,7 +73,7 @@ function Menu() {
 
       {/* Botões */}
       <div className="flex items-center space-x-4">
-        <button onClick={NavLogin} className="hover:text-gray-300">
+        <button onClick={NavLogin} className="hover:text-gray-300 font-semibold">
           Entrar
         </button>
         <button

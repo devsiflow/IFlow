@@ -21,24 +21,29 @@ export default function Cadastro() {
       return;
     }
 
-    try {
-      const res = await fetch("https://iflow-zdbx.onrender.com/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          matricula,
-          name: nome,
-          email,
-          password: senha,
-        }),
-      });
+const API_URL = import.meta.env.VITE_API_URL;
 
-      const data = await res.json();
+try {
+  const res = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      matricula,
+      name: nome,
+      email,
+      password: senha,
+    }),
+  });
 
-      if (!res.ok) {
-        setError(data.error || "Erro ao criar usuário");
-        return;
-      }
+  const data = await res.json();
+
+  if (!res.ok) {
+    setError(data.error || "Erro ao criar usuário");
+    return;
+  }
+} catch (err) {
+  setError("Erro de conexão com servidor");
+}
 
       // Backend deve retornar token
       if (data.token) {
@@ -47,9 +52,6 @@ export default function Cadastro() {
       } else {
         setError("Usuário criado, mas não foi possível gerar token.");
       }
-    } catch (err) {
-      console.error("Erro de conexão:", err);
-      setError("Erro de conexão com o servidor");
     }
   };
 
@@ -123,4 +125,4 @@ export default function Cadastro() {
       </div>
     </div>
   );
-}
+

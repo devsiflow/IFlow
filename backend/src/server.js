@@ -9,7 +9,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://iflow.vercel.app", "https://i-flow-be84dvn7v-iflows-projects-1a4d9c28.vercel.app"],
+    origin: ["http://localhost:5173", "https://iflow.vercel.app", "https://i-flow-be84dvn7v-iflows-projects-1a4d9c28.vercel.app", "https://i-flow-liard.vercel.app/"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // se precisar enviar cookies
   })

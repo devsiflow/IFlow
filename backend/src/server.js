@@ -7,7 +7,6 @@ dotenv.config();
 
 const app = express();
 
-// ✅ Corrigido para permitir seu frontend
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://iflow.vercel.app"],

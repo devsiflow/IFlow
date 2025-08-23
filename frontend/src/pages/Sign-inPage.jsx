@@ -22,7 +22,7 @@ export default function Cadastro() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/auth/register", {
+      const res = await fetch("https://iflow-zdbx.onrender.com/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -69,7 +69,9 @@ export default function Cadastro() {
       />
 
       <div className="w-full max-w-md space-y-6 mt-16">
-        <h1 className="text-3xl font-semibold text-gray-900 text-center">Criar conta</h1>
+        <h1 className="text-3xl font-semibold text-gray-900 text-center">
+          Criar conta
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"

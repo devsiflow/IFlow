@@ -15,11 +15,17 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5174/auth/login", {
+      const res = await fetch("https://iflow-zdbx.onrender.com/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matricula, email, password: senha }),
+        body: JSON.stringify({
+          matricula,
+          name: nome,
+          email,
+          password: senha,
+        }),
       });
+
       const data = await res.json();
 
       if (!res.ok) {

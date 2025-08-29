@@ -18,9 +18,7 @@ function Menu() {
   function NavEncontreiItem() {
     navigate("/cadastroitem");
   }
-  function NavPerdiItem() {
-    navigate("/lostitem");
-  }
+ 
 
   return (
     <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between">

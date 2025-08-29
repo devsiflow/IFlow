@@ -4,19 +4,11 @@ import logo from "../assets/logo.jpg";
 function Menu() {
   const navigate = useNavigate();
 
-  function NavCadastro() {
-    navigate(`/cadastro`);
-  }
-
-  function NavLogin() {
-    navigate(`/login`);
-  }
-
-  function NavMarketPlace() {
-    navigate("/marketpalce");
-  }
   function NavCadastroItem() {
     navigate("/cadastroitem");
+  }
+   function NavInicio() {
+    navigate("/home");
   }
 
   return (
@@ -28,13 +20,9 @@ function Menu() {
         <div className="text-2xl font-bold tracking-wide"></div>
 
         {/* Links */}
-        <ul className="font-medium flex space-x-6">
-          <li>
-            <a href="/home" className="hover:text-gray-300">
-              Inicio
-            </a>
-          </li>
-        </ul>
+        <button onClick={NavInicio} className="text-white font-bold">
+          Início
+        </button>
       </div>
 
       {/* Botões */}

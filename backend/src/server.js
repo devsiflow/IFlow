@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
+import itemsRouter from "./routes/item.js";
 
 dotenv.config();
 
@@ -26,3 +27,5 @@ app.use("/auth", authRoutes);
 // eslint-disable-next-line no-undef
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+app.use("/items", itemsRouter);

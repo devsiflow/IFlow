@@ -1,38 +1,41 @@
 import express from "express";
-import prisma from "../prismaClient.js";
-import { authenticateToken } from "../middleware/auth.js";
+import prisma  from "../prisma.js"; // ajuste seu path se necessário
 
 const router = express.Router();
 
-// Criar item
-router.post("/", authenticateToken, async (req, res) => {
+router.post("/", async (req, res) => {
+  const { title, description, location, status, userId, categoryName } = req.body;
+
+  if (!title || !description || !location || !userId || !categoryName) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios" });
+  }
+
   try {
-    const { title, description, status, location, categoryId } = req.body;
     const item = await prisma.item.create({
       data: {
         title,
         description,
-        status,
         location,
-        userId: req.user.id,
-        categoryId,
+        status: status || "Perdido",
+        user: { connect: { id: Number(userId) } },
+        category: {
+          connectOrCreate: {
+            where: { name: categoryName },
+            create: { name: categoryName },
+          },
+        },
+      },
+      include: {
+        category: true,
+        user: true,
       },
     });
-    res.status(201).json(item);
-  } catch (error) {
-    console.log(error);
-    
-    res.status(500).json({ error: "Erro ao criar item" });
-  }
-});
 
-// Listar itens
-router.get("/", async (req, res) => {
-  const items = await prisma.item.findMany({
-    include: { user: true, category: true },
-    orderBy: { createdAt: "desc" },
-  });
-  res.json(items);
+    res.json(item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao cadastrar item" });
+  }
 });
 
 export default router;

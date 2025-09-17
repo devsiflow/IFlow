@@ -7,7 +7,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Cadastro from "./pages/Sign-inPage.jsx";
 import Login from "./pages/LoginPage.jsx";
 import LandingPage from "./pages/LandingPages.jsx";
-import MarkePlace from "./components/MarketPlace.jsx";
+import MarkePlace from "./pages/MarketPlace.jsx";
 import CadastraItem from "./components/CadastrarItem.jsx";
 import LostItem from "./pages/LostItem.jsx";
 import ValidarItem from "./pages/ValidarItem.jsx";
@@ -56,7 +56,7 @@ const router = createBrowserRouter([
   {
     path: "/perfil",
     element: <UserPage />,
-  }
+  },
 ]);
 
 createRoot(document.getElementById("root")).render(

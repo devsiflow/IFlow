@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
-import { useItens } from "../hooks/useItens";
+
 import { supabase } from "../lib/supabaseClient"; // client do Supabase
 
 function CadastrarItem() {
   const navigate = useNavigate();
-  const { adicionarItem } = useItens();
+
 
   const [form, setForm] = useState({
     name: "",
@@ -92,8 +92,8 @@ function CadastrarItem() {
         throw new Error(errorData.error || "Erro ao cadastrar item");
       }
 
-      const data = await res.json();
-      adicionarItem(data);
+
+
       navigate("/marketplace");
     } catch (err) {
       console.error("Erro:", err);

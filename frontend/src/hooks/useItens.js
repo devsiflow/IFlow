@@ -1,18 +1,29 @@
 import { useEffect, useState } from "react";
 
 export function useItens() {
-  const [itens, setItens] = useState(() => {
-    const stored = localStorage.getItem("itens");
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [itens, setItens] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem("itens", JSON.stringify(itens));
-  }, [itens]);
+    async function fetchItens() {
+      try {
+        const res = await fetch("https://iflow-zdbx.onrender.com/items"); 
+        if (!res.ok) {
+          throw new Error("Erro ao buscar itens");
+        }
+        const data = await res.json();
+        setItens(data);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  function adicionarItem(novoItem) {
-    setItens((prev) => [...prev, novoItem]);
-  }
+    fetchItens();
+  }, []);
 
-  return { itens, adicionarItem };
+  return { itens, loading, error };
 }

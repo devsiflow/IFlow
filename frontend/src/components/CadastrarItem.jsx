@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
 import { useItens } from "../hooks/useItens";
+import { supabase } from "../lib/supabaseClient"; // client do Supabase
 
 function CadastrarItem() {
   const navigate = useNavigate();
@@ -13,27 +14,23 @@ function CadastrarItem() {
     local: "",
     status: "Perdido",
     date: "",
-    image: "",
     category: "",
   });
 
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const processImageFile = (file) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setForm((prev) => ({ ...prev, image: reader.result }));
-    };
-    if (file) reader.readAsDataURL(file);
-  };
-
   const handleImage = (e) => {
     const file = e.target.files[0];
-    processImageFile(file);
+    if (file && file.type.startsWith("image/")) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleDrop = (e) => {
@@ -41,20 +38,38 @@ function CadastrarItem() {
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("image/")) {
-      processImageFile(file);
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validação básica
     if (!form.name || !form.description || !form.local || !form.category) {
       alert("Preencha todos os campos obrigatórios!");
       return;
     }
 
     try {
+      let imageUrl = null;
+
+      // Upload direto para Supabase Storage
+      if (imageFile) {
+        const fileExt = imageFile.name.split(".").pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("iflow-item")
+          .upload(`public/${fileName}`, imageFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+          .from("iflow-item")
+          .getPublicUrl(`public/${fileName}`);
+        imageUrl = data.publicUrl;
+      }
+
       const API_URL = import.meta.env.VITE_API_URL;
 
       const res = await fetch(`${API_URL}/items`, {
@@ -66,9 +81,9 @@ function CadastrarItem() {
           location: form.local,
           status: form.status,
           date: form.date,
-          image: form.image,
+          image: imageUrl, // envia apenas a URL
           categoryName: form.category,
-          userId: 1, // substitua pelo ID do usuário logado
+          userId: 1,
         }),
       });
 
@@ -93,6 +108,7 @@ function CadastrarItem() {
         <div className="w-full max-w-2xl bg-white border border-gray-200 shadow-sm rounded-2xl p-10 space-y-6">
           <h2 className="text-3xl font-semibold text-neutral-900">📋 Cadastrar Item</h2>
           <form onSubmit={handleSubmit} className="space-y-5 text-neutral-800">
+            {/* Campos de formulário */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Item</label>
               <input
@@ -156,21 +172,17 @@ function CadastrarItem() {
               />
             </div>
 
+            {/* Drag & Drop da imagem */}
             <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`w-full border-2 border-dashed ${
-                isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300"
-              } rounded-md p-6 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition`}
+              className={`w-full border-2 border-dashed ${isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300"} rounded-md p-6 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition`}
             >
               <label className="cursor-pointer text-center w-full">
-                {form.image ? (
+                {imagePreview ? (
                   <img
-                    src={form.image}
+                    src={imagePreview}
                     alt="Preview"
                     className="max-h-40 mx-auto rounded-md object-contain mb-3"
                   />

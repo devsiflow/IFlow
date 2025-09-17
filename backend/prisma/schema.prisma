@@ -31,9 +31,9 @@ model Item {
   status      String   @default("perdido")
   location    String
   createdAt   DateTime @default(now())
+  imageUrl    String?  // <- opcional
   userId      Int
   categoryId  Int
-  image       String?  // <-- aqui! campo opcional para a URL da imagem
   category    Category @relation(fields: [categoryId], references: [id])
   user        User     @relation(fields: [userId], references: [id])
 }

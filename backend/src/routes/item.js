@@ -33,9 +33,8 @@ const item = await prisma.item.create({
     status,
     userId,
     categoryId: category.id,
-    // Prisma não aceita undefined, então só passa se houver valor
     ...(date && { createdAt: new Date(date) }),
-    ...(image && { image }), 
+    ...(image && { imageUrl: image }),
   },
 });
 

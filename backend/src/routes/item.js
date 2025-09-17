@@ -1,30 +1,44 @@
+// src/routes/item.js
 import express from "express";
-import prisma from "../db.js";
+import { PrismaClient } from "@prisma/client";
 
 const router = express.Router();
+const prisma = new PrismaClient();
 
 // Criar item
 router.post("/", async (req, res) => {
   try {
-    const { title, description, location, status, date, image, userId, categoryId } = req.body;
+    const { title, description, location, status, date, image, categoryName, userId } = req.body;
 
-    if (!title || !description || !location || !userId || !categoryId) {
+    // Validação simples
+    if (!title || !description || !location || !status || !categoryName || !userId) {
       return res.status(400).json({ error: "Campos obrigatórios faltando" });
     }
 
-    const item = await prisma.item.create({
-      data: {
-        title,
-        description,
-        status: status || "perdido",
-        location,
-        createdAt: date ? new Date(date) : undefined,
-        image_url: image || null,
-        userId,
-        categoryId
-      },
-      include: { category: true, user: true }
+    // Verifica se a categoria existe, senão cria
+    let category = await prisma.category.findUnique({
+      where: { name: categoryName }
     });
+
+    if (!category) {
+      category = await prisma.category.create({ data: { name: categoryName } });
+    }
+
+    // Cria o item
+const item = await prisma.item.create({
+  data: {
+    title,
+    description,
+    location,
+    status,
+    userId,
+    categoryId: category.id,
+    // Prisma não aceita undefined, então só passa se houver valor
+    ...(date && { createdAt: new Date(date) }),
+    ...(image && { image }), 
+  },
+});
+
 
     res.status(201).json(item);
   } catch (err) {
@@ -37,8 +51,8 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const items = await prisma.item.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { category: true, user: true },
+      orderBy: { id: "desc" },
+      include: { category: true, user: true }
     });
     res.json(items);
   } catch (err) {

@@ -12,6 +12,7 @@ import CadastraItem from "./components/CadastrarItem.jsx";
 import LostItem from "./pages/LostItem.jsx";
 import ValidarItem from "./pages/ValidarItem.jsx";
 import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
+import UserPage from "./pages/UserPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -52,6 +53,10 @@ const router = createBrowserRouter([
     path: "/validacaoConfirmada",
     element: <ValidacaoConfirmada />,
   },
+  {
+    path: "/perfil",
+    element: <UserPage />,
+  }
 ]);
 
 createRoot(document.getElementById("root")).render(

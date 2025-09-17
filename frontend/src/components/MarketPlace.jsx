@@ -5,7 +5,7 @@ import livroImg from "../assets/livro.jpg";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-function MarkePlace() {
+function MarketPlace() {
   const { itens } = useItens();
   const navigate = useNavigate();
 
@@ -15,16 +15,16 @@ function MarkePlace() {
   const [dateFilter, setDateFilter] = useState("");
 
   const filteredItems = itens.filter((item) => {
-    const nameMatch = item.name
+    const nameMatch = (item.name ?? "")
       .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+      .includes((searchTerm ?? "").toLowerCase());
 
     const statusMatch =
       statusFilter === "Todos" || item.status === statusFilter;
 
-    const localMatch = item.local
-      ?.toLowerCase()
-      .includes(localFilter.toLowerCase());
+    const localMatch = (item.local ?? "")
+      .toLowerCase()
+      .includes((localFilter ?? "").toLowerCase());
 
     const dateMatch = !dateFilter || item.date?.includes(dateFilter);
 
@@ -147,4 +147,4 @@ function MarkePlace() {
   );
 }
 
-export default MarkePlace;
+export default MarketPlace;

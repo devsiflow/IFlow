@@ -14,14 +14,18 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
+    if (!matricula && !email) {
+      setError("Informe a matrícula ou o e-mail para continuar");
+      return;
+    }
+
     try {
-      const res = await fetch("https://iflow-zdbx.onrender.com/auth/register", {
+      const res = await fetch("https://iflow-zdbx.onrender.com/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          matricula,
-          name: nome,
-          email,
+          matricula: matricula || undefined,
+          email: email || undefined,
           password: senha,
         }),
       });
@@ -36,8 +40,7 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       navigate("/home");
     } catch (err) {
-      console.log(err);
-
+      console.error(err);
       setError("Erro de conexão com o servidor");
     }
   };
@@ -61,6 +64,7 @@ export default function Login() {
         <h1 className="text-3xl font-semibold text-gray-900 text-center">
           Fazer login
         </h1>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
@@ -68,16 +72,18 @@ export default function Login() {
             value={matricula}
             onChange={(e) => setMatricula(e.target.value)}
             className="w-full px-4 py-2 border rounded-md"
-            required
           />
+
+          <div className="text-center text-gray-500 text-sm">ou</div>
+
           <input
             type="email"
             placeholder="E-mail institucional"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 border rounded-md"
-            required
           />
+
           <input
             type="password"
             placeholder="Senha"
@@ -86,13 +92,16 @@ export default function Login() {
             className="w-full px-4 py-2 border rounded-md"
             required
           />
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
           <button
             type="submit"
             className="w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-md"
           >
             Entrar
           </button>
+
           <button
             type="button"
             onClick={() => navigate("/cadastro")}

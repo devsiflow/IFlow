@@ -4,6 +4,7 @@ import MenuMarketPlace from "../components/MenuMarketPlace";
 import livroImg from "../assets/livro.jpg";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import loadingGif from "../assets/pedreiro.gif";
 
 function MarketPlace() {
   const { itens, loading, error } = useItens();
@@ -15,7 +16,11 @@ function MarketPlace() {
   const [dateFilter, setDateFilter] = useState("");
 
   if (loading) {
-    return <div className="p-6 text-center">Carregando itens...</div>;
+      return (
+    <div className="p-6 text-center flex justify-center items-center min-h-screen min-w-screen">
+      <img src={loadingGif} alt="Carregando..." className="w-[300px] h-[300px]" />
+    </div>
+  );
   }
 
   if (error) {

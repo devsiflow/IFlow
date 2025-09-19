@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import logo from "../assets/logo.jpg";
+import { supabase } from "../supabaseClient";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [matricula, setMatricula] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
@@ -14,30 +14,27 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    if (!matricula && !email) {
-      setError("Informe a matrícula ou o e-mail para continuar");
+    if (!email || !senha) {
+      setError("Informe email e senha para continuar");
       return;
     }
 
     try {
-      const res = await fetch("https://iflow-zdbx.onrender.com/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          matricula: matricula || undefined,
-          email: email || undefined,
-          password: senha,
-        }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: senha,
       });
+      if (error) return setError(error.message);
 
-      const data = await res.json();
+      // Buscar perfil no backend
+      const API_URL = import.meta.env.VITE_API_URL;
+      const profileRes = await fetch(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      const profile = await profileRes.json();
 
-      if (!res.ok) {
-        setError(data.error || "Erro ao fazer login");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
+      localStorage.setItem("token", data.session.access_token);
+      localStorage.setItem("user", JSON.stringify(profile));
       navigate("/home");
     } catch (err) {
       console.error(err);
@@ -61,29 +58,17 @@ export default function Login() {
       />
 
       <div className="w-full max-w-md space-y-6 mt-16">
-        <h1 className="text-3xl font-semibold text-gray-900 text-center">
-          Fazer login
-        </h1>
+        <h1 className="text-3xl font-semibold text-gray-900 text-center">Fazer login</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Matrícula"
-            value={matricula}
-            onChange={(e) => setMatricula(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
-          />
-
-          <div className="text-center text-gray-500 text-sm">ou</div>
-
           <input
             type="email"
             placeholder="E-mail institucional"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 border rounded-md"
+            required
           />
-
           <input
             type="password"
             placeholder="Senha"

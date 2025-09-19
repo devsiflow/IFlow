@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import logo from "../assets/logo.jpg";
+import { supabase } from "../supabaseClient";
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -20,36 +21,30 @@ export default function Cadastro() {
       return;
     }
 
-    const API_URL = import.meta.env.VITE_API_URL;
-
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      // 1️⃣ Criar usuário no Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: senha,
+      });
+      if (error) return setError(error.message);
+
+      // 2️⃣ Criar perfil no backend (Prisma)
+      const API_URL = import.meta.env.VITE_API_URL;
+      await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          matricula,
+          id: data.user.id,
           name: nome,
-          email,
-          password: senha,
+          matricula,
         }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Erro ao criar usuário");
-        return;
-      }
-
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        navigate("/home");
-      } else {
-        setError("Usuário criado, mas não foi possível gerar token.");
-      }
+      navigate("/home");
     } catch (err) {
-      console.error("Erro de conexão:", err);
-      setError("Erro de conexão com o servidor");
+      console.error(err);
+      setError("Erro ao criar usuário");
     }
   };
 
@@ -69,9 +64,8 @@ export default function Cadastro() {
       />
 
       <div className="w-full max-w-md space-y-6 mt-16">
-        <h1 className="text-3xl font-semibold text-gray-900 text-center">
-          Criar conta
-        </h1>
+        <h1 className="text-3xl font-semibold text-gray-900 text-center">Criar conta</h1>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"

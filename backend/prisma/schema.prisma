@@ -7,15 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
+model Profile {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) // UUID do Supabase Auth
   name      String
-  email     String   @unique
   matricula String   @unique
-  password  String
+  profilePic String? // opcional
   createdAt DateTime @default(now())
   items     Item[]
 }
+
 
 
 model Category {
@@ -31,9 +31,9 @@ model Item {
   status      String   @default("perdido")
   location    String
   createdAt   DateTime @default(now())
-  imageUrl    String?  // <- opcional
-  userId      Int
+  imageUrl    String?
+  userId      String
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
-  user        User     @relation(fields: [userId], references: [id])
+  user        Profile  @relation(fields: [userId], references: [id])
 }

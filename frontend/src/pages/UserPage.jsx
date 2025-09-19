@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import loadingGif from "../assets/pedreiro.gif";
 
 export default function UserPage() {
   const navigate = useNavigate();
@@ -42,7 +43,13 @@ export default function UserPage() {
     fetchUser();
   }, [navigate]);
 
-  if (loading) return <p className="text-center mt-10">Carregando...</p>;
+ if (loading) {
+       return (
+     <div className="p-6 text-center flex justify-center items-center min-h-screen min-w-screen">
+       <img src={loadingGif} alt="Carregando..." className="w-[300px] h-[300px]" />
+     </div>
+   );
+   }
   if (error) return <p className="text-red-500 text-center mt-10">{error}</p>;
   if (!user) return null; // não deve acontecer, mas previne crash
 

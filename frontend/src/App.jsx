@@ -1,7 +1,7 @@
 import "./index.css";
 import Footer from "./components/Footer";
 import Menu from "./components/Menu";
-import HomePage from "./components/HomePage";
+import HomePage from "./pages/HomePage";
 import AboutSection from "./components/AboutSection";
 import HowItWorks from "./components/HowItWorks";
 import ObjectiveSection from "./components/ObjectiveSection";

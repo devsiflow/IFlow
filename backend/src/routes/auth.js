@@ -4,37 +4,37 @@ import prisma from "../prismaClient.js";
 
 const router = express.Router();
 
-// Registro
+// REGISTERRRR
 router.post("/register", async (req, res) => {
-  const { name, email, password, matricula } = req.body;
-  if (!name || !email || !password || !matricula) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios" });
-  }
+  const { email, password, name, matricula } = req.body;
 
   try {
     // Cria usuário no Supabase Auth
-    const { data: user, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return res.status(400).json({ error: error.message });
 
-    // Cria perfil no banco com id do Supabase
+    const user = data.user;
+    if (!user) return res.status(500).json({ error: "Não foi possível criar usuário no Supabase" });
+
+    // Cria o Profile no Prisma usando o UUID gerado pelo Supabase
     const profile = await prisma.profile.create({
       data: {
-        id: user.user.id,
+        id: user.id,
         name,
         matricula,
+        profilePic: null,
       },
     });
 
-    res.status(201).json({ message: "Usuário registrado com sucesso", user: profile });
+    res.json({ message: "Usuário cadastrado! Confirme seu email.", profile });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    res.status(500).json({ error: "Erro interno" });
   }
 });
+
+
+
 
 // Login
 router.post("/login", async (req, res) => {

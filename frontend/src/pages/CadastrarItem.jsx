@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
-import { supabase } from "../lib/supabaseClient"; // client do Supabase
+import { supabase } from "../lib/supabaseClient";
 
 function CadastrarItem() {
   const navigate = useNavigate();
@@ -10,8 +10,6 @@ function CadastrarItem() {
     name: "",
     description: "",
     local: "",
-    status: "Perdido",
-    date: "",
     category: "",
   });
 
@@ -70,21 +68,20 @@ function CadastrarItem() {
 
       const API_URL = import.meta.env.VITE_API_URL;
 
-      // manda só os dados do item (sem userId!)
+      // Envia dados do item para o backend
       const res = await fetch(`${API_URL}/items`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`, // token salvo no login
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
           title: form.name,
           description: form.description,
           location: form.local,
-          status: form.status,
-          date: form.date,
+          status: "perdido", // status fixo
           image: imageUrl,
-          categoryName: form.category,
+          categoryId: Number(form.category), // ID inteiro da categoria
         }),
       });
 
@@ -109,7 +106,7 @@ function CadastrarItem() {
             📋 Cadastrar Item
           </h2>
           <form onSubmit={handleSubmit} className="space-y-5 text-neutral-800">
-            {/* Campos de formulário */}
+            {/* Nome */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nome do Item
@@ -125,6 +122,7 @@ function CadastrarItem() {
               />
             </div>
 
+            {/* Descrição */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Descrição
@@ -140,6 +138,7 @@ function CadastrarItem() {
               />
             </div>
 
+            {/* Local */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Local
@@ -155,35 +154,27 @@ function CadastrarItem() {
               />
             </div>
 
+            {/* Categoria */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Categoria
               </label>
-              <input
+              <select
                 name="category"
-                type="text"
                 value={form.category}
                 onChange={handleChange}
                 required
-                placeholder="Ex: Eletrônico, Roupa..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-              />
+              >
+                <option value="">Selecione</option>
+                <option value={1}>Eletrônico</option>
+                <option value={2}>Roupa</option>
+                <option value={3}>Acessório</option>
+                <option value={4}>Outros</option>
+              </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Data (opcional)
-              </label>
-              <input
-                name="date"
-                type="date"
-                value={form.date}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-              />
-            </div>
-
-            {/* Drag & Drop da imagem */}
+            {/* Drag & Drop */}
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -221,21 +212,7 @@ function CadastrarItem() {
               </label>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"
-              >
-                <option value="Perdido">Perdido</option>
-                <option value="Encontrado">Encontrado</option>
-              </select>
-            </div>
-
+            {/* Botão */}
             <button
               type="submit"
               className="w-full py-3 bg-[#084808] hover:bg-[#066c06] text-white font-medium text-sm rounded-md transition-colors"

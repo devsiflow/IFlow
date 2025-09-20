@@ -35,9 +35,9 @@ export default function Cadastro() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: data.user.id,
           name: nome,
           matricula,
+          email, // opcional, se quiser salvar no backend também
         }),
       });
 
@@ -64,7 +64,9 @@ export default function Cadastro() {
       />
 
       <div className="w-full max-w-md space-y-6 mt-16">
-        <h1 className="text-3xl font-semibold text-gray-900 text-center">Criar conta</h1>
+        <h1 className="text-3xl font-semibold text-gray-900 text-center">
+          Criar conta
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input

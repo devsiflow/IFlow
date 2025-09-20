@@ -7,30 +7,27 @@ const router = express.Router();
 // Criar item
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { title, description, location, status, image, categoryName } = req.body;
+    const { title, description, location, image, categoryId } = req.body;
 
-    if (!title || !description || !location || !status || !categoryName) {
+    if (!title || !description || !location || !categoryId) {
       return res.status(400).json({ error: "Campos obrigatórios faltando" });
     }
 
-    // Categoria
-    let category = await prisma.category.findUnique({
-      where: { name: categoryName },
+    // Verifica se a categoria existe
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
     });
-    if (!category) {
-      category = await prisma.category.create({ data: { name: categoryName } });
-    }
+    if (!category) return res.status(400).json({ error: "Categoria inválida" });
 
-    // Cria item com UUID do Supabase
     const item = await prisma.item.create({
       data: {
         title,
         description,
         location,
-        status,
+        status: "perdido", // ✅ padrão
         imageUrl: image,
         categoryId: category.id,
-        userId: req.user.id, // 👈 sempre pega do token
+        userId: req.user.id,
       },
     });
 

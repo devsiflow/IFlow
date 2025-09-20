@@ -1,23 +1,16 @@
-import jwt from "jsonwebtoken";
+import { supabase } from "../lib/supabaseClient.js";
 
 export async function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
+  const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token) {
-    return res.status(401).json({ error: "Token não fornecido" });
-  }
+  if (!token) return res.status(401).json({ error: "Token não fornecido" });
 
-  try {
-    // O Supabase já usa JWT assinado com a chave do projeto
-    const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
+  // valida token via Supabase
+  const { data: { user }, error } = await supabase.auth.getUser(token);
 
-    // O ID do usuário do Supabase vem em "sub"
-    req.user = { id: decoded.sub };
+  if (error || !user) return res.status(403).json({ error: "Token inválido ou expirado" });
 
-    next();
-  } catch (err) {
-    console.error("Erro ao validar token Supabase:", err);
-    return res.status(403).json({ error: "Token inválido" });
-  }
+  req.user = user; // UUID do Supabase
+  next();
 }

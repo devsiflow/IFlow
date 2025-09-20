@@ -1,33 +1,36 @@
 import express from "express";
 import prisma from "../prismaClient.js";
+import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
 // Criar item
-router.post("/", async (req, res) => {
+router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { title, description, location, status, date, image, categoryName, userId } = req.body;
+    const { title, description, location, status, image, categoryName } = req.body;
 
-    if (!title || !description || !location || !status || !categoryName || !userId) {
+    if (!title || !description || !location || !status || !categoryName) {
       return res.status(400).json({ error: "Campos obrigatórios faltando" });
     }
 
     // Categoria
-    let category = await prisma.category.findUnique({ where: { name: categoryName } });
+    let category = await prisma.category.findUnique({
+      where: { name: categoryName },
+    });
     if (!category) {
       category = await prisma.category.create({ data: { name: categoryName } });
     }
 
+    // Cria item com UUID do Supabase
     const item = await prisma.item.create({
       data: {
         title,
         description,
         location,
         status,
-        userId,
+        imageUrl: image,
         categoryId: category.id,
-        ...(date && { createdAt: new Date(date) }),
-        ...(image && { imageUrl: image }),
+        userId: req.user.id, // 👈 sempre pega do token
       },
     });
 

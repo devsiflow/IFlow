@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import livroImg from "../assets/livro.jpg"; // imagem padrão para itens
+import { supabase } from "../lib/supabaseClient";
+import livroImg from "../assets/livro.jpg"; // imagem padrão
 import Loading from "../components/loading";
 
 export default function UserPage() {
@@ -13,33 +14,28 @@ export default function UserPage() {
   const [form, setForm] = useState({ name: "", email: "" });
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
-        return;
-      }
-
+    const fetchUserAndItems = async () => {
       try {
-        // Dados do usuário
-        const resUser = await fetch("https://iflow-zdbx.onrender.com/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Pega usuário logado do Supabase
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
 
-        if (!resUser.ok) {
-          localStorage.removeItem("token");
+        if (error || !user) {
           navigate("/login");
           return;
         }
 
-        const dataUser = await resUser.json();
-        setUser(dataUser);
-        setForm({ name: dataUser.name, email: dataUser.email });
+        setUser(user.user_metadata); // nome, matricula, etc ficam no metadata
+        setForm({
+          name: user.user_metadata.name || "",
+          email: user.email,
+        });
 
-        // Itens do usuário
+        // Pega itens do backend
         const resItems = await fetch(
-          `https://iflow-zdbx.onrender.com/items/user/${dataUser.id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          `https://iflow-zdbx.onrender.com/items/user/${user.id}`
         );
         if (resItems.ok) {
           const dataItems = await resItems.json();
@@ -53,36 +49,32 @@ export default function UserPage() {
       }
     };
 
-    fetchUser();
+    fetchUserAndItems();
   }, [navigate]);
 
   const handleUpdate = async () => {
-    const token = localStorage.getItem("token");
     try {
-      const res = await fetch("https://iflow-zdbx.onrender.com/auth/update", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
+      // Atualiza os metadados no Supabase
+      const { error } = await supabase.auth.updateUser({
+        data: { name: form.name },
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setUser(updated);
-        setEditing(false);
-      } else {
-        alert("Erro ao atualizar perfil");
-      }
+      if (error) throw error;
+
+      setUser({ ...user, name: form.name, email: form.email });
+      setEditing(false);
     } catch (err) {
       console.error(err);
+      alert("Erro ao atualizar perfil");
     }
   };
 
-  if (loading) {
-    return Loading();
-  }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
+  if (loading) return <Loading />;
   if (error) return <p className="text-red-500 text-center mt-10">{error}</p>;
   if (!user) return null;
 
@@ -126,10 +118,7 @@ export default function UserPage() {
                   Editar Perfil
                 </button>
                 <button
-                  onClick={() => {
-                    localStorage.removeItem("token");
-                    navigate("/login");
-                  }}
+                  onClick={handleLogout}
                   className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500"
                 >
                   Sair
@@ -148,9 +137,8 @@ export default function UserPage() {
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="E-mail"
+                disabled
+                className="w-full px-4 py-2 border rounded-md bg-gray-100 cursor-not-allowed"
               />
               <div className="flex gap-3">
                 <button

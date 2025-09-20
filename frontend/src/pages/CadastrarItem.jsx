@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
-
 import { supabase } from "../lib/supabaseClient"; // client do Supabase
 
 function CadastrarItem() {
   const navigate = useNavigate();
-
 
   const [form, setForm] = useState({
     name: "",
@@ -54,7 +52,7 @@ function CadastrarItem() {
     try {
       let imageUrl = null;
 
-      // Upload direto para Supabase Storage
+      // Upload da imagem no Supabase Storage
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
         const fileName = `${Date.now()}.${fileExt}`;
@@ -72,18 +70,21 @@ function CadastrarItem() {
 
       const API_URL = import.meta.env.VITE_API_URL;
 
+      // manda só os dados do item (sem userId!)
       const res = await fetch(`${API_URL}/items`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // token salvo no login
+        },
         body: JSON.stringify({
           title: form.name,
           description: form.description,
           location: form.local,
           status: form.status,
           date: form.date,
-          image: imageUrl, // envia apenas a URL
+          image: imageUrl,
           categoryName: form.category,
-          userId: 1,
         }),
       });
 
@@ -91,8 +92,6 @@ function CadastrarItem() {
         const errorData = await res.json();
         throw new Error(errorData.error || "Erro ao cadastrar item");
       }
-
-
 
       navigate("/marketplace");
     } catch (err) {
@@ -106,11 +105,15 @@ function CadastrarItem() {
       <MenuOtherPages />
       <div className="flex justify-center items-center px-4 py-16">
         <div className="w-full max-w-2xl bg-white border border-gray-200 shadow-sm rounded-2xl p-10 space-y-6">
-          <h2 className="text-3xl font-semibold text-neutral-900">📋 Cadastrar Item</h2>
+          <h2 className="text-3xl font-semibold text-neutral-900">
+            📋 Cadastrar Item
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-5 text-neutral-800">
             {/* Campos de formulário */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Item</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nome do Item
+              </label>
               <input
                 name="name"
                 type="text"
@@ -123,7 +126,9 @@ function CadastrarItem() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descrição
+              </label>
               <textarea
                 name="description"
                 value={form.description}
@@ -136,7 +141,9 @@ function CadastrarItem() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Local
+              </label>
               <input
                 name="local"
                 type="text"
@@ -149,7 +156,9 @@ function CadastrarItem() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Categoria
+              </label>
               <input
                 name="category"
                 type="text"
@@ -162,7 +171,9 @@ function CadastrarItem() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Data (opcional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data (opcional)
+              </label>
               <input
                 name="date"
                 type="date"
@@ -174,10 +185,17 @@ function CadastrarItem() {
 
             {/* Drag & Drop da imagem */}
             <div
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`w-full border-2 border-dashed ${isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300"} rounded-md p-6 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition`}
+              className={`w-full border-2 border-dashed ${
+                isDragging
+                  ? "border-indigo-500 bg-indigo-50"
+                  : "border-gray-300"
+              } rounded-md p-6 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition`}
             >
               <label className="cursor-pointer text-center w-full">
                 {imagePreview ? (
@@ -189,7 +207,9 @@ function CadastrarItem() {
                 ) : (
                   <span>
                     Arraste uma imagem aqui ou{" "}
-                    <span className="underline text-indigo-600">clique para selecionar</span>
+                    <span className="underline text-indigo-600">
+                      clique para selecionar
+                    </span>
                   </span>
                 )}
                 <input
@@ -202,7 +222,9 @@ function CadastrarItem() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
               <select
                 name="status"
                 value={form.status}

@@ -24,6 +24,7 @@ export default function Login() {
         email,
         password: senha,
       });
+      
       if (error) return setError(error.message);
 
       // Buscar perfil no backend

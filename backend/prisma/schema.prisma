@@ -8,28 +8,12 @@ datasource db {
 }
 
 model Profile {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) // UUID do usuário do Supabase
+  id         String   @id // UUID do Supabase Auth
   name       String
   matricula  String   @unique
-  profilePic String? 
+  profilePic String?
   createdAt  DateTime @default(now())
   items      Item[]
-
-  user auth_users @relation(fields: [id], references: [id], onDelete: Cascade)
-}
-
-model auth_users {
-  id        String   @id
-  email     String?
-  raw_user_meta_data Json?
-  raw_app_meta_data Json?
-  created_at DateTime?
-  updated_at DateTime?
-
-  profile   Profile?
-  
-  @@map("users")
-  @@schema("auth")
 }
 
 model Category {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import loadingGif from "../assets/pedreiro.gif";
 import livroImg from "../assets/livro.jpg"; // imagem padrão para itens
+import Loading from "../components/loading";
 
 export default function UserPage() {
   const navigate = useNavigate();
@@ -81,11 +81,7 @@ export default function UserPage() {
   };
 
   if (loading) {
-    return (
-      <div className="p-6 text-center flex justify-center items-center min-h-screen min-w-screen">
-        <img src={loadingGif} alt="Carregando..." className="w-[200px] h-[200px]" />
-      </div>
-    );
+    return Loading();
   }
   if (error) return <p className="text-red-500 text-center mt-10">{error}</p>;
   if (!user) return null;

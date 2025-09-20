@@ -39,6 +39,13 @@ function CadastrarItem() {
     }
   };
 
+  const categories = {
+    1: "Eletrônico",
+    2: "Roupa",
+    3: "Acessório",
+    4: "Outros",
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -75,13 +82,14 @@ function CadastrarItem() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
+
         body: JSON.stringify({
           title: form.name,
           description: form.description,
           location: form.local,
-          status: "perdido", // status fixo
+          status: "perdido",
           image: imageUrl,
-          categoryId: Number(form.category), // ID inteiro da categoria
+          categoryName: categories[form.category],
         }),
       });
 

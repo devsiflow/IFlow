@@ -7,27 +7,28 @@ const router = express.Router();
 // Criar item
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { title, description, location, image, categoryId } = req.body;
+    const { title, description, location, image, categoryName } = req.body;
 
-    if (!title || !description || !location || !categoryId) {
+    if (!title || !description || !location || !categoryName)
       return res.status(400).json({ error: "Campos obrigatórios faltando" });
-    }
 
-    // Verifica se a categoria existe
+    // Categoria fixa (não cria nova)
     const category = await prisma.category.findUnique({
-      where: { id: categoryId },
+      where: { name: categoryName },
     });
-    if (!category) return res.status(400).json({ error: "Categoria inválida" });
+    if (!category)
+      return res.status(400).json({ error: "Categoria inválida" });
 
+    // Cria item
     const item = await prisma.item.create({
       data: {
         title,
         description,
         location,
-        status: "perdido", // ✅ padrão
-        imageUrl: image,
+        status: "perdido", // status padrão
+        imageUrl: image || null,
         categoryId: category.id,
-        userId: req.user.id,
+        userId: req.user.id, // pega do token Supabase
       },
     });
 
@@ -37,6 +38,7 @@ router.post("/", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
+
 
 // Listar itens
 router.get("/", async (req, res) => {

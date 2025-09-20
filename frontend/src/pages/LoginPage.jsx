@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import logo from "../assets/logo.jpg";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -63,7 +63,7 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
-            placeholder="E-mail institucional"
+            placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 border rounded-md"

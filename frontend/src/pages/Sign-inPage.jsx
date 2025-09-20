@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import logo from "../assets/logo.jpg";
-import { supabase } from "../supabaseClient";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Cadastro() {
   const navigate = useNavigate();

@@ -24,10 +24,9 @@ export default function Login() {
         email,
         password: senha,
       });
-      
+
       if (error) return setError(error.message);
 
-      // Buscar perfil no backend
       const API_URL = import.meta.env.VITE_API_URL;
       const profileRes = await fetch(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${data.session.access_token}` },
@@ -45,20 +44,23 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4 relative">
+      {/* Botão de voltar no topo */}
       <button
         onClick={() => navigate("/home")}
-        className="absolute top-4 left-4 flex items-center text-gray-600 hover:text-gray-900 z-50"
+        className="fixed top-4 left-4 z-50 p-2 rounded hover:bg-gray-200 transition"
       >
-        <Home className="h-5 w-5 mr-1" /> Página Inicial
+        <Home className="w-6 h-6 text-gray-700" />
       </button>
 
+      {/* Logo fixa no topo */}
       <img
         src={logo}
         alt="Logo"
-        className="fixed top-0 left-1/2 transform -translate-x-1/2 mt-4 h-12 w-auto z-40 object-contain"
+        className="fixed top-4 left-1/2 transform -translate-x-1/2 h-12 w-auto z-40 object-contain"
       />
 
-      <div className="w-full max-w-md space-y-6 mt-16">
+      {/* Formulário */}
+      <div className="w-full max-w-md space-y-6 mt-20">
         <h1 className="text-3xl font-semibold text-gray-900 text-center">Fazer login</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">

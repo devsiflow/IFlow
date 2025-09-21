@@ -1,8 +1,10 @@
 // import backgroundImage from "../assets/backgroundImage.jpg";
 import iflowlogo from "../assets/iflowlogopngwhite.png";
+import MobileMenu from "../components/MobileMenu";
 
 function HomePage() {
   return (
+    
     // <section
     //   className="h-screen bg-cover bg-center flex items-center justify-center"
     //   style={{ backgroundImage: `url(${backgroundImage})` }}

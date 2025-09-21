@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useItens } from "../hooks/useItens";
 import MenuMarketPlace from "../components/MenuMarketPlace";
+import MobileMenu from "../components/MobileMenu";
 import livroImg from "../assets/livro.jpg";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +46,7 @@ function MarketPlace() {
   return (
     <div className="min-h-screen bg-gray-50">
       <MenuMarketPlace />
+      <MobileMenu />
       <div className="p-6 max-w-7xl mx-auto">
         {/* Filtros */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">

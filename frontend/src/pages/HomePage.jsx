@@ -1,6 +1,5 @@
 // import backgroundImage from "../assets/backgroundImage.jpg";
 import iflowlogo from "../assets/iflowlogopngwhite.png";
-import MobileMenu from "../components/MobileMenu";
 
 function HomePage() {
   return (

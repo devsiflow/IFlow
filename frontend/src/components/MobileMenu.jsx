@@ -17,7 +17,6 @@ export default function MobileMenu() {
 
   return (
     <div className="md:hidden fixed top-0 left-0 w-full z-50">
-      {/* Botão Hamburger */}
       <div className="flex justify-between items-center p-4 bg-green-800 text-white shadow-md">
         <span className="font-bold text-lg">Iflow</span>
         <button onClick={() => setOpen(!open)}>
@@ -25,7 +24,6 @@ export default function MobileMenu() {
         </button>
       </div>
 
-      {/* Menu deslizante */}
       <div
         className={`fixed top-0 left-0 w-64 h-full bg-white shadow-md transform ${
           open ? "translate-x-0" : "-translate-x-full"

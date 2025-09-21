@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 import livroImg from "../assets/livro.jpg"; // imagem padrão para itens
 import Loading from "../components/loading";
 import { X, User, ArrowLeft } from "lucide-react";
+import MobileMenu from "../components/MobileMenu";
 
 export default function UserPage() {
   const navigate = useNavigate();
@@ -128,6 +129,7 @@ export default function UserPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-6">
+      <MobileMenu />
       {/* Botão de voltar com ícone de seta */}
       <div className="flex items-center mb-6">
         <button

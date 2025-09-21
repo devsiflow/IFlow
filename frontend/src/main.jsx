@@ -8,9 +8,7 @@ import Cadastro from "./pages/Sign-inPage.jsx";
 import Login from "./pages/LoginPage.jsx";
 import LandingPage from "./pages/LandingPages.jsx";
 import MarkePlace from "./pages/MarketPlace.jsx";
-import HomePage from "./pages/HomePage";
 import CadastraItem from "./pages/CadastrarItem.jsx";
-import LostItem from "./pages/LostItem.jsx";
 import ValidarItem from "./pages/ValidarItem.jsx";
 import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
 import UserPage from "./pages/UserPage.jsx";
@@ -42,10 +40,6 @@ const router = createBrowserRouter([
     element: <CadastraItem />,
   },
 
-  {
-    path: "/lostitem",
-    element: <LostItem />,
-  },
   {
     path: "/validacao",
     element: <ValidarItem />,

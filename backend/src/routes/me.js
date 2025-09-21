@@ -1,44 +1,46 @@
 import express from "express";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // rota para pegar usuário logado
 router.get("/me", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await prisma.user.findUnique({
+    const profile = await prisma.profile.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true, matricula: true, image: true },
+      select: { id: true, name: true, matricula: true, profilePic: true, createdAt: true },
     });
 
-    if (!user) return res.status(404).json({ error: "Usuário não encontrado" });
-    res.json(user);
+    if (!profile) {
+      return res.status(404).json({ error: "Perfil não encontrado" });
+    }
+
+    res.json(profile);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
 
-// rota para atualizar usuário
-router.put("/update", authenticateToken, async (req, res) => {
+// rota para atualizar perfil (opcional)
+router.put("/me", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, email, image } = req.body;
+    const { name, matricula, profilePic } = req.body;
 
-    const updatedUser = await prisma.user.update({
+    const updated = await prisma.profile.update({
       where: { id: userId },
       data: {
         ...(name && { name }),
-        ...(email && { email }),
-        ...(image && { image }), // precisa ter campo image no schema.prisma
+        ...(matricula && { matricula }),
+        ...(profilePic && { profilePic }),
       },
-      select: { id: true, name: true, email: true, matricula: true, image: true },
+      select: { id: true, name: true, matricula: true, profilePic: true, createdAt: true },
     });
 
-    res.json(updatedUser);
+    res.json(updated);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erro interno do servidor" });

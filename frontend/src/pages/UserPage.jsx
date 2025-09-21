@@ -89,6 +89,8 @@ export default function UserPage() {
     if (file) setNewImage(file);
   };
 
+// ATUALIZAR FOTO DE PERFIL
+
   const handleUpload = async () => {
     if (!newImage) return;
     setUploading(true);

@@ -45,7 +45,7 @@ function CadastrarItem() {
     3: "Acessório",
     4: "Outros",
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -86,10 +86,9 @@ function CadastrarItem() {
         body: JSON.stringify({
           title: form.name,
           description: form.description,
-          location: form.local,
-          status: "perdido",
+          location: form.local, // <-- backend entende como "location"
+          categoryName: form.category,
           image: imageUrl,
-          categoryName: categories[form.category],
         }),
       });
 

@@ -7,28 +7,43 @@ const router = express.Router();
 // Criar item
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { title, description, location, image, categoryName } = req.body;
+    const { title, description, location, local, image, categoryName } = req.body;
 
-    if (!title || !description || !location || !categoryName)
+    if (!title || !description || (!location && !local) || !categoryName) {
       return res.status(400).json({ error: "Campos obrigatórios faltando" });
+    }
 
-    // Categoria fixa (não cria nova)
-    const category = await prisma.category.findUnique({
+    // Se frontend mandar `local` em vez de `location`
+    const finalLocation = location || local;
+
+    // Verifica categoria (cria se não existir)
+    let category = await prisma.category.findUnique({
       where: { name: categoryName },
     });
-    if (!category)
-      return res.status(400).json({ error: "Categoria inválida" });
+
+    if (!category) {
+      category = await prisma.category.create({ data: { name: categoryName } });
+    }
+
+    // Verifica se perfil existe
+    const profile = await prisma.profile.findUnique({
+      where: { id: req.user.id },
+    });
+
+    if (!profile) {
+      return res.status(400).json({ error: "Perfil não encontrado. Crie seu perfil antes de cadastrar itens." });
+    }
 
     // Cria item
     const item = await prisma.item.create({
       data: {
         title,
         description,
-        location,
-        status: "perdido", // status padrão
+        location: finalLocation,
+        status: "perdido",
         imageUrl: image || null,
         categoryId: category.id,
-        userId: req.user.id, // pega do token Supabase
+        userId: req.user.id,
       },
     });
 
@@ -39,17 +54,48 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-
-// Listar itens
+// Listar todos os itens
 router.get("/", async (req, res) => {
   try {
+    const { status, category, q } = req.query;
+
+    const where = {};
+    if (status) where.status = status;
+    if (category) where.category = { name: category };
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
     const items = await prisma.item.findMany({
+      where,
       orderBy: { id: "desc" },
-      include: { category: true, user: true },
+      include: { category: true, user: { select: { id: true, name: true, profilePic: true } } },
     });
+
     res.json(items);
   } catch (err) {
     console.error("Erro ao listar itens:", err);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
+// Listar itens do usuário autenticado
+router.get("/me/items", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const items = await prisma.item.findMany({
+      where: { userId },
+      orderBy: { id: "desc" },
+      include: { category: true },
+    });
+
+    res.json(items);
+  } catch (err) {
+    console.error("Erro ao listar itens do usuário:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });

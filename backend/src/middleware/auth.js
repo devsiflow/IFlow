@@ -6,14 +6,9 @@ export async function authenticateToken(req, res, next) {
 
   if (!token) return res.status(401).json({ error: "Token não fornecido" });
 
-  // valida token via Supabase
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(token);
+  const { data: { user }, error } = await supabase.auth.getUser(token);
 
-  if (error || !user)
-    return res.status(403).json({ error: "Token inválido ou expirado" });
+  if (error || !user) return res.status(403).json({ error: "Token inválido ou expirado" });
 
   req.user = user; // UUID do Supabase
   next();

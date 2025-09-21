@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
 import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "../hooks/useAuth"; // importa o hook
 
 function CadastrarItem() {
   const navigate = useNavigate();
+  const { user, token, loading } = useAuth(); // pega usuário e token do hook
 
   const [form, setForm] = useState({
     name: "",
@@ -39,18 +41,21 @@ function CadastrarItem() {
     }
   };
 
-  const categories = {
-    1: "Eletrônico",
-    2: "Roupa",
-    3: "Acessório",
-    4: "Outros",
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.name || !form.description || !form.local || !form.category) {
       alert("Preencha todos os campos obrigatórios!");
+      return;
+    }
+
+    if (loading) {
+      alert("Carregando sessão, aguarde...");
+      return;
+    }
+
+    if (!token) {
+      alert("Usuário não está logado ou sessão expirou!");
       return;
     }
 
@@ -61,6 +66,7 @@ function CadastrarItem() {
       if (imageFile) {
         const fileExt = imageFile.name.split(".").pop();
         const fileName = `${Date.now()}.${fileExt}`;
+
         const { error: uploadError } = await supabase.storage
           .from("iflow-item")
           .upload(`public/${fileName}`, imageFile);
@@ -75,18 +81,17 @@ function CadastrarItem() {
 
       const API_URL = import.meta.env.VITE_API_URL;
 
-      // Envia dados do item para o backend
+      // Envia dados do item para o backend com token atualizado
       const res = await fetch(`${API_URL}/items`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
-
         body: JSON.stringify({
           title: form.name,
           description: form.description,
-          location: form.local, // <-- backend entende como "location"
+          location: form.local,
           categoryName: form.category,
           image: imageUrl,
         }),
@@ -109,15 +114,11 @@ function CadastrarItem() {
       <MenuOtherPages />
       <div className="flex justify-center items-center px-4 py-16">
         <div className="w-full max-w-2xl bg-white border border-gray-200 shadow-sm rounded-2xl p-10 space-y-6">
-          <h2 className="text-3xl font-semibold text-neutral-900">
-            📋 Cadastrar Item
-          </h2>
+          <h2 className="text-3xl font-semibold text-neutral-900">📋 Cadastrar Item</h2>
           <form onSubmit={handleSubmit} className="space-y-5 text-neutral-800">
             {/* Nome */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nome do Item
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Item</label>
               <input
                 name="name"
                 type="text"
@@ -131,9 +132,7 @@ function CadastrarItem() {
 
             {/* Descrição */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Descrição
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
               <textarea
                 name="description"
                 value={form.description}
@@ -147,9 +146,7 @@ function CadastrarItem() {
 
             {/* Local */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Local
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
               <input
                 name="local"
                 type="text"
@@ -163,9 +160,7 @@ function CadastrarItem() {
 
             {/* Categoria */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Categoria
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
               <select
                 name="category"
                 value={form.category}
@@ -190,32 +185,19 @@ function CadastrarItem() {
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
               className={`w-full border-2 border-dashed ${
-                isDragging
-                  ? "border-indigo-500 bg-indigo-50"
-                  : "border-gray-300"
+                isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300"
               } rounded-md p-6 flex flex-col items-center justify-center text-sm text-gray-500 cursor-pointer transition`}
             >
               <label className="cursor-pointer text-center w-full">
                 {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="max-h-40 mx-auto rounded-md object-contain mb-3"
-                  />
+                  <img src={imagePreview} alt="Preview" className="max-h-40 mx-auto rounded-md object-contain mb-3" />
                 ) : (
                   <span>
                     Arraste uma imagem aqui ou{" "}
-                    <span className="underline text-indigo-600">
-                      clique para selecionar
-                    </span>
+                    <span className="underline text-indigo-600">clique para selecionar</span>
                   </span>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImage}
-                  className="hidden"
-                />
+                <input type="file" accept="image/*" onChange={handleImage} className="hidden" />
               </label>
             </div>
 
@@ -229,6 +211,7 @@ function CadastrarItem() {
           </form>
         </div>
       </div>
+      
     </div>
   );
 }

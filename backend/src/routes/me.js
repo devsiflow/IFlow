@@ -4,8 +4,8 @@ import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// rota para pegar usuário logado
-router.get("/me", authenticateToken, async (req, res) => {
+// GET /me → retorna perfil
+router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const profile = await prisma.profile.findUnique({
@@ -13,9 +13,7 @@ router.get("/me", authenticateToken, async (req, res) => {
       select: { id: true, name: true, matricula: true, profilePic: true, createdAt: true },
     });
 
-    if (!profile) {
-      return res.status(404).json({ error: "Perfil não encontrado" });
-    }
+    if (!profile) return res.status(404).json({ error: "Perfil não encontrado" });
 
     res.json(profile);
   } catch (err) {
@@ -24,8 +22,8 @@ router.get("/me", authenticateToken, async (req, res) => {
   }
 });
 
-// rota para atualizar perfil (opcional)
-router.put("/me", authenticateToken, async (req, res) => {
+// PUT /me → atualiza perfil
+router.put("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
     const { name, matricula, profilePic } = req.body;

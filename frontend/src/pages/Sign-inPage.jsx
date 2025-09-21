@@ -12,10 +12,12 @@ export default function Cadastro() {
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess(false);
 
     if (!matricula || !nome || !email || !senha) {
       setError("Todos os campos são obrigatórios");
@@ -30,10 +32,23 @@ export default function Cadastro() {
         email,
         password: senha,
       });
+
       if (supError) {
         setLoading(false);
         return setError(supError.message);
       }
+
+      if (!data.user) {
+        setLoading(false);
+        return setError("Usuário não retornou do Supabase");
+      }
+
+      const userId = data.user.id;
+
+      // Atualiza user_metadata (nome e matrícula)
+      await supabase.auth.updateUser({
+        data: { name: nome, matricula },
+      });
 
       // 2️⃣ Criar perfil no backend (Prisma)
       const API_URL = import.meta.env.VITE_API_URL;
@@ -41,9 +56,10 @@ export default function Cadastro() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: data.user.id,
+          id: userId,
           name: nome,
           matricula,
+          profilePic: null,
         }),
       });
 
@@ -53,7 +69,7 @@ export default function Cadastro() {
       }
 
       setLoading(false);
-      navigate("/home");
+      setSuccess(true);
     } catch (err) {
       console.error(err);
       setLoading(false);
@@ -80,61 +96,82 @@ export default function Cadastro() {
 
       {/* Formulário */}
       <div className="w-full max-w-md space-y-6 mt-20">
-        <h1 className="text-3xl font-semibold text-gray-900 text-center">Criar conta</h1>
+        <h1 className="text-3xl font-semibold text-gray-900 text-center">
+          Criar conta
+        </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Matrícula"
-            value={matricula}
-            onChange={(e) => setMatricula(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-            autoFocus
-          />
-          <input
-            type="text"
-            placeholder="Nome completo"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-          />
-          <input
-            type="email"
-            placeholder="E-mail institucional"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Senha"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-          />
+        {success ? (
+          <div className="p-4 bg-green-100 border border-green-400 rounded-md text-green-800 text-center">
+            Conta criada com sucesso! Verifique seu e-mail para ativar a conta.
+            <button
+              onClick={() => navigate("/login")}
+              className="mt-3 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-500"
+            >
+              Ir para login
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="text"
+              placeholder="Matrícula"
+              value={matricula}
+              onChange={(e) => setMatricula(e.target.value)}
+              className="w-full px-4 py-2 border rounded-md"
+              required
+              autoFocus
+              disabled={loading}
+            />
+            <input
+              type="text"
+              placeholder="Nome completo"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="w-full px-4 py-2 border rounded-md"
+              required
+              disabled={loading}
+            />
+            <input
+              type="email"
+              placeholder="E-mail institucional"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border rounded-md"
+              required
+              disabled={loading}
+            />
+            <input
+              type="password"
+              placeholder="Senha"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="w-full px-4 py-2 border rounded-md"
+              required
+              disabled={loading}
+            />
 
-          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-sm text-center">{error}</p>
+            )}
 
-          <button
-            type="submit"
-            className="w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-md"
-            disabled={loading}
-          >
-            {loading ? "Criando..." : "Criar conta"}
-          </button>
+            <button
+              type="submit"
+              className="w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-md"
+              disabled={loading}
+            >
+              {loading ? "Criando..." : "Criar conta"}
+            </button>
 
-          <button
-            type="button"
-            onClick={() => navigate("/login")}
-            className="w-full text-sm text-gray-500 mt-2"
-          >
-            Voltar para login
-          </button>
-        </form>
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="w-full text-sm text-gray-500 mt-2"
+              disabled={loading}
+            >
+              Voltar para login
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

@@ -16,7 +16,7 @@ function MarketPlace() {
   const [dateFilter, setDateFilter] = useState("");
 
   if (loading) {
-      return Loading();
+    return Loading();
   }
 
   if (error) {

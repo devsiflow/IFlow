@@ -1,5 +1,5 @@
 import express from "express";
-import prisma from "../prismaClient.js";
+import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -7,7 +7,8 @@ const router = express.Router();
 // Criar item
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { title, description, location, local, image, categoryName } = req.body;
+    const { title, description, location, local, image, categoryName } =
+      req.body;
 
     if (!title || !description || (!location && !local) || !categoryName) {
       return res.status(400).json({ error: "Campos obrigatórios faltando" });
@@ -31,7 +32,12 @@ router.post("/", authenticateToken, async (req, res) => {
     });
 
     if (!profile) {
-      return res.status(400).json({ error: "Perfil não encontrado. Crie seu perfil antes de cadastrar itens." });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Perfil não encontrado. Crie seu perfil antes de cadastrar itens.",
+        });
     }
 
     // Cria item
@@ -72,7 +78,10 @@ router.get("/", async (req, res) => {
     const items = await prisma.item.findMany({
       where,
       orderBy: { id: "desc" },
-      include: { category: true, user: { select: { id: true, name: true, profilePic: true } } },
+      include: {
+        category: true,
+        user: { select: { id: true, name: true, profilePic: true } },
+      },
     });
 
     res.json(items);

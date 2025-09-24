@@ -32,12 +32,21 @@ export default function UserPage() {
 
         const metadata = supData.user.user_metadata || {};
 
+        // buscar o perfil do banco
+        // Buscar perfil direto do backend (garante campo certo)
+        const token = (await supabase.auth.getSession())?.data?.session
+          ?.access_token;
+        const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const profileData = await res.json();
+
         setUser({
           id: supData.user.id,
           name: metadata.name || "Não informado",
           email: supData.user.email,
           matricula: metadata.matricula || "Não informado",
-          avatar_url: metadata.avatar_url || null,
+          avatar_url: profileData?.profilePic || null, // ✅ sempre certo
         });
 
         setForm({ name: metadata.name || "", email: supData.user.email });
@@ -111,70 +120,67 @@ export default function UserPage() {
     }
   };
 
-const handleUpload = async () => {
-  if (!newImage) return;
-  setUploading(true);
+  const handleUpload = async () => {
+    if (!newImage) return;
+    setUploading(true);
 
-  try {
-    // 1️⃣ Upload da imagem no storage
-    const fileExt = newImage.name.split(".").pop();
-    const fileName = `${user.id}.${fileExt}`;
+    try {
+      // 1️⃣ Upload da imagem no storage
+      const fileExt = newImage.name.split(".").pop();
+      const fileName = `${user.id}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(fileName, newImage, { upsert: true });
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, newImage, { upsert: true });
 
-    if (uploadError) throw uploadError;
+      if (uploadError) throw uploadError;
 
-    // 2️⃣ Pegar URL pública
-    const { data: urlData, error: urlError } = supabase.storage
-      .from("avatars")
-      .getPublicUrl(fileName);
+      // 2️⃣ Pegar URL pública
+      const { data: urlData, error: urlError } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
 
-    if (urlError) throw urlError;
+      if (urlError) throw urlError;
 
-    const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
-    // 3️⃣ Pegar token válido do Supabase
-    const session = (await supabase.auth.getSession())?.data?.session;
-    if (!session) {
-      alert("Usuário não está logado");
+      // 3️⃣ Pegar token válido do Supabase
+      const session = (await supabase.auth.getSession())?.data?.session;
+      if (!session) {
+        alert("Usuário não está logado");
+        setUploading(false);
+        return;
+      }
+
+      const token = session.access_token;
+
+      // 4️⃣ Enviar PUT para o backend
+      const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ profilePic: publicUrl }), // 👈 mantém igual ao banco
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Erro ao atualizar perfil");
+      }
+
+      // 5️⃣ Atualizar state local
+      setUser((prev) => ({ ...prev, avatar_url: publicUrl }));
+      setShowModal(false);
+      setNewImage(null);
+      alert("Foto de perfil atualizada com sucesso!");
+    } catch (err) {
+      console.error(err);
+      alert(`Erro ao enviar imagem: ${err.message}`);
+    } finally {
       setUploading(false);
-      return;
     }
-
-    const token = session.access_token;
-
-    // 4️⃣ Enviar PUT para o backend
-    const res = await fetch("https://iflow-zdbx.onrender.com/me", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ profilePic: publicUrl }),
-    });
-
-    if (!res.ok) {
-      const errData = await res.json();
-      throw new Error(errData.error || "Erro ao atualizar perfil");
-    }
-
-    // 5️⃣ Atualizar state local
-    setUser((prev) => ({ ...prev, avatar_url: publicUrl }));
-    setShowModal(false);
-    setNewImage(null);
-    alert("Foto de perfil atualizada com sucesso!");
-  } catch (err) {
-    console.error(err);
-    alert(`Erro ao enviar imagem: ${err.message}`);
-  } finally {
-    setUploading(false);
-  }
-};
-
-
-
+  };
 
   if (loading) return <Loading />;
   if (error) return <p className="text-red-500 text-center mt-10">{error}</p>;

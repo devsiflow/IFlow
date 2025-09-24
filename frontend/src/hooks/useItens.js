@@ -8,7 +8,10 @@ export function useItens() {
   useEffect(() => {
     async function fetchItens() {
       try {
-        const res = await fetch("https://iflow-zdbx.onrender.com/items"); 
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+        const res = await fetch(`${API_URL}/items`);
+
         if (!res.ok) {
           throw new Error("Erro ao buscar itens");
         }

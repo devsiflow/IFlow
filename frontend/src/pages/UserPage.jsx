@@ -23,32 +23,45 @@ export default function UserPage() {
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    // Exemplo usando fetch
-    const fetchItems = async () => {
+    const fetchUserAndItems = async () => {
       try {
-        const token = localStorage.getItem("token"); // garanta que você salva o JWT em login
-        if (!token) {
-          setItems([]);
+        const { data: supData, error: supError } = await supabase.auth.getUser();
+        if (supError || !supData.user) {
+          navigate("/login");
           return;
         }
 
-        // Use a base correta (dev vs prod). Exemplo usando variável de ambiente:
-        const BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
-        const res = await fetch(`${BASE}/items/me/items`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        const metadata = supData.user.user_metadata || {};
+        const session = (await supabase.auth.getSession())?.data?.session;
+        const token = session?.access_token;
+
+        // Busca perfil
+        const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const profileData = await res.json();
+
+        setUser({
+          id: supData.user.id,
+          name: metadata.name || "Não informado",
+          email: supData.user.email,
+          matricula: metadata.matricula || "Não informado",
+          avatar_url: profileData?.profilePic || null,
         });
 
-        if (!res.ok) {
-          console.error("Erro ao obter itens:", res.status, await res.text());
-          setItems([]);
-          return;
-        }
+        setForm({ name: metadata.name || "", email: supData.user.email });
 
-        const data = await res.json();
-        setItems(data);
+        // Busca itens do usuário logado
+        const resItems = await fetch("https://iflow-zdbx.onrender.com/items/me/items", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (resItems.ok) {
+          const dataItems = await resItems.json();
+          setItems(dataItems);
+        } else {
+          console.error("Erro ao buscar itens:", await resItems.text());
+        }
       } catch (err) {
         console.error(err);
         setError("Erro de conexão com o servidor");
@@ -56,57 +69,6 @@ export default function UserPage() {
         setLoading(false);
       }
     };
-  }, []);
-
-  useEffect(() => {
-const fetchUserAndItems = async () => {
-  try {
-    const { data: supData, error: supError } = await supabase.auth.getUser();
-    if (supError || !supData.user) {
-      navigate("/login");
-      return;
-    }
-
-    const metadata = supData.user.user_metadata || {};
-
-    const session = (await supabase.auth.getSession())?.data?.session;
-    const token = session?.access_token;
-
-    // Busca perfil
-    const res = await fetch("https://iflow-zdbx.onrender.com/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const profileData = await res.json();
-
-    setUser({
-      id: supData.user.id,
-      name: metadata.name || "Não informado",
-      email: supData.user.email,
-      matricula: metadata.matricula || "Não informado",
-      avatar_url: profileData?.profilePic || null,
-    });
-
-    setForm({ name: metadata.name || "", email: supData.user.email });
-
-    // 🔴 Busca itens do usuário logado
-    const resItems = await fetch("https://iflow-zdbx.onrender.com/items/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (resItems.ok) {
-      const dataItems = await resItems.json();
-      setItems(dataItems);
-    } else {
-      console.error("Erro ao buscar itens:", await resItems.text());
-    }
-  } catch (err) {
-    console.error(err);
-    setError("Erro de conexão com o servidor");
-  } finally {
-    setLoading(false);
-  }
-};
-
 
     fetchUserAndItems();
   }, [navigate]);
@@ -218,7 +180,7 @@ const fetchUserAndItems = async () => {
     }
   };
 
-  // 🔴 Função para deletar item
+  // Função para deletar item
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm("Tem certeza que deseja remover este item?")) return;
 
@@ -246,7 +208,6 @@ const fetchUserAndItems = async () => {
       }
 
       setItems((prev) => prev.filter((item) => item.id !== itemId));
-
       setMessage("✅ Item removido com sucesso!");
       setMessageType("success");
     } catch (err) {

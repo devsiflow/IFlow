@@ -104,7 +104,7 @@ router.get("/me/items", authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     const items = await prisma.item.findMany({
-      where: { id },
+      where: { userId },
       orderBy: { id: "desc" },
       include: { category: true },
     });

@@ -7,7 +7,8 @@ const router = express.Router();
 // Criar item
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { title, description, location, local, image, categoryName } = req.body;
+    const { title, description, location, local, image, categoryName } =
+      req.body;
 
     if (!title || !description || (!location && !local) || !categoryName) {
       return res.status(400).json({ error: "Campos obrigatórios faltando" });
@@ -27,16 +28,19 @@ router.post("/", authenticateToken, async (req, res) => {
 
     // Verifica se perfil existe
     const profile = await prisma.profile.findUnique({
-      where: { id: req.user.id }, // req.user.id = UUID do Supabase
+      where: { id: req.user.id },
     });
 
     if (!profile) {
-      return res.status(400).json({
-        error: "Perfil não encontrado. Crie seu perfil antes de cadastrar itens.",
-      });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Perfil não encontrado. Crie seu perfil antes de cadastrar itens.",
+        });
     }
 
-    // Cria item associado ao perfil
+    // Cria item
     const item = await prisma.item.create({
       data: {
         title,
@@ -45,7 +49,7 @@ router.post("/", authenticateToken, async (req, res) => {
         status: "perdido",
         imageUrl: image || null,
         categoryId: category.id,
-        profileId: profile.id, // 🔴 corrigido: salvar pelo profileId
+        userId: req.user.id,
       },
     });
 
@@ -56,7 +60,7 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-// Listar todos os itens (marketplace)
+// Listar todos os itens
 router.get("/", async (req, res) => {
   try {
     const { status, category, q } = req.query;
@@ -76,7 +80,7 @@ router.get("/", async (req, res) => {
       orderBy: { id: "desc" },
       include: {
         category: true,
-        profile: { select: { id: true, name: true, profilePic: true } }, // 🔴 corrigido: usar profile
+        user: { select: { id: true, name: true, profilePic: true } },
       },
     });
 
@@ -87,11 +91,20 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Listar itens do usuário autenticado
 router.get("/me", authenticateToken, async (req, res) => {
+  const items = await prisma.item.findMany({
+    where: { profileId: req.user.id },
+  });
+  res.json(items);
+});
+
+// Listar itens do usuário autenticado
+router.get("/me/items", authenticateToken, async (req, res) => {
   try {
+    const userId = req.user.id;
+
     const items = await prisma.item.findMany({
-      where: { profileId: req.user.id }, // 🔴 corrigido
+      where: { id },
       orderBy: { id: "desc" },
       include: { category: true },
     });

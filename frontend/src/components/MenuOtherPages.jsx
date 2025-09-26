@@ -12,29 +12,35 @@ function MenuOtherPages() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: supData } = await supabase.auth.getUser();
+      if (!supData.user) return;
 
-      if (user) {
-        setUser(user.user_metadata);
-        setProfileImage(user.user_metadata?.avatar_url || null);
+      setUser(supData.user);
+
+      // 🔑 busca foto real no backend
+      const session = (await supabase.auth.getSession())?.data?.session;
+      if (session) {
+        const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setProfileImage(data.profilePic || null);
+        }
       }
     };
 
     fetchUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session?.user) {
-          setUser(session.user.user_metadata);
-          setProfileImage(session.user.user_metadata?.avatar_url || null);
-        } else {
-          setUser(null);
-          setProfileImage(null);
-        }
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        setProfileImage(session.user?.profilePic || null);
+      } else {
+        setUser(null);
+        setProfileImage(null);
       }
-    );
+    });
 
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -64,22 +70,13 @@ function MenuOtherPages() {
     <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between relative">
       {/* Logo e Links */}
       <div className="flex items-center space-x-5">
-        <img
-          src={logo}
-          alt="Logo"
-          className="w-36 cursor-pointer"
-          onClick={NavHome}
-        />
+        <img src={logo} alt="Logo" className="w-36 cursor-pointer" onClick={NavHome} />
         <ul className="hidden md:flex font-medium space-x-6">
           <li>
-            <button onClick={NavHome} className="hover:text-gray-300">
-              Início
-            </button>
+            <button onClick={NavHome} className="hover:text-gray-300">Início</button>
           </li>
           <li>
-            <button onClick={NavMarketPlace} className="hover:text-gray-300">
-              MarketPlace
-            </button>
+            <button onClick={NavMarketPlace} className="hover:text-gray-300">MarketPlace</button>
           </li>
         </ul>
       </div>
@@ -88,12 +85,7 @@ function MenuOtherPages() {
       <div className="hidden md:flex items-center space-x-4">
         {!user ? (
           <>
-            <button
-              onClick={NavLogin}
-              className="hover:text-gray-300 font-semibold"
-            >
-              Login
-            </button>
+            <button onClick={NavLogin} className="hover:text-gray-300 font-semibold">Login</button>
             <button
               onClick={NavCadastro}
               className="bg-green-500 transition-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
@@ -123,37 +115,21 @@ function MenuOtherPages() {
         className="md:hidden flex items-center"
         onClick={() => setMenuOpen(!menuOpen)}
       >
-        {menuOpen ? (
-          <X className="w-8 h-8" />
-        ) : (
-          <MenuIcon className="w-8 h-8" />
-        )}
+        {menuOpen ? <X className="w-8 h-8" /> : <MenuIcon className="w-8 h-8" />}
       </button>
 
       {/* Menu Mobile (sidebar) */}
       {menuOpen && (
         <div className="absolute top-0 left-0 w-64 h-screen bg-green-950 shadow-lg p-6 flex flex-col space-y-6 md:hidden z-50">
-          <button onClick={NavHome} className="hover:text-gray-300 text-left">
-            Início
-          </button>
-          <button
-            onClick={NavMarketPlace}
-            className="hover:text-gray-300 text-left"
-          >
-            MarketPlace
-          </button>
+          <button onClick={NavHome} className="hover:text-gray-300 text-left">Início</button>
+          <button onClick={NavMarketPlace} className="hover:text-gray-300 text-left">MarketPlace</button>
           <hr className="border-gray-600" />
 
           {/* Perfil ou botões */}
           <div className="mt-6">
             {!user ? (
               <div className="flex flex-col space-y-3">
-                <button
-                  onClick={NavLogin}
-                  className="hover:text-gray-300 font-semibold text-left"
-                >
-                  Login
-                </button>
+                <button onClick={NavLogin} className="hover:text-gray-300 font-semibold text-left">Login</button>
                 <button
                   onClick={NavCadastro}
                   className="bg-green-500 transition-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded w-fit"

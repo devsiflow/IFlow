@@ -15,6 +15,7 @@ export default function UserPage() {
   const [form, setForm] = useState({ name: "", email: "" });
   const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState(""); // nova state para mensagens
 
   const [newImage, setNewImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -23,8 +24,7 @@ export default function UserPage() {
   useEffect(() => {
     const fetchUserAndItems = async () => {
       try {
-        const { data: supData, error: supError } =
-          await supabase.auth.getUser();
+        const { data: supData, error: supError } = await supabase.auth.getUser();
         if (supError || !supData.user) {
           navigate("/login");
           return;
@@ -32,10 +32,7 @@ export default function UserPage() {
 
         const metadata = supData.user.user_metadata || {};
 
-        // buscar o perfil do banco
-        // Buscar perfil direto do backend (garante campo certo)
-        const token = (await supabase.auth.getSession())?.data?.session
-          ?.access_token;
+        const token = (await supabase.auth.getSession())?.data?.session?.access_token;
         const res = await fetch("https://iflow-zdbx.onrender.com/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -46,7 +43,7 @@ export default function UserPage() {
           name: metadata.name || "Não informado",
           email: supData.user.email,
           matricula: metadata.matricula || "Não informado",
-          avatar_url: profileData?.profilePic || null, // ✅ sempre certo
+          avatar_url: profileData?.profilePic || null,
         });
 
         setForm({ name: metadata.name || "", email: supData.user.email });
@@ -55,9 +52,7 @@ export default function UserPage() {
         if (!perfilId) {
           setItems([]);
         } else {
-          const resItems = await fetch(
-            `https://iflow-zdbx.onrender.com/items/user/${perfilId}`
-          );
+          const resItems = await fetch(`https://iflow-zdbx.onrender.com/items/user/${perfilId}`);
           if (resItems.ok) {
             const dataItems = await resItems.json();
             setItems(dataItems);
@@ -86,15 +81,13 @@ export default function UserPage() {
 
   const handleUpdate = async () => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        data: { name: form.name },
-      });
+      const { error } = await supabase.auth.updateUser({ data: { name: form.name } });
       if (error) throw error;
       setUser({ ...user, name: form.name });
       setEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Erro ao atualizar perfil");
+      setMessage("Erro ao atualizar perfil");
     }
   };
 
@@ -123,45 +116,39 @@ export default function UserPage() {
   const handleUpload = async () => {
     if (!newImage) return;
     setUploading(true);
-
+    setMessage(""); // resetar mensagem anterior
     try {
-      // 1️⃣ Upload da imagem no storage
       const fileExt = newImage.name.split(".").pop();
       const fileName = `${user.id}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(fileName, newImage, { upsert: true });
-
       if (uploadError) throw uploadError;
 
-      // 2️⃣ Pegar URL pública
       const { data: urlData, error: urlError } = supabase.storage
         .from("avatars")
         .getPublicUrl(fileName);
-
       if (urlError) throw urlError;
 
       const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
-      // 3️⃣ Pegar token válido do Supabase
       const session = (await supabase.auth.getSession())?.data?.session;
       if (!session) {
-        alert("Usuário não está logado");
+        setMessage("Usuário não está logado");
         setUploading(false);
         return;
       }
 
       const token = session.access_token;
 
-      // 4️⃣ Enviar PUT para o backend
       const res = await fetch("https://iflow-zdbx.onrender.com/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ profilePic: publicUrl }), // 👈 mantém igual ao banco
+        body: JSON.stringify({ profilePic: publicUrl }),
       });
 
       if (!res.ok) {
@@ -169,14 +156,13 @@ export default function UserPage() {
         throw new Error(errData.error || "Erro ao atualizar perfil");
       }
 
-      // 5️⃣ Atualizar state local
       setUser((prev) => ({ ...prev, avatar_url: publicUrl }));
       setShowModal(false);
       setNewImage(null);
-      alert("Foto de perfil atualizada com sucesso!");
+      setMessage("✅ Foto de perfil atualizada com sucesso!");
     } catch (err) {
       console.error(err);
-      alert(`Erro ao enviar imagem: ${err.message}`);
+      setMessage(`❌ Erro ao enviar imagem: ${err.message}`);
     } finally {
       setUploading(false);
     }
@@ -188,7 +174,6 @@ export default function UserPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-6">
-      {/* Botão de voltar */}
       <div className="flex items-center mb-6">
         <button
           onClick={() => navigate(-1)}
@@ -198,9 +183,16 @@ export default function UserPage() {
         </button>
       </div>
 
-      {/* Card do usuário */}
+      {/* Mensagem estilizada */}
+      {message && (
+        <div className="max-w-4xl mx-auto mb-4 p-4 rounded-md text-white font-medium text-center
+                        bg-green-600 dark:bg-green-600 transition">
+          {message}
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row gap-8">
-        {/* Foto de perfil */}
+        {/* Card de perfil */}
         <div className="flex flex-col items-center md:w-1/3 relative">
           <div className="relative w-32 h-32 group">
             {!user.avatar_url ? (
@@ -225,7 +217,6 @@ export default function UserPage() {
           </div>
         </div>
 
-        {/* Informações */}
         <div className="flex-1 space-y-4">
           <h1 className="text-2xl font-bold text-gray-800">Meu Perfil</h1>
 
@@ -289,7 +280,7 @@ export default function UserPage() {
         </div>
       </div>
 
-      {/* Modal drag & drop */}
+      {/* Modal de upload */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 px-4">
           <div className="bg-white rounded-2xl p-8 w-full max-w-2xl relative shadow-xl">
@@ -320,11 +311,24 @@ export default function UserPage() {
               onClick={() => document.getElementById("fileInput").click()}
             >
               {previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="max-h-64 mx-auto rounded-lg object-contain mb-4 shadow-md"
-                />
+                <div className="flex flex-col items-center">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="max-h-64 mx-auto rounded-lg object-contain mb-4 shadow-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setNewImage(null);
+                      setPreviewUrl(null);
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition"
+                  >
+                    Remover imagem
+                  </button>
+                </div>
               ) : (
                 <div className="flex flex-col items-center space-y-2">
                   <User className="w-16 h-16 text-gray-400" />

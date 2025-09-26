@@ -12,27 +12,37 @@ function MenuMarketPlace() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: supData } = await supabase.auth.getUser();
+      if (!supData.user) return;
 
-      if (user) {
-        setUser(user.user_metadata);
-        setProfileImage(user.user_metadata?.avatar_url || null);
+      setUser(supData.user);
+
+      // 🔑 busca foto real no backend
+      const session = (await supabase.auth.getSession())?.data?.session;
+      if (session) {
+        const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setProfileImage(data.profilePic || null);
+        }
       }
     };
 
     fetchUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(session.user.user_metadata);
-        setProfileImage(session.user.user_metadata?.avatar_url || null);
-      } else {
-        setUser(null);
-        setProfileImage(null);
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+          setProfileImage(session.user?.profilePic || null);
+        } else {
+          setUser(null);
+          setProfileImage(null);
+        }
       }
-    });
+    );
 
     return () => listener.subscription.unsubscribe();
   }, []);

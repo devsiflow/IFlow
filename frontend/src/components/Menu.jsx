@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import logo from "../assets/logo.jpg";
-import { User, Menu as MenuIcon, X } from "lucide-react"; // Ícones
+import { User, Menu as MenuIcon, X } from "lucide-react";
 
 function Menu() {
   const navigate = useNavigate();
@@ -12,27 +12,42 @@ function Menu() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (user) {
-        setUser(user.user_metadata);
-        setProfileImage(user.user_metadata?.avatar_url || null);
+      const { data: supData } = await supabase.auth.getUser();
+      if (!supData.user) {
+        setUser(null);
+        setProfileImage(null);
+        return;
       }
+
+      // Pegar token
+      const session = (await supabase.auth.getSession())?.data?.session;
+      const token = session?.access_token;
+
+      if (!token) {
+        setUser(null);
+        setProfileImage(null);
+        return;
+      }
+
+      // Buscar perfil no backend (garante profilePic certo)
+      const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const profile = await res.json();
+
+      setUser({
+        id: supData.user.id,
+        name: profile?.name || supData.user.user_metadata?.name || "Não informado",
+        email: supData.user.email,
+      });
+      setProfileImage(profile?.profilePic || null);
     };
 
     fetchUser();
 
-    // Listener para login/logout
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser(session.user.user_metadata);
-        setProfileImage(session.user.user_metadata?.avatar_url || null);
-      } else {
-        setUser(null);
-        setProfileImage(null);
-      }
+    // Listener de login/logout
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      fetchUser();
     });
 
     return () => listener.subscription.unsubscribe();
@@ -63,7 +78,12 @@ function Menu() {
   return (
     <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between relative">
       {/* Logo */}
-      <img src={logo} alt="Logo" className="w-32 sm:w-36 cursor-pointer" onClick={() => navigate("/")} />
+      <img
+        src={logo}
+        alt="Logo"
+        className="w-32 sm:w-36 cursor-pointer"
+        onClick={() => navigate("/")}
+      />
 
       {/* Links - desktop */}
       <ul className="hidden md:flex font-medium space-x-6">
@@ -113,7 +133,7 @@ function Menu() {
         {menuOpen ? <X className="w-8 h-8" /> : <MenuIcon className="w-8 h-8" />}
       </button>
 
-      {/* Menu Mobile (sidebar) */}
+      {/* Menu Mobile */}
       {menuOpen && (
         <div className="absolute top-0 left-0 w-64 h-screen bg-green-950 shadow-lg p-6 flex flex-col space-y-6 md:hidden z-50">
           <a href="#sobreNos" onClick={() => setMenuOpen(false)} className="hover:text-gray-300">Sobre nós</a>
@@ -159,4 +179,3 @@ function Menu() {
 }
 
 export default Menu;
- 

@@ -7,8 +7,7 @@ const router = express.Router();
 // Criar item
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { title, description, location, local, image, categoryName } =
-      req.body;
+    const { title, description, location, local, image, categoryName } = req.body;
 
     if (!title || !description || (!location && !local) || !categoryName) {
       return res.status(400).json({ error: "Campos obrigatórios faltando" });
@@ -28,19 +27,16 @@ router.post("/", authenticateToken, async (req, res) => {
 
     // Verifica se perfil existe
     const profile = await prisma.profile.findUnique({
-      where: { id: req.user.id },
+      where: { id: req.user.id }, // req.user.id = UUID do Supabase
     });
 
     if (!profile) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Perfil não encontrado. Crie seu perfil antes de cadastrar itens.",
-        });
+      return res.status(400).json({
+        error: "Perfil não encontrado. Crie seu perfil antes de cadastrar itens.",
+      });
     }
 
-    // Cria item
+    // Cria item associado ao perfil
     const item = await prisma.item.create({
       data: {
         title,
@@ -49,7 +45,7 @@ router.post("/", authenticateToken, async (req, res) => {
         status: "perdido",
         imageUrl: image || null,
         categoryId: category.id,
-        userId: req.user.id,
+        profileId: profile.id, // 🔴 corrigido: salvar pelo profileId
       },
     });
 
@@ -60,7 +56,7 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
-// Listar todos os itens
+// Listar todos os itens (marketplace)
 router.get("/", async (req, res) => {
   try {
     const { status, category, q } = req.query;
@@ -80,7 +76,7 @@ router.get("/", async (req, res) => {
       orderBy: { id: "desc" },
       include: {
         category: true,
-        user: { select: { id: true, name: true, profilePic: true } },
+        profile: { select: { id: true, name: true, profilePic: true } }, // 🔴 corrigido: usar profile
       },
     });
 
@@ -91,20 +87,11 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/me", authenticateToken, async (req, res) => {
-  const items = await prisma.item.findMany({
-    where: { profileId: req.user.id },
-  });
-  res.json(items);
-});
-
 // Listar itens do usuário autenticado
-router.get("/me/items", authenticateToken, async (req, res) => {
+router.get("/me", authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
-
     const items = await prisma.item.findMany({
-      where: { userId },
+      where: { profileId: req.user.id }, // 🔴 corrigido
       orderBy: { id: "desc" },
       include: { category: true },
     });

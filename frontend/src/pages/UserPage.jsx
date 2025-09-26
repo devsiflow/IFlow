@@ -22,67 +22,33 @@ export default function UserPage() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  
-
   useEffect(() => {
-  const fetchItems = async () => {
-    try {
-      const token = localStorage.getItem("token"); // onde você guarda o JWT
-      const res = await axios.get("http://localhost:5000/me/items", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setItems(res.data);
-    } catch (err) {
-      console.error("Erro ao carregar itens do usuário:", err);
-    }
-  };
-
-  fetchItems();
-}, []);
-
-  useEffect(() => {
-    const fetchUserAndItems = async () => {
+    // Exemplo usando fetch
+    const fetchItems = async () => {
       try {
-        const { data: supData, error: supError } =
-          await supabase.auth.getUser();
-        if (supError || !supData.user) {
-          navigate("/login");
+        const token = localStorage.getItem("token"); // garanta que você salva o JWT em login
+        if (!token) {
+          setItems([]);
           return;
         }
 
-        const metadata = supData.user.user_metadata || {};
-
-        const token = (await supabase.auth.getSession())?.data?.session
-          ?.access_token;
-        const res = await fetch("https://iflow-zdbx.onrender.com/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const profileData = await res.json();
-
-        setUser({
-          id: supData.user.id,
-          name: metadata.name || "Não informado",
-          email: supData.user.email,
-          matricula: metadata.matricula || "Não informado",
-          avatar_url: profileData?.profilePic || null,
+        // Use a base correta (dev vs prod). Exemplo usando variável de ambiente:
+        const BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
+        const res = await fetch(`${BASE}/items/me/items`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
 
-        setForm({ name: metadata.name || "", email: supData.user.email });
-
-        const perfilId = localStorage.getItem("perfilId");
-        if (!perfilId) {
+        if (!res.ok) {
+          console.error("Erro ao obter itens:", res.status, await res.text());
           setItems([]);
-        } else {
-          const resItems = await fetch(
-            `https://iflow-zdbx.onrender.com/items/user/${perfilId}`
-          );
-          if (resItems.ok) {
-            const dataItems = await resItems.json();
-            setItems(dataItems);
-          }
+          return;
         }
+
+        const data = await res.json();
+        setItems(data);
       } catch (err) {
         console.error(err);
         setError("Erro de conexão com o servidor");
@@ -90,6 +56,57 @@ export default function UserPage() {
         setLoading(false);
       }
     };
+  }, []);
+
+  useEffect(() => {
+const fetchUserAndItems = async () => {
+  try {
+    const { data: supData, error: supError } = await supabase.auth.getUser();
+    if (supError || !supData.user) {
+      navigate("/login");
+      return;
+    }
+
+    const metadata = supData.user.user_metadata || {};
+
+    const session = (await supabase.auth.getSession())?.data?.session;
+    const token = session?.access_token;
+
+    // Busca perfil
+    const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const profileData = await res.json();
+
+    setUser({
+      id: supData.user.id,
+      name: metadata.name || "Não informado",
+      email: supData.user.email,
+      matricula: metadata.matricula || "Não informado",
+      avatar_url: profileData?.profilePic || null,
+    });
+
+    setForm({ name: metadata.name || "", email: supData.user.email });
+
+    // 🔴 Busca itens do usuário logado
+    const resItems = await fetch("https://iflow-zdbx.onrender.com/items/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (resItems.ok) {
+      const dataItems = await resItems.json();
+      setItems(dataItems);
+    } else {
+      console.error("Erro ao buscar itens:", await resItems.text());
+    }
+  } catch (err) {
+    console.error(err);
+    setError("Erro de conexão com o servidor");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
     fetchUserAndItems();
   }, [navigate]);

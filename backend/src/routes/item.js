@@ -91,6 +91,13 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/me", authenticateToken, async (req, res) => {
+  const items = await prisma.item.findMany({
+    where: { profileId: req.user.id },
+  });
+  res.json(items);
+});
+
 // Listar itens do usuário autenticado
 router.get("/me/items", authenticateToken, async (req, res) => {
   try {

@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 // Rotas
 app.use("/auth", authRoutes);   // login, register etc.
 app.use("/me", meRoutes);       // GET /me e PUT /me
-app.use("/items", itemsRouter); // itens do marketplace
+app.use("/items", itemsRouter); // itens do banco de itens
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

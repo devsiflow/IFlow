@@ -6,7 +6,7 @@ import "aos/dist/aos.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Cadastro from "./pages/Sign-inPage.jsx";
 import Login from "./pages/LoginPage.jsx";
-import MarkePlace from "./pages/MarketPlace.jsx";
+import BancoItens from "./pages/BancoItems.jsx";
 import CadastraItem from "./pages/CadastrarItem.jsx";
 import ValidarItem from "./pages/ValidarItem.jsx";
 import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
@@ -30,8 +30,8 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: "/marketplace",
-    element: <MarkePlace />,
+    path: "/bancoitens",
+    element: <BancoItens />,
   },
   {
     path: "/cadastroitem",

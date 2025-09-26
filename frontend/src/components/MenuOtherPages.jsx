@@ -57,8 +57,8 @@ function MenuOtherPages() {
     navigate(`/cadastro`);
     setMenuOpen(false);
   }
-  function NavMarketPlace() {
-    navigate(`/marketplace`);
+  function NavBancoItens() {
+    navigate(`/bancoitens`);
     setMenuOpen(false);
   }
   function NavPerfil() {
@@ -76,7 +76,7 @@ function MenuOtherPages() {
             <button onClick={NavHome} className="hover:text-gray-300">Início</button>
           </li>
           <li>
-            <button onClick={NavMarketPlace} className="hover:text-gray-300">MarketPlace</button>
+            <button onClick={NavBancoItens} className="hover:text-gray-300">BancoItens</button>
           </li>
         </ul>
       </div>
@@ -122,7 +122,7 @@ function MenuOtherPages() {
       {menuOpen && (
         <div className="absolute top-0 left-0 w-64 h-screen bg-green-950 shadow-lg p-6 flex flex-col space-y-6 md:hidden z-50">
           <button onClick={NavHome} className="hover:text-gray-300 text-left">Início</button>
-          <button onClick={NavMarketPlace} className="hover:text-gray-300 text-left">MarketPlace</button>
+          <button onClick={NavBancoItens} className="hover:text-gray-300 text-left">BancoItens</button>
           <hr className="border-gray-600" />
 
           {/* Perfil ou botões */}

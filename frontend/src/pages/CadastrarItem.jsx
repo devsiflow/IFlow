@@ -102,7 +102,7 @@ function CadastrarItem() {
         throw new Error(errorData.error || "Erro ao cadastrar item");
       }
 
-      navigate("/marketplace");
+      navigate("/bancoitens");
     } catch (err) {
       console.error("Erro:", err);
       alert("Erro ao cadastrar item: " + err.message);

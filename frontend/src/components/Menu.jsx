@@ -62,8 +62,8 @@ function Menu() {
     navigate(`/login`);
     setMenuOpen(false);
   }
-  function NavMarketPlace() {
-    navigate("/marketplace");
+  function NavBancoItens() {
+    navigate("/bancoitens");
     setMenuOpen(false);
   }
   function NavEncontreiItem() {
@@ -92,7 +92,7 @@ function Menu() {
         <li><a href="#objetivo" className="hover:text-gray-300">Objetivo</a></li>
         <li><a href="#contato" className="hover:text-gray-300">Contato</a></li>
         <li><a className="hover:text-gray-300 pointer-events-none">|</a></li>
-        <li><button onClick={NavMarketPlace} className="hover:text-gray-300">Perdi um item</button></li>
+        <li><button onClick={NavBancoItens} className="hover:text-gray-300">Perdi um item</button></li>
         <li><button onClick={NavEncontreiItem} className="hover:text-gray-300">Encontrei um item</button></li>
       </ul>
 
@@ -141,7 +141,7 @@ function Menu() {
           <a href="#objetivo" onClick={() => setMenuOpen(false)} className="hover:text-gray-300">Objetivo</a>
           <a href="#contato" onClick={() => setMenuOpen(false)} className="hover:text-gray-300">Contato</a>
           <hr className="border-gray-600" />
-          <button onClick={NavMarketPlace} className="hover:text-gray-300 text-left">Perdi um item</button>
+          <button onClick={NavBancoItens} className="hover:text-gray-300 text-left">Perdi um item</button>
           <button onClick={NavEncontreiItem} className="hover:text-gray-300 text-left">Encontrei um item</button>
 
           {/* Perfil ou botões */}

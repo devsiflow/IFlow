@@ -18,9 +18,9 @@ function Footer() {
           </p>
           {/* Social icons */}
           <div className="flex space-x-4 mt-4 text-xl">
-            <a href="#" className="hover:text-green-400"><FaInstagram /></a>
+            <a href="https://www.instagram.com/ifprcampuscuritiba" className="hover:text-green-400"><FaInstagram /></a>
             <a href="#" className="hover:text-green-400"><FaTwitter /></a>
-            <a href="#" className="hover:text-green-400"><FaGithub /></a>
+            <a href="https://github.com/devsiflow/IFlow" className="hover:text-green-400"><FaGithub /></a>
           </div>
         </div>
 

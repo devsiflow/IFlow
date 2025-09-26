@@ -125,9 +125,6 @@ function MarketPlace() {
                   <p className="text-sm text-gray-600">
                     <strong>Categoria:</strong> {item.category?.name}
                   </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Contato:</strong> {item.user?.email}
-                  </p>
                   <span
                     className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${
                       item.status === "Perdido"

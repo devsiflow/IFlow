@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
-import livroImg from "../assets/livro.jpg"; // imagem padrão para itens
+import livroImg from "../assets/livro.jpg"; // imagem padrão
 import Loading from "../components/loading";
-import { X, User, ArrowLeft } from "lucide-react";
+import { X, User, ArrowLeft, Trash2 } from "lucide-react";
 
 export default function UserPage() {
   const navigate = useNavigate();
@@ -15,16 +15,38 @@ export default function UserPage() {
   const [form, setForm] = useState({ name: "", email: "" });
   const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState(""); // nova state para mensagens
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("success");
 
   const [newImage, setNewImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  
+
+  useEffect(() => {
+  const fetchItems = async () => {
+    try {
+      const token = localStorage.getItem("token"); // onde você guarda o JWT
+      const res = await axios.get("http://localhost:5000/me/items", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setItems(res.data);
+    } catch (err) {
+      console.error("Erro ao carregar itens do usuário:", err);
+    }
+  };
+
+  fetchItems();
+}, []);
+
   useEffect(() => {
     const fetchUserAndItems = async () => {
       try {
-        const { data: supData, error: supError } = await supabase.auth.getUser();
+        const { data: supData, error: supError } =
+          await supabase.auth.getUser();
         if (supError || !supData.user) {
           navigate("/login");
           return;
@@ -32,7 +54,8 @@ export default function UserPage() {
 
         const metadata = supData.user.user_metadata || {};
 
-        const token = (await supabase.auth.getSession())?.data?.session?.access_token;
+        const token = (await supabase.auth.getSession())?.data?.session
+          ?.access_token;
         const res = await fetch("https://iflow-zdbx.onrender.com/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -52,7 +75,9 @@ export default function UserPage() {
         if (!perfilId) {
           setItems([]);
         } else {
-          const resItems = await fetch(`https://iflow-zdbx.onrender.com/items/user/${perfilId}`);
+          const resItems = await fetch(
+            `https://iflow-zdbx.onrender.com/items/user/${perfilId}`
+          );
           if (resItems.ok) {
             const dataItems = await resItems.json();
             setItems(dataItems);
@@ -81,13 +106,18 @@ export default function UserPage() {
 
   const handleUpdate = async () => {
     try {
-      const { error } = await supabase.auth.updateUser({ data: { name: form.name } });
+      const { error } = await supabase.auth.updateUser({
+        data: { name: form.name },
+      });
       if (error) throw error;
       setUser({ ...user, name: form.name });
       setEditing(false);
+      setMessage("✅ Perfil atualizado com sucesso!");
+      setMessageType("success");
     } catch (err) {
       console.error(err);
-      setMessage("Erro ao atualizar perfil");
+      setMessage("❌ Erro ao atualizar perfil");
+      setMessageType("error");
     }
   };
 
@@ -116,7 +146,7 @@ export default function UserPage() {
   const handleUpload = async () => {
     if (!newImage) return;
     setUploading(true);
-    setMessage(""); // resetar mensagem anterior
+    setMessage("");
     try {
       const fileExt = newImage.name.split(".").pop();
       const fileName = `${user.id}.${fileExt}`;
@@ -135,7 +165,8 @@ export default function UserPage() {
 
       const session = (await supabase.auth.getSession())?.data?.session;
       if (!session) {
-        setMessage("Usuário não está logado");
+        setMessage("❌ Usuário não está logado");
+        setMessageType("error");
         setUploading(false);
         return;
       }
@@ -160,11 +191,51 @@ export default function UserPage() {
       setShowModal(false);
       setNewImage(null);
       setMessage("✅ Foto de perfil atualizada com sucesso!");
+      setMessageType("success");
     } catch (err) {
       console.error(err);
       setMessage(`❌ Erro ao enviar imagem: ${err.message}`);
+      setMessageType("error");
     } finally {
       setUploading(false);
+    }
+  };
+
+  // 🔴 Função para deletar item
+  const handleDeleteItem = async (itemId) => {
+    if (!window.confirm("Tem certeza que deseja remover este item?")) return;
+
+    try {
+      const session = (await supabase.auth.getSession())?.data?.session;
+      if (!session) {
+        setMessage("❌ Usuário não autenticado");
+        setMessageType("error");
+        return;
+      }
+
+      const token = session.access_token;
+
+      const res = await fetch(
+        `https://iflow-zdbx.onrender.com/items/${itemId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Erro ao remover item");
+      }
+
+      setItems((prev) => prev.filter((item) => item.id !== itemId));
+
+      setMessage("✅ Item removido com sucesso!");
+      setMessageType("success");
+    } catch (err) {
+      console.error(err);
+      setMessage("❌ Erro ao remover item: " + err.message);
+      setMessageType("error");
     }
   };
 
@@ -183,16 +254,20 @@ export default function UserPage() {
         </button>
       </div>
 
-      {/* Mensagem estilizada */}
+      {/* Mensagens */}
       {message && (
-        <div className="max-w-4xl mx-auto mb-4 p-4 rounded-md text-white font-medium text-center
-                        bg-green-600 dark:bg-green-600 transition">
+        <div
+          className={`max-w-4xl mx-auto mb-4 p-4 rounded-md text-white font-medium text-center ${
+            messageType === "success" ? "bg-green-600" : "bg-red-600"
+          } transition`}
+        >
           {message}
         </div>
       )}
 
+      {/* Card de Perfil */}
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row gap-8">
-        {/* Card de perfil */}
+        {/* Avatar */}
         <div className="flex flex-col items-center md:w-1/3 relative">
           <div className="relative w-32 h-32 group">
             {!user.avatar_url ? (
@@ -217,6 +292,7 @@ export default function UserPage() {
           </div>
         </div>
 
+        {/* Infos */}
         <div className="flex-1 space-y-4">
           <h1 className="text-2xl font-bold text-gray-800">Meu Perfil</h1>
 
@@ -280,7 +356,7 @@ export default function UserPage() {
         </div>
       </div>
 
-      {/* Modal de upload */}
+      {/* Modal de Upload */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 px-4">
           <div className="bg-white rounded-2xl p-8 w-full max-w-2xl relative shadow-xl">
@@ -358,7 +434,7 @@ export default function UserPage() {
         </div>
       )}
 
-      {/* Itens */}
+      {/* Meus Itens */}
       <div className="max-w-4xl mx-auto mt-12">
         <h2 className="text-xl font-bold text-gray-800 mb-4">📦 Meus Itens</h2>
         {items.length > 0 ? (
@@ -366,7 +442,7 @@ export default function UserPage() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="border rounded-xl shadow-sm bg-white hover:shadow-md transition p-4"
+                className="border rounded-xl shadow-sm bg-white hover:shadow-md transition p-4 flex flex-col"
               >
                 <img
                   src={item.imageUrl || livroImg}
@@ -384,6 +460,14 @@ export default function UserPage() {
                 >
                   {item.status}
                 </span>
+
+                {/* Botão Remover */}
+                <button
+                  onClick={() => handleDeleteItem(item.id)}
+                  className="mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition"
+                >
+                  <Trash2 className="w-4 h-4" /> Remover
+                </button>
               </div>
             ))}
           </div>

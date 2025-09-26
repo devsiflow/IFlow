@@ -6,7 +6,6 @@ import "aos/dist/aos.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Cadastro from "./pages/Sign-inPage.jsx";
 import Login from "./pages/LoginPage.jsx";
-import LandingPage from "./pages/LandingPages.jsx";
 import MarkePlace from "./pages/MarketPlace.jsx";
 import CadastraItem from "./pages/CadastrarItem.jsx";
 import ValidarItem from "./pages/ValidarItem.jsx";
@@ -16,13 +15,12 @@ import UserPage from "./pages/UserPage.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />,
+    element: <App />,
   },
   {
     path: "/home",
     element: <App />,
   },
-
   {
     path: "/cadastro",
     element: <Cadastro />,

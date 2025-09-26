@@ -126,10 +126,10 @@ function MarketPlace() {
                     <strong>Categoria:</strong> {item.category?.name}
                   </p>
                   <span
-                    className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${
+                    className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${
                       item.status === "Perdido"
                         ? "bg-red-500 text-white"
-                        : "bg-green-500 text-white"
+                        : "bg-red-500 text-white"
                     }`}
                   >
                     {item.status}

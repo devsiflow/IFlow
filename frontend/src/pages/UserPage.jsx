@@ -430,10 +430,10 @@ export default function UserPage() {
                 <h3 className="font-semibold text-gray-800">{item.title}</h3>
                 <p className="text-sm text-gray-600">{item.description}</p>
                 <span
-                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-full ${
+                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${
                     item.status === "Perdido"
                       ? "bg-red-500 text-white"
-                      : "bg-green-500 text-white"
+                      : "bg-red-500 text-white"
                   }`}
                 >
                   {item.status}

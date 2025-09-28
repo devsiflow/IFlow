@@ -1,7 +1,8 @@
+// pages/UserPage.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
-import livroImg from "../assets/livro.jpg"; // imagem padrão
+import livroImg from "../assets/livro.jpg";
 import Loading from "../components/loading";
 import { X, User, ArrowLeft, Trash2 } from "lucide-react";
 
@@ -25,8 +26,9 @@ export default function UserPage() {
   useEffect(() => {
     const fetchUserAndItems = async () => {
       try {
+        setLoading(true);
         const { data: supData, error: supError } = await supabase.auth.getUser();
-        if (supError || !supData.user) {
+        if (supError || !supData?.user) {
           navigate("/login");
           return;
         }
@@ -35,32 +37,46 @@ export default function UserPage() {
         const session = (await supabase.auth.getSession())?.data?.session;
         const token = session?.access_token;
 
-        // Busca perfil
-        const res = await fetch("https://iflow-zdbx.onrender.com/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const profileData = await res.json();
+        // Try to read cached profilePic in localStorage first
+        const cachedPic = localStorage.getItem("profilePic");
+
+        // Fetch profile from backend only if necessary (or to populate other fields)
+        let profileData = {};
+        if (token) {
+          try {
+            const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              profileData = await res.json();
+            }
+          } catch (err) {
+            console.error("Erro ao buscar perfil:", err);
+          }
+        }
 
         setUser({
           id: supData.user.id,
-          name: metadata.name || "Não informado",
+          name: profileData?.name || metadata.name || "Não informado",
           email: supData.user.email,
           matricula: metadata.matricula || "Não informado",
-          avatar_url: profileData?.profilePic || null,
+          avatar_url: profileData?.profilePic || cachedPic || null,
         });
 
         setForm({ name: metadata.name || "", email: supData.user.email });
 
         // Busca itens do usuário logado
-        const resItems = await fetch("https://iflow-zdbx.onrender.com/items/me/items", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        if (token) {
+          const resItems = await fetch("https://iflow-zdbx.onrender.com/items/me/items", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-        if (resItems.ok) {
-          const dataItems = await resItems.json();
-          setItems(dataItems);
-        } else {
-          console.error("Erro ao buscar itens:", await resItems.text());
+          if (resItems.ok) {
+            const dataItems = await resItems.json();
+            setItems(dataItems);
+          } else {
+            console.error("Erro ao buscar itens:", await resItems.text());
+          }
         }
       } catch (err) {
         console.error(err);
@@ -102,7 +118,8 @@ export default function UserPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    localStorage.removeItem("perfilId");
+    localStorage.removeItem("profilePic");
+    localStorage.removeItem("profileName");
     navigate("/login");
   };
 
@@ -122,17 +139,22 @@ export default function UserPage() {
     }
   };
 
+  // UPLOAD: redimensiona (gera thumbnail), sobe ao Supabase storage e atualiza backend + cache local
   const handleUpload = async () => {
-    if (!newImage) return;
+    if (!newImage || !user) return;
     setUploading(true);
     setMessage("");
     try {
-      const fileExt = newImage.name.split(".").pop();
+      // gera thumbnail 300x300
+      const thumbFile = await resizeImage(newImage, 300, 300, 0.8);
+
+      const fileExt = (thumbFile.name || newImage.name).split(".").pop();
       const fileName = `${user.id}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, newImage, { upsert: true });
+        .upload(fileName, thumbFile, { upsert: true });
+
       if (uploadError) throw uploadError;
 
       const { data: urlData, error: urlError } = supabase.storage
@@ -162,11 +184,13 @@ export default function UserPage() {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "Erro ao atualizar perfil");
       }
 
       setUser((prev) => ({ ...prev, avatar_url: publicUrl }));
+      localStorage.setItem("profilePic", publicUrl);
+      localStorage.setItem("profileName", form.name || user.name || "");
       setShowModal(false);
       setNewImage(null);
       setMessage("✅ Foto de perfil atualizada com sucesso!");
@@ -180,7 +204,7 @@ export default function UserPage() {
     }
   };
 
-  // Função para deletar item
+  // Deletar item (roda DELETE no backend e atualiza lista local)
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm("Tem certeza que deseja remover este item?")) return;
 
@@ -203,7 +227,7 @@ export default function UserPage() {
       );
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "Erro ao remover item");
       }
 
@@ -232,7 +256,6 @@ export default function UserPage() {
         </button>
       </div>
 
-      {/* Mensagens */}
       {message && (
         <div
           className={`max-w-4xl mx-auto mb-4 p-4 rounded-md text-white font-medium text-center ${
@@ -243,7 +266,6 @@ export default function UserPage() {
         </div>
       )}
 
-      {/* Card de Perfil */}
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row gap-8">
         {/* Avatar */}
         <div className="flex flex-col items-center md:w-1/3 relative">
@@ -260,12 +282,10 @@ export default function UserPage() {
               />
             )}
             <div
-              className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex justify-center items-center rounded-full cursor-pointer transition-opacity"
+              className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 flex justify-center items-center rounded-full cursor-pointer transition-opacity"
               onClick={() => setShowModal(true)}
             >
-              <span className="text-white font-semibold text-center">
-                + Alterar Foto
-              </span>
+              <span className="text-white font-semibold text-center">+ Alterar Foto</span>
             </div>
           </div>
         </div>
@@ -276,58 +296,21 @@ export default function UserPage() {
 
           {!editing ? (
             <>
-              <p>
-                <strong>Nome:</strong> {user.name || "Não informado"}
-              </p>
-              <p>
-                <strong>E-mail:</strong> {user.email}
-              </p>
-              <p>
-                <strong>Matrícula:</strong> {user.matricula || "Não informado"}
-              </p>
+              <p><strong>Nome:</strong> {user.name || "Não informado"}</p>
+              <p><strong>E-mail:</strong> {user.email}</p>
+              <p><strong>Matrícula:</strong> {user.matricula || "Não informado"}</p>
               <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => setEditing(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500"
-                >
-                  Editar Perfil
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500"
-                >
-                  Sair
-                </button>
+                <button onClick={() => setEditing(true)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-500">Editar Perfil</button>
+                <button onClick={handleLogout} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500">Sair</button>
               </div>
             </>
           ) : (
             <div className="space-y-3">
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="Nome"
-              />
-              <input
-                type="email"
-                value={form.email}
-                disabled
-                className="w-full px-4 py-2 border rounded-md bg-gray-100 cursor-not-allowed"
-              />
+              <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2 border rounded-md" placeholder="Nome" />
+              <input type="email" value={form.email} disabled className="w-full px-4 py-2 border rounded-md bg-gray-100 cursor-not-allowed" />
               <div className="flex gap-3">
-                <button
-                  onClick={handleUpdate}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-500"
-                >
-                  Salvar
-                </button>
-                <button
-                  onClick={() => setEditing(false)}
-                  className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500"
-                >
-                  Cancelar
-                </button>
+                <button onClick={handleUpdate} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-500">Salvar</button>
+                <button onClick={() => setEditing(false)} className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500">Cancelar</button>
               </div>
             </div>
           )}
@@ -338,74 +321,29 @@ export default function UserPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 px-4">
           <div className="bg-white rounded-2xl p-8 w-full max-w-2xl relative shadow-xl">
-            <button
-              onClick={() => {
-                setShowModal(false);
-                setNewImage(null);
-              }}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
-            >
-              <X size={24} />
-            </button>
+            <button onClick={() => { setShowModal(false); setNewImage(null); }} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"><X size={24} /></button>
 
-            <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
-              Alterar Foto de Perfil
-            </h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Alterar Foto de Perfil</h2>
 
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              className={`w-full border-2 border-dashed ${
-                isDragging ? "border-green-600 bg-green-50" : "border-gray-300"
-              } rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 cursor-pointer transition`}
+            <div onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={handleDrop}
+              className={`w-full border-2 border-dashed ${isDragging ? "border-green-600 bg-green-50" : "border-gray-300"} rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 cursor-pointer transition`}
               onClick={() => document.getElementById("fileInput").click()}
             >
               {previewUrl ? (
                 <div className="flex flex-col items-center">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="max-h-64 mx-auto rounded-lg object-contain mb-4 shadow-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setNewImage(null);
-                      setPreviewUrl(null);
-                    }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition"
-                  >
-                    Remover imagem
-                  </button>
+                  <img src={previewUrl} alt="Preview" className="max-h-64 mx-auto rounded-lg object-contain mb-4 shadow-md" />
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setNewImage(null); setPreviewUrl(null); }} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition">Remover imagem</button>
                 </div>
               ) : (
                 <div className="flex flex-col items-center space-y-2">
                   <User className="w-16 h-16 text-gray-400" />
-                  <p className="text-gray-600">
-                    Arraste uma imagem aqui ou{" "}
-                    <span className="underline text-green-600">clique</span>
-                  </p>
+                  <p className="text-gray-600">Arraste uma imagem aqui ou <span className="underline text-green-600">clique</span></p>
                 </div>
               )}
-              <input
-                id="fileInput"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
+              <input id="fileInput" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
             </div>
 
-            <button
-              onClick={handleUpload}
-              disabled={uploading || !newImage}
-              className="mt-6 w-full py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-500 disabled:opacity-50"
-            >
+            <button onClick={handleUpload} disabled={uploading || !newImage} className="mt-6 w-full py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-500 disabled:opacity-50">
               {uploading ? "Enviando..." : "Salvar Foto"}
             </button>
           </div>
@@ -418,32 +356,13 @@ export default function UserPage() {
         {items.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {items.map((item) => (
-              <div
-                key={item.id}
-                className="border rounded-xl shadow-sm bg-white hover:shadow-md transition p-4 flex flex-col"
-              >
-                <img
-                  src={item.imageUrl || livroImg}
-                  alt={item.title}
-                  className="w-full h-32 object-contain mb-3"
-                />
+              <div key={item.id} className="border rounded-xl shadow-sm bg-white hover:shadow-md transition p-4 flex flex-col">
+                <img src={item.imageUrl || livroImg} alt={item.title} className="w-full h-32 object-contain mb-3 cursor-pointer" onClick={() => navigate(`/item/${item.id}`)} />
                 <h3 className="font-semibold text-gray-800">{item.title}</h3>
                 <p className="text-sm text-gray-600">{item.description}</p>
-                <span
-                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${
-                    item.status === "Perdido"
-                      ? "bg-red-500 text-white"
-                      : "bg-red-500 text-white"
-                  }`}
-                >
-                  {item.status}
-                </span>
+                <span className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${item.status === "Perdido" ? "bg-red-500 text-white" : "bg-gray-200 text-gray-800"}`}>{item.status}</span>
 
-                {/* Botão Remover */}
-                <button
-                  onClick={() => handleDeleteItem(item.id)}
-                  className="mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition"
-                >
+                <button onClick={() => handleDeleteItem(item.id)} className="mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition">
                   <Trash2 className="w-4 h-4" /> Remover
                 </button>
               </div>

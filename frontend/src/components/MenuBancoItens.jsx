@@ -1,157 +1,238 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.jpg";
-import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { User, Menu as MenuIcon, X } from "lucide-react";
+import { User, X } from "lucide-react";
+import logo from "../assets/logo.jpg";
 
-function MenuBancoItens() {
+export default function MenuBancoItens() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [profileImageSmall, setProfileImageSmall] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
+      const cachedPic = localStorage.getItem("profilePic");
+      const cachedPicSmall = localStorage.getItem("profilePicSmall");
+      const cachedName = localStorage.getItem("profileName");
+
       const { data: supData } = await supabase.auth.getUser();
-      if (!supData.user) return;
-
-      setUser(supData.user);
-
-      // 🔑 busca foto real no backend
-      const session = (await supabase.auth.getSession())?.data?.session;
-      if (session) {
-        const res = await fetch("https://iflow-zdbx.onrender.com/me", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setProfileImage(data.profilePic || null);
-        }
+      if (!supData?.user) {
+        setUser(null);
+        setProfileImage(null);
+        setProfileImageSmall(null);
+        return;
       }
+
+      setUser({
+        id: supData.user.id,
+        name: cachedName || supData.user.user_metadata?.name || "Não informado",
+        email: supData.user.email,
+      });
+
+      if (cachedPic) setProfileImage(cachedPic);
+      if (cachedPicSmall) setProfileImageSmall(cachedPicSmall);
     };
 
     fetchUser();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-          setProfileImage(session.user?.profilePic || null);
-        } else {
-          setUser(null);
-          setProfileImage(null);
-        }
-      }
-    );
-
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      localStorage.removeItem("profilePic");
+      localStorage.removeItem("profilePicSmall");
+      localStorage.removeItem("profileName");
+      fetchUser();
+    });
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  function NavCadastroItem() {
-    navigate("/cadastroitem");
-    setMenuOpen(false);
-  }
-
-  function NavInicio() {
-    navigate("/home");
-    setMenuOpen(false);
-  }
-
-  function NavPerfil() {
-    navigate("/perfil");
-    setMenuOpen(false);
-  }
+  const AnimatedLink = ({ children, ...props }) => (
+    <button {...props} className="relative group text-left">
+      <span className="inline-block">{children}</span>
+      <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
+    </button>
+  );
 
   return (
-    <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between relative">
-      {/* Logo e Links lado a lado */}
-      <div className="flex items-center space-x-5">
-        <img src={logo} alt="Logo" className="w-36 cursor-pointer" onClick={NavInicio} />
-        <button onClick={NavInicio} className="hidden md:block text-white font-bold hover:text-gray-300">
-          Início
+    <nav className="fixed top-0 left-0 w-full bg-green-950 text-white shadow z-50">
+      <div className="flex items-center justify-between px-6 py-3">
+        {/* Logo */}
+        <img
+          src={logo}
+          alt="Logo"
+          className="w-32 cursor-pointer"
+          onClick={() => navigate("/")}
+        />
+
+        {/* Links Desktop */}
+        <ul className="hidden md:flex space-x-8 font-medium">
+          <li>
+            <AnimatedLink onClick={() => navigate("/")}>Início</AnimatedLink>
+          </li>
+          <li>
+            <AnimatedLink onClick={() => navigate("/cadastroitem")}>
+              Cadastrar Item
+            </AnimatedLink>
+          </li>
+        </ul>
+
+        {/* Perfil Desktop */}
+        <div className="hidden md:flex items-center space-x-4">
+          {user ? (
+            profileImageSmall ? (
+              <img
+                src={profileImageSmall}
+                alt="Foto do usuário"
+                className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => navigate("/perfil")}
+              />
+            ) : profileImage ? (
+              <img
+                src={profileImage}
+                alt="Foto do usuário"
+                className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => navigate("/perfil")}
+              />
+            ) : (
+              <div
+                className="w-9 h-9 rounded-full border border-white flex items-center justify-center cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => navigate("/perfil")}
+              >
+                <User className="w-5 h-5 text-gray-300" />
+              </div>
+            )
+          ) : (
+            <>
+              <button
+                onClick={() => navigate("/login")}
+                className="hover:underline"
+              >
+                Entrar
+              </button>
+              <button
+                onClick={() => navigate("/cadastro")}
+                className="hover:underline"
+              >
+                Cadastro
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* Botão Hambúrguer Mobile */}
+        <button
+          className="md:hidden relative w-10 h-10 flex flex-col justify-center items-center gap-1"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <span
+            className={`block w-8 h-0.5 bg-white rounded transform transition-all duration-300 ${
+              menuOpen ? "rotate-45 translate-y-2.5" : ""
+            }`}
+          />
+          <span
+            className={`block w-8 h-0.5 bg-white rounded transition-all duration-300 ${
+              menuOpen ? "opacity-0" : ""
+            }`}
+          />
+          <span
+            className={`block w-8 h-0.5 bg-white rounded transform transition-all duration-300 ${
+              menuOpen ? "-rotate-45 -translate-y-2.5" : ""
+            }`}
+          />
         </button>
       </div>
 
-      {/* Botões ou foto de perfil - desktop */}
-      <div className="hidden md:flex items-center space-x-4">
+      {/* Menu Mobile */}
+      <div
+        className={`fixed top-0 right-0 w-72 h-full bg-green-950 shadow-lg p-6 flex flex-col gap-8 transform transition-transform duration-300 z-50 ${
+          menuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
         <button
-          onClick={NavCadastroItem}
-          className="bg-green-500 transition-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
+          onClick={() => setMenuOpen(false)}
+          className="absolute top-4 right-4 text-white hover:text-gray-300 transition"
         >
-          Cadastrar Item
+          <X className="w-6 h-6" />
         </button>
 
-        {user ? (
-          profileImage ? (
-            <img
-              src={profileImage}
-              alt="Foto do usuário"
-              className="w-10 h-10 rounded-full border-2 border-white cursor-pointer hover:scale-110 transition-transform"
-              onClick={NavPerfil}
-            />
-          ) : (
-            <div
-              className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform bg-gray-100"
-              onClick={NavPerfil}
-            >
-              <User className="w-6 h-6 text-gray-500" />
-            </div>
-          )
-        ) : (
-          <button
-            onClick={NavPerfil}
-            className="bg-green-500 transition-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
+        {user && (
+          <div className="flex flex-col items-center gap-2 mt-8">
+            {profileImageSmall ? (
+              <img
+                src={profileImageSmall}
+                alt="perfil"
+                className="w-16 h-16 rounded-full border-2 border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/perfil");
+                }}
+              />
+            ) : profileImage ? (
+              <img
+                src={profileImage}
+                alt="perfil"
+                className="w-16 h-16 rounded-full border-2 border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/perfil");
+                }}
+              />
+            ) : (
+              <div
+                className="w-16 h-16 rounded-full border-2 border-white flex items-center justify-center cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/perfil");
+                }}
+              >
+                <User className="w-8 h-8 text-gray-300" />
+              </div>
+            )}
+            <p className="text-white font-semibold">{user.name}</p>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-4 text-white text-lg">
+          <AnimatedLink
+            onClick={() => {
+              navigate("/");
+              setMenuOpen(false);
+            }}
           >
-            Perfil
-          </button>
+            Início
+          </AnimatedLink>
+          <AnimatedLink
+            onClick={() => {
+              navigate("/cadastroitem");
+              setMenuOpen(false);
+            }}
+          >
+            Cadastrar Item
+          </AnimatedLink>
+        </div>
+
+        {!user && (
+          <div className="flex flex-col gap-2 mt-auto">
+            <button
+              onClick={() => {
+                navigate("/login");
+                setMenuOpen(false);
+              }}
+              className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition"
+            >
+              Entrar
+            </button>
+            <button
+              onClick={() => {
+                navigate("/cadastro");
+                setMenuOpen(false);
+              }}
+              className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition"
+            >
+              Cadastro
+            </button>
+          </div>
         )}
       </div>
-
-      {/* Botão de menu mobile */}
-      <button
-        className="md:hidden flex items-center"
-        onClick={() => setMenuOpen(!menuOpen)}
-      >
-        {menuOpen ? <X className="w-8 h-8" /> : <MenuIcon className="w-8 h-8" />}
-      </button>
-
-      {/* Menu Mobile (sidebar) */}
-      {menuOpen && (
-        <div className="absolute top-0 left-0 w-64 h-screen bg-green-950 shadow-lg p-6 flex flex-col space-y-6 md:hidden z-50">
-          <button onClick={NavInicio} className="hover:text-gray-300 text-left">Início</button>
-          <button onClick={NavCadastroItem} className="hover:text-gray-300 text-left">Cadastrar Item</button>
-
-          {/* Perfil ou botão */}
-          <div className="mt-6">
-            {user ? (
-              profileImage ? (
-                <img
-                  src={profileImage}
-                  alt="Foto do usuário"
-                  className="w-12 h-12 rounded-full border-2 border-white cursor-pointer"
-                  onClick={NavPerfil}
-                />
-              ) : (
-                <div
-                  className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center cursor-pointer bg-gray-100"
-                  onClick={NavPerfil}
-                >
-                  <User className="w-6 h-6 text-gray-500" />
-                </div>
-              )
-            ) : (
-              <button
-                onClick={NavPerfil}
-                className="bg-green-500 transition-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded w-fit"
-              >
-                Perfil
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
-
-export default MenuBancoItens;

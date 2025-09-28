@@ -2,180 +2,214 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import logo from "../assets/logo.jpg";
-import { User, Menu as MenuIcon, X } from "lucide-react";
+import { User, X } from "lucide-react";
 
-function Menu() {
+export default function Menu() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState(null); // big avatar
+  const [profileImageSmall, setProfileImageSmall] = useState(null); // menu avatar (small)
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: supData } = await supabase.auth.getUser();
-      if (!supData.user) {
-        setUser(null);
-        setProfileImage(null);
-        return;
+      try {
+        const cachedPic = localStorage.getItem("profilePic");
+        const cachedPicSmall = localStorage.getItem("profilePicSmall");
+        const cachedName = localStorage.getItem("profileName");
+
+        const { data: supData } = await supabase.auth.getUser();
+        if (!supData?.user) {
+          setUser(null);
+          setProfileImage(null);
+          setProfileImageSmall(null);
+          return;
+        }
+
+        setUser({
+          id: supData.user.id,
+          name: cachedName || supData.user.user_metadata?.name || "Não informado",
+          email: supData.user.email,
+        });
+
+        if (cachedPic) setProfileImage(cachedPic);
+        if (cachedPicSmall) setProfileImageSmall(cachedPicSmall);
+
+        const session = (await supabase.auth.getSession())?.data?.session;
+        const token = session?.access_token;
+        if (!token) return;
+
+        try {
+          const res = await fetch("https://iflow-zdbx.onrender.com/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const profile = await res.json();
+            if (profile?.profilePic && profile.profilePic !== cachedPic) {
+              setProfileImage(profile.profilePic);
+              localStorage.setItem("profilePic", profile.profilePic);
+            }
+            if (profile?.profilePicSmall && profile.profilePicSmall !== cachedPicSmall) {
+              setProfileImageSmall(profile.profilePicSmall);
+              localStorage.setItem("profilePicSmall", profile.profilePicSmall);
+            }
+            if (profile?.name && profile.name !== cachedName) {
+              setUser((u) => ({ ...u, name: profile.name }));
+              localStorage.setItem("profileName", profile.name);
+            }
+          }
+        } catch (err) {
+          console.debug("Menu: background profile sync failed", err);
+        }
+      } catch (err) {
+        console.error("Menu error:", err);
       }
-
-      // Pegar token
-      const session = (await supabase.auth.getSession())?.data?.session;
-      const token = session?.access_token;
-
-      if (!token) {
-        setUser(null);
-        setProfileImage(null);
-        return;
-      }
-
-      // Buscar perfil no backend (garante profilePic certo)
-      const res = await fetch("https://iflow-zdbx.onrender.com/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const profile = await res.json();
-
-      setUser({
-        id: supData.user.id,
-        name: profile?.name || supData.user.user_metadata?.name || "Não informado",
-        email: supData.user.email,
-      });
-      setProfileImage(profile?.profilePic || null);
     };
 
     fetchUser();
-
-    // Listener de login/logout
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      localStorage.removeItem("profilePic");
+      localStorage.removeItem("profilePicSmall");
+      localStorage.removeItem("profileName");
       fetchUser();
     });
-
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Navegação
-  function NavCadastro() {
-    navigate(`/cadastro`);
-    setMenuOpen(false);
-  }
-  function NavLogin() {
-    navigate(`/login`);
-    setMenuOpen(false);
-  }
-  function NavBancoItens() {
-    navigate("/bancoitens");
-    setMenuOpen(false);
-  }
-  function NavEncontreiItem() {
-    navigate("/cadastroitem");
-    setMenuOpen(false);
-  }
-  function handleProfileClick() {
-    navigate("/perfil");
-    setMenuOpen(false);
-  }
+  const AnimatedLink = ({ children, ...props }) => (
+    <a {...props} className="relative group">
+      <span className="inline-block">{children}</span>
+      <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
+    </a>
+  );
 
   return (
-    <nav className="bg-green-950 text-white px-6 py-3 flex items-center justify-between relative">
-      {/* Logo */}
-      <img
-        src={logo}
-        alt="Logo"
-        className="w-32 sm:w-36 cursor-pointer"
-        onClick={() => navigate("/")}
-      />
+    <nav className="fixed top-0 left-0 w-full bg-black/40 text-white shadow z-50">
+      <div className="flex items-center justify-between px-6 py-3">
+        <img
+          src={logo}
+          alt="Logo"
+          className="w-32 cursor-pointer"
+          onClick={() => navigate("/")}
+        />
 
-      {/* Links - desktop */}
-      <ul className="hidden md:flex font-medium space-x-6">
-        <li><a href="#sobreNos" className="hover:text-gray-300">Sobre nós</a></li>
-        <li><a href="#comoFunciona" className="hover:text-gray-300">Como Funciona</a></li>
-        <li><a href="#objetivo" className="hover:text-gray-300">Objetivo</a></li>
-        <li><a href="#contato" className="hover:text-gray-300">Contato</a></li>
-        <li><a className="hover:text-gray-300 pointer-events-none">|</a></li>
-        <li><button onClick={NavBancoItens} className="hover:text-gray-300">Perdi um item</button></li>
-        <li><button onClick={NavEncontreiItem} className="hover:text-gray-300">Encontrei um item</button></li>
-      </ul>
-
-      {/* Botões ou perfil - desktop */}
-      <div className="hidden md:flex items-center space-x-4">
-        {!user ? (
-          <>
-            <button onClick={NavLogin} className="hover:text-gray-300 font-semibold">Entrar</button>
-            <button
-              onClick={NavCadastro}
-              className="bg-green-500 transition-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded"
-            >
-              Cadastro
+        <ul className="hidden md:flex space-x-8 font-medium">
+          <li><AnimatedLink href="#sobreNos">Sobre nós</AnimatedLink></li>
+          <li><AnimatedLink href="#comoFunciona">Como funciona</AnimatedLink></li>
+          <li><AnimatedLink href="#objetivo">Objetivo</AnimatedLink></li>
+          <li><AnimatedLink href="#contato">Contato</AnimatedLink></li>
+          <li>
+            <button onClick={() => navigate("/bancoitens")} className="relative group">
+              <span className="inline-block">Perdi um item</span>
+              <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
             </button>
-          </>
-        ) : profileImage ? (
-          <img
-            src={profileImage}
-            alt="Foto do usuário"
-            className="w-10 h-10 rounded-full border-2 border-white cursor-pointer hover:scale-110 transition-transform"
-            onClick={handleProfileClick}
-          />
-        ) : (
-          <div
-            className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform bg-gray-100"
-            onClick={handleProfileClick}
-          >
-            <User className="w-6 h-6 text-gray-500" />
-          </div>
-        )}
+          </li>
+          <li>
+            <button onClick={() => navigate("/cadastroitem")} className="relative group">
+              <span className="inline-block">Encontrei um item</span>
+              <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
+            </button>
+          </li>
+        </ul>
+
+        {/* Avatar desktop */}
+        <div className="hidden md:flex items-center space-x-4">
+          {!user ? (
+            <>
+              <button onClick={() => navigate("/login")} className="hover:underline">Entrar</button>
+              <button onClick={() => navigate("/cadastro")} className="hover:underline">Cadastro</button>
+            </>
+          ) : profileImageSmall ? (
+            <img
+              src={profileImageSmall}
+              alt="Foto do usuário"
+              className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+              onClick={() => { navigate("/perfil"); }}
+            />
+          ) : profileImage ? (
+            <img
+              src={profileImage}
+              alt="Foto do usuário"
+              className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+              onClick={() => { navigate("/perfil"); }}
+            />
+          ) : (
+            <div
+              className="w-9 h-9 rounded-full border border-white flex items-center justify-center cursor-pointer transform transition-transform duration-300 hover:scale-110"
+              onClick={() => navigate("/perfil")}
+            >
+              <User className="w-5 h-5 text-gray-300" />
+            </div>
+          )}
+        </div>
+
+        {/* Botão hambúrguer */}
+        <button
+          className="md:hidden relative w-10 h-10 flex flex-col justify-center items-center gap-1"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <span className={`block w-8 h-0.5 bg-white rounded transform transition-all duration-300 ${menuOpen ? "rotate-45 translate-y-2.5" : ""}`} />
+          <span className={`block w-8 h-0.5 bg-white rounded transition-all duration-300 ${menuOpen ? "opacity-0" : ""}`} />
+          <span className={`block w-8 h-0.5 bg-white rounded transform transition-all duration-300 ${menuOpen ? "-rotate-45 -translate-y-2.5" : ""}`} />
+        </button>
       </div>
 
-      {/* Botão de menu mobile */}
-      <button
-        className="md:hidden flex items-center"
-        onClick={() => setMenuOpen(!menuOpen)}
-      >
-        {menuOpen ? <X className="w-8 h-8" /> : <MenuIcon className="w-8 h-8" />}
-      </button>
-
       {/* Menu Mobile */}
-      {menuOpen && (
-        <div className="absolute top-0 left-0 w-64 h-screen bg-green-950 shadow-lg p-6 flex flex-col space-y-6 md:hidden z-50">
-          <a href="#sobreNos" onClick={() => setMenuOpen(false)} className="hover:text-gray-300">Sobre nós</a>
-          <a href="#comoFunciona" onClick={() => setMenuOpen(false)} className="hover:text-gray-300">Como Funciona</a>
-          <a href="#objetivo" onClick={() => setMenuOpen(false)} className="hover:text-gray-300">Objetivo</a>
-          <a href="#contato" onClick={() => setMenuOpen(false)} className="hover:text-gray-300">Contato</a>
-          <hr className="border-gray-600" />
-          <button onClick={NavBancoItens} className="hover:text-gray-300 text-left">Perdi um item</button>
-          <button onClick={NavEncontreiItem} className="hover:text-gray-300 text-left">Encontrei um item</button>
+      <div className={`fixed top-0 right-0 w-72 h-full bg-green-950 shadow-lg p-6 flex flex-col gap-8 transform transition-transform duration-300 z-50 ${menuOpen ? "translate-x-0" : "translate-x-full"}`}>
+        <button
+          onClick={() => setMenuOpen(false)}
+          className="absolute top-4 right-4 text-white hover:text-gray-300 transition"
+        >
+          <X className="w-6 h-6" />
+        </button>
 
-          {/* Perfil ou botões */}
-          <div className="mt-6">
-            {!user ? (
-              <div className="flex flex-col space-y-3">
-                <button onClick={NavLogin} className="hover:text-gray-300 font-semibold text-left">Entrar</button>
-                <button
-                  onClick={NavCadastro}
-                  className="bg-green-500 transition-colors duration-500 hover:bg-green-400 text-white font-semibold px-4 py-1 rounded w-fit"
-                >
-                  Cadastro
-                </button>
-              </div>
+        {user && (
+          <div className="flex flex-col items-center gap-2 mt-8">
+            {profileImageSmall ? (
+              <img
+                src={profileImageSmall}
+                alt="perfil"
+                className="w-16 h-16 rounded-full border-2 border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => { setMenuOpen(false); navigate("/perfil"); }}
+              />
             ) : profileImage ? (
               <img
                 src={profileImage}
-                alt="Foto do usuário"
-                className="w-12 h-12 rounded-full border-2 border-white cursor-pointer"
-                onClick={handleProfileClick}
+                alt="perfil"
+                className="w-16 h-16 rounded-full border-2 border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => { setMenuOpen(false); navigate("/perfil"); }}
               />
             ) : (
               <div
-                className="w-12 h-12 rounded-full border-2 border-white flex items-center justify-center cursor-pointer bg-gray-100"
-                onClick={handleProfileClick}
+                className="w-16 h-16 rounded-full border-2 border-white flex items-center justify-center cursor-pointer transform transition-transform duration-300 hover:scale-110"
+                onClick={() => { setMenuOpen(false); navigate("/perfil"); }}
               >
-                <User className="w-6 h-6 text-gray-500" />
+                <User className="w-8 h-8 text-gray-300" />
               </div>
             )}
+            <p className="text-white font-semibold">{user.name}</p>
           </div>
+        )}
+
+        <div className="flex flex-col gap-4 text-white text-lg">
+          <AnimatedLink href="#sobreNos" onClick={() => setMenuOpen(false)}>Sobre nós</AnimatedLink>
+          <AnimatedLink href="#comoFunciona" onClick={() => setMenuOpen(false)}>Como funciona</AnimatedLink>
+          <AnimatedLink href="#objetivo" onClick={() => setMenuOpen(false)}>Objetivo</AnimatedLink>
+          <AnimatedLink href="#contato" onClick={() => setMenuOpen(false)}>Contato</AnimatedLink>
         </div>
-      )}
+
+        <div className="flex flex-col gap-3 mt-auto">
+          <button onClick={() => { navigate("/bancoitens"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition">Perdi um item</button>
+          <button onClick={() => { navigate("/cadastroitem"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition">Encontrei um item</button>
+        </div>
+
+        {!user && (
+          <div className="flex flex-col gap-2">
+            <button onClick={() => { navigate("/login"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition">Entrar</button>
+            <button onClick={() => { navigate("/cadastro"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition">Cadastro</button>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }
-
-export default Menu;

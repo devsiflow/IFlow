@@ -11,6 +11,7 @@ import CadastraItem from "./pages/CadastrarItem.jsx";
 import ValidarItem from "./pages/ValidarItem.jsx";
 import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
 import UserPage from "./pages/UserPage.jsx";
+import ItemPage from "./pages/ItemPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
   {
     path: "/perfil",
     element: <UserPage />,
+  },
+   {
+    path: "/paginaitem",
+    element: <ItemPage />,
   },
 ]);
 

@@ -12,11 +12,16 @@ import ValidarItem from "./pages/ValidarItem.jsx";
 import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
 import UserPage from "./pages/UserPage.jsx";
 import ItemPage from "./pages/ItemPage.jsx";
+import AdminPage from "./admin/AdminPage.jsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+  },
+  {
+    path: "/admin",
+    element: <AdminPage />,
   },
   {
     path: "/home",
@@ -51,7 +56,7 @@ const router = createBrowserRouter([
     path: "/perfil",
     element: <UserPage />,
   },
-   {
+  {
     path: "/paginaitem",
     element: <ItemPage />,
   },

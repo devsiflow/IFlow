@@ -1,14 +1,12 @@
 import { useState } from "react";
 import { useItens } from "../hooks/useItens";
 import MenuBancoItens from "../components/MenuBancoItens";
-import livroImg from "../assets/livro.jpg";
 import { Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import Loading from "../components/loading";
+import ItemCard from "../components/ItemCard";
 
 function BancoItens() {
   const { itens, loading, error } = useItens();
-  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
@@ -99,51 +97,7 @@ function BancoItens() {
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="border rounded-xl overflow-hidden shadow-sm bg-white hover:shadow-md transition"
-              >
-                <img
-                  src={item.imageUrl || livroImg}
-                  alt={item.title}
-                  className="w-full h-40 object-contain p-4"
-                />
-                <div className="p-4 bg-gray-50 space-y-1">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    {item.title}
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    <strong>Data:</strong>{" "}
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Local:</strong> {item.location}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Descrição:</strong> {item.description}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    <strong>Categoria:</strong> {item.category?.name}
-                  </p>
-                  <span
-                    className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${
-                      item.status === "Perdido"
-                        ? "bg-red-500 text-white"
-                        : "bg-red-500 text-white"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-
-                  {/* Botão com rota para validação */}
-                  <button
-                    className="mt-4 w-full transition-colors duration-500 bg-green-600 text-white py-2 rounded-md hover:bg-green-700"
-                    onClick={() => navigate("/validacao")}
-                  >
-                    É meu
-                  </button>
-                </div>
-              </div>
+              <ItemCard key={item.id} item={item} />
             ))}
           </div>
         ) : (

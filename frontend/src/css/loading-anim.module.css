@@ -1,0 +1,25 @@
+.loading path {
+  stroke: hsl(var(--brand-default));
+  stroke-width: 2;
+  stroke-linecap: round;
+  fill: none;
+
+  /* Neon glow */
+  filter: drop-shadow(0 0 4px hsl(var(--brand-default)))
+          drop-shadow(0 0 8px hsl(var(--brand-default)))
+          drop-shadow(0 0 12px hsl(var(--brand-default)));
+
+  /* Dash animation */
+  stroke-dasharray: 200; /* total length of path */
+  stroke-dashoffset: 200;
+  animation: dash 2s linear infinite;
+}
+
+@keyframes dash {
+  0% {
+    stroke-dashoffset: 200;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}

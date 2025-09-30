@@ -28,7 +28,8 @@ export default function Menu() {
 
         setUser({
           id: supData.user.id,
-          name: cachedName || supData.user.user_metadata?.name || "Não informado",
+          name:
+            cachedName || supData.user.user_metadata?.name || "Não informado",
           email: supData.user.email,
         });
 
@@ -49,7 +50,10 @@ export default function Menu() {
               setProfileImage(profile.profilePic);
               localStorage.setItem("profilePic", profile.profilePic);
             }
-            if (profile?.profilePicSmall && profile.profilePicSmall !== cachedPicSmall) {
+            if (
+              profile?.profilePicSmall &&
+              profile.profilePicSmall !== cachedPicSmall
+            ) {
               setProfileImageSmall(profile.profilePicSmall);
               localStorage.setItem("profilePicSmall", profile.profilePicSmall);
             }
@@ -76,15 +80,17 @@ export default function Menu() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  const AnimatedLink = ({ children, ...props }) => (
-    <a {...props} className="relative group">
-      <span className="inline-block">{children}</span>
-      <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
-    </a>
-  );
+const AnimatedLink = ({ children, ...props }) => (
+  <a {...props} className="relative group">
+    <span className="inline-block">{children}</span>
+    <span className="absolute bottom-[-2px] left-1/2 h-[2px] w-0 bg-white transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2"></span>
+  </a>
+);
+
 
   return (
-    <nav className="fixed top-0 left-0 w-full bg-black/40 text-white shadow z-50">
+   <nav className="fixed top-0 left-0 w-full bg-black/70 backdrop-blur-sm text-white z-50 shadow-[0_8px_30px_rgba(0,0,0,0.85)]">
+
       <div className="flex items-center justify-between px-6 py-3">
         <img
           src={logo}
@@ -93,21 +99,35 @@ export default function Menu() {
           onClick={() => navigate("/")}
         />
 
-        <ul className="hidden md:flex space-x-8 font-medium">
-          <li><AnimatedLink href="#sobreNos">Sobre nós</AnimatedLink></li>
-          <li><AnimatedLink href="#comoFunciona">Como funciona</AnimatedLink></li>
-          <li><AnimatedLink href="#objetivo">Objetivo</AnimatedLink></li>
-          <li><AnimatedLink href="#contato">Contato</AnimatedLink></li>
+        <ul className="hidden md:flex space-x-8 font-medium text-22">
           <li>
-            <button onClick={() => navigate("/bancoitens")} className="relative group">
+            <AnimatedLink href="#sobreNos">Sobre nós</AnimatedLink>
+          </li>
+          <li>
+            <AnimatedLink href="#comoFunciona">Como funciona</AnimatedLink>
+          </li>
+          <li>
+            <AnimatedLink href="#objetivo">Objetivo</AnimatedLink>
+          </li>
+          <li>
+            <AnimatedLink href="#contato">Contato</AnimatedLink>
+          </li>
+          <li>
+            <button
+              onClick={() => navigate("/bancoitens")}
+              className="relative group text-22"
+            >
               <span className="inline-block">Perdi um item</span>
-              <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-1/2 h-[2px] w-0 bg-white transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2"></span>
             </button>
           </li>
           <li>
-            <button onClick={() => navigate("/cadastroitem")} className="relative group">
+            <button
+              onClick={() => navigate("/cadastroitem")}
+              className="relative group text-22"
+            >
               <span className="inline-block">Encontrei um item</span>
-              <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-white transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-1/2 h-[2px] w-0 bg-white transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2"></span>
             </button>
           </li>
         </ul>
@@ -116,22 +136,36 @@ export default function Menu() {
         <div className="hidden md:flex items-center space-x-4">
           {!user ? (
             <>
-              <button onClick={() => navigate("/login")} className="hover:underline">Entrar</button>
-              <button onClick={() => navigate("/cadastro")} className="hover:underline">Cadastro</button>
+              <button
+                onClick={() => navigate("/login")}
+                className="hover:underline font-bold"
+              >
+                Entrar
+              </button>
+              <button
+                onClick={() => navigate("/cadastro")}
+                className="hover:underline"
+              >
+                Cadastro
+              </button>
             </>
           ) : profileImageSmall ? (
             <img
               src={profileImageSmall}
               alt="Foto do usuário"
               className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
-              onClick={() => { navigate("/perfil"); }}
+              onClick={() => {
+                navigate("/perfil");
+              }}
             />
           ) : profileImage ? (
             <img
               src={profileImage}
               alt="Foto do usuário"
               className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
-              onClick={() => { navigate("/perfil"); }}
+              onClick={() => {
+                navigate("/perfil");
+              }}
             />
           ) : (
             <div
@@ -148,14 +182,30 @@ export default function Menu() {
           className="md:hidden relative w-10 h-10 flex flex-col justify-center items-center gap-1"
           onClick={() => setMenuOpen(!menuOpen)}
         >
-          <span className={`block w-8 h-0.5 bg-white rounded transform transition-all duration-300 ${menuOpen ? "rotate-45 translate-y-2.5" : ""}`} />
-          <span className={`block w-8 h-0.5 bg-white rounded transition-all duration-300 ${menuOpen ? "opacity-0" : ""}`} />
-          <span className={`block w-8 h-0.5 bg-white rounded transform transition-all duration-300 ${menuOpen ? "-rotate-45 -translate-y-2.5" : ""}`} />
+          <span
+            className={`block w-8 h-0.5 bg-white rounded transform transition-all duration-300 ${
+              menuOpen ? "rotate-45 translate-y-2.5" : ""
+            }`}
+          />
+          <span
+            className={`block w-8 h-0.5 bg-white rounded transition-all duration-300 ${
+              menuOpen ? "opacity-0" : ""
+            }`}
+          />
+          <span
+            className={`block w-8 h-0.5 bg-white rounded transform transition-all duration-300 ${
+              menuOpen ? "-rotate-45 -translate-y-2.5" : ""
+            }`}
+          />
         </button>
       </div>
 
       {/* Menu Mobile */}
-      <div className={`fixed top-0 right-0 w-72 h-full bg-green-950 shadow-lg p-6 flex flex-col gap-8 transform transition-transform duration-300 z-50 ${menuOpen ? "translate-x-0" : "translate-x-full"}`}>
+      <div
+        className={`fixed top-0 right-0 w-72 h-full bg-green-950 shadow-lg p-6 flex flex-col gap-8 transform transition-transform duration-300 z-50 ${
+          menuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
         <button
           onClick={() => setMenuOpen(false)}
           className="absolute top-4 right-4 text-white hover:text-gray-300 transition"
@@ -170,19 +220,28 @@ export default function Menu() {
                 src={profileImageSmall}
                 alt="perfil"
                 className="w-16 h-16 rounded-full border-2 border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
-                onClick={() => { setMenuOpen(false); navigate("/perfil"); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/perfil");
+                }}
               />
             ) : profileImage ? (
               <img
                 src={profileImage}
                 alt="perfil"
                 className="w-16 h-16 rounded-full border-2 border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
-                onClick={() => { setMenuOpen(false); navigate("/perfil"); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/perfil");
+                }}
               />
             ) : (
               <div
                 className="w-16 h-16 rounded-full border-2 border-white flex items-center justify-center cursor-pointer transform transition-transform duration-300 hover:scale-110"
-                onClick={() => { setMenuOpen(false); navigate("/perfil"); }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate("/perfil");
+                }}
               >
                 <User className="w-8 h-8 text-gray-300" />
               </div>
@@ -191,22 +250,62 @@ export default function Menu() {
           </div>
         )}
 
-        <div className="flex flex-col gap-4 text-white text-lg">
-          <AnimatedLink href="#sobreNos" onClick={() => setMenuOpen(false)}>Sobre nós</AnimatedLink>
-          <AnimatedLink href="#comoFunciona" onClick={() => setMenuOpen(false)}>Como funciona</AnimatedLink>
-          <AnimatedLink href="#objetivo" onClick={() => setMenuOpen(false)}>Objetivo</AnimatedLink>
-          <AnimatedLink href="#contato" onClick={() => setMenuOpen(false)}>Contato</AnimatedLink>
+        <div className="flex flex-col gap-4 text-white text-22">
+          <AnimatedLink href="#sobreNos" onClick={() => setMenuOpen(false)}>
+            Sobre nós
+          </AnimatedLink>
+          <AnimatedLink href="#comoFunciona" onClick={() => setMenuOpen(false)}>
+            Como funciona
+          </AnimatedLink>
+          <AnimatedLink href="#objetivo" onClick={() => setMenuOpen(false)}>
+            Objetivo
+          </AnimatedLink>
+          <AnimatedLink href="#contato" onClick={() => setMenuOpen(false)}>
+            Contato
+          </AnimatedLink>
         </div>
 
         <div className="flex flex-col gap-3 mt-auto">
-          <button onClick={() => { navigate("/bancoitens"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition">Perdi um item</button>
-          <button onClick={() => { navigate("/cadastroitem"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition">Encontrei um item</button>
+          <button
+            onClick={() => {
+              navigate("/bancoitens");
+              setMenuOpen(false);
+            }}
+            className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition text-22"
+          >
+            Perdi um item
+          </button>
+          <button
+            onClick={() => {
+              navigate("/cadastroitem");
+              setMenuOpen(false);
+            }}
+            className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition text-22"
+          >
+            Encontrei um item
+          </button>
         </div>
 
         {!user && (
           <div className="flex flex-col gap-2">
-            <button onClick={() => { navigate("/login"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition">Entrar</button>
-            <button onClick={() => { navigate("/cadastro"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition">Cadastro</button>
+            <button
+              onClick={() => {
+                navigate("/login");
+                setMenuOpen(false);
+              }}
+              className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition text-22"
+            >
+              Entrar
+            </button>
+            <button
+              onClick={() => {
+                navigate("/cadastro");
+                setMenuOpen(false);
+              }}
+              className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition text-22"
+            >
+              Cadastro
+            </button>
           </div>
         )}
       </div>

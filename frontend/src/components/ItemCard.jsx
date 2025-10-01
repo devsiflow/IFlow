@@ -5,7 +5,10 @@ function ItemCard({ item }) {
   const navigate = useNavigate();
 
   return (
-    <div className="border rounded-xl overflow-hidden shadow-sm bg-white hover:shadow-md transition">
+    <div
+      className="border rounded-xl overflow-hidden shadow-sm bg-white hover:shadow-md transition cursor-pointer"
+      onClick={() => navigate("/itempage2", { state: { item } })}
+    >
       <img
         src={item.imageUrl || livroImg}
         alt={item.title}
@@ -38,7 +41,10 @@ function ItemCard({ item }) {
         {/* Botão com rota para validação */}
         <button
           className="mt-4 w-full transition-colors duration-500 bg-green-600 text-white py-2 rounded-md hover:bg-green-700"
-          onClick={() => navigate("/validacao")}
+          onClick={(e) => {
+            e.stopPropagation(); 
+            navigate("/validacao", { state: { item } });
+          }}
         >
           É meu
         </button>

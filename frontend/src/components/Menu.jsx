@@ -80,17 +80,15 @@ export default function Menu() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-const AnimatedLink = ({ children, ...props }) => (
-  <a {...props} className="relative group">
-    <span className="inline-block">{children}</span>
-    <span className="absolute bottom-[-2px] left-1/2 h-[2px] w-0 bg-white transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2"></span>
-  </a>
-);
-
+  const AnimatedLink = ({ children, ...props }) => (
+    <a {...props} className="relative group">
+      <span className="inline-block">{children}</span>
+      <span className="absolute bottom-[-2px] left-1/2 h-[2px] w-0 bg-white transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2"></span>
+    </a>
+  );
 
   return (
-   <nav className="fixed top-0 left-0 w-full bg-black/70 backdrop-blur-sm text-white z-50 shadow-[0_8px_30px_rgba(0,0,0,0.85)]">
-
+    <nav className="fixed top-0 left-0 w-full text-white z-50 bg-[linear-gradient(to_bottom,rgb(0,0,0),rgba(0,0,0,0))]">
       <div className="flex items-center justify-between px-6 py-3">
         <img
           src={logo}
@@ -99,7 +97,7 @@ const AnimatedLink = ({ children, ...props }) => (
           onClick={() => navigate("/")}
         />
 
-        <ul className="hidden md:flex space-x-8 font-medium text-22">
+        <ul className="flex max-[940px]:hidden space-x-8 font-medium text-xl">
           <li>
             <AnimatedLink href="#sobreNos">Sobre nós</AnimatedLink>
           </li>
@@ -146,7 +144,7 @@ const AnimatedLink = ({ children, ...props }) => (
                 onClick={() => navigate("/cadastro")}
                 className="hover:underline"
               >
-                Cadastro
+                Cadastrar
               </button>
             </>
           ) : profileImageSmall ? (
@@ -179,7 +177,7 @@ const AnimatedLink = ({ children, ...props }) => (
 
         {/* Botão hambúrguer */}
         <button
-          className="md:hidden relative w-10 h-10 flex flex-col justify-center items-center gap-1"
+          className="hiddenmax-[940px]:flex relative w-10 h-10 flex flex-col justify-center items-center gap-1"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           <span
@@ -287,7 +285,7 @@ const AnimatedLink = ({ children, ...props }) => (
         </div>
 
         {!user && (
-          <div className="flex flex-col gap-2">
+          <div className="flex max-[940px]:hidden flex-col gap-2">
             <button
               onClick={() => {
                 navigate("/login");

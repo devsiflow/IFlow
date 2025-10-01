@@ -88,7 +88,7 @@ export default function Menu() {
   );
 
   return (
-    <nav className="fixed top-0 left-0 w-full text-white z-50 bg-[linear-gradient(to_bottom,rgb(0,0,0),rgba(0,0,0,0))]">
+    <nav className=" font-semibold fixed h-52 top-0 left-0 w-full text-white z-50 bg-[linear-gradient(to_bottom,rgb(0,0,0),rgba(0,0,0,0))]">
 
       <div className="flex items-center justify-between px-6 py-3">
         <img
@@ -98,7 +98,7 @@ export default function Menu() {
           onClick={() => navigate("/")}
         />
 
-        <ul className="hidden md:flex space-x-8 font-medium text-xl">
+        <ul className="hidden md:flex space-x-8 text-xl">
           <li>
             <AnimatedLink href="#sobreNos">Sobre nós</AnimatedLink>
           </li>
@@ -131,21 +131,21 @@ export default function Menu() {
           </li>
         </ul>
 
-        {/* Avatar desktop */}
         <div className="hidden md:flex items-center space-x-4">
+        {/* Avatar desktop */}
           {!user ? (
             <>
               <button
                 onClick={() => navigate("/login")}
-                className="hover:underline font-bold"
+                className="hover:underline  text-lg"
               >
-                Entrar
+                <AnimatedLink>Entrar</AnimatedLink>
               </button>
               <button
                 onClick={() => navigate("/cadastro")}
-                className="hover:underline"
+                className="hover:underline  text-lg"
               >
-                Cadastrar
+                <AnimatedLink>Cadastrar</AnimatedLink>
               </button>
             </>
           ) : profileImageSmall ? (

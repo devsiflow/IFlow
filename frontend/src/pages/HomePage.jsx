@@ -1,5 +1,6 @@
 // import backgroundImage from "../assets/backgroundImage.jpg";
 import iflowlogo from "../assets/iflowlogopngwhite.png";
+import Menu from "../components/menu/Menu";
 
 function HomePage() {
   return (
@@ -12,6 +13,7 @@ function HomePage() {
     // </section>
 
         <section className="h-screen w-screen relative overflow-hidden" data-aos="fade-in">
+          <Menu />
       {/* Vídeo de fundo */}
       <video
         autoPlay

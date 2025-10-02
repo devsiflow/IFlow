@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import livroImg from "../assets/livro.jpg";
-import Loading from "../components/loading";
 import { X, User, ArrowLeft, Trash2 } from "lucide-react";
+import LogoLoader from "../components/LogoLoader";
 
 export default function UserPage() {
   const navigate = useNavigate();
@@ -241,7 +241,7 @@ export default function UserPage() {
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <LogoLoader />;
   if (error) return <p className="text-red-500 text-center mt-10">{error}</p>;
   if (!user) return null;
 

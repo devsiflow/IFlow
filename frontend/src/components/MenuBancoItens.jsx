@@ -75,48 +75,50 @@ export default function MenuBancoItens() {
           </li>
         </ul>
 
-        {/* Perfil Desktop */}
-        <div className="hidden md:flex items-center space-x-4">
-          {user ? (
-            profileImageSmall ? (
-              <img
-                src={profileImageSmall}
-                alt="Foto do usuário"
-                className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
-                onClick={() => navigate("/perfil")}
-              />
-            ) : profileImage ? (
-              <img
-                src={profileImage}
-                alt="Foto do usuário"
-                className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
-                onClick={() => navigate("/perfil")}
-              />
-            ) : (
-              <div
-                className="w-9 h-9 rounded-full border border-white flex items-center justify-center cursor-pointer transform transition-transform duration-300 hover:scale-110"
-                onClick={() => navigate("/perfil")}
-              >
-                <User className="w-5 h-5 text-gray-300" />
-              </div>
-            )
-          ) : (
-            <>
-              <button
-                onClick={() => navigate("/login")}
-                className="hover:underline"
-              >
-                Entrar
-              </button>
-              <button
-                onClick={() => navigate("/cadastro")}
-                className="hover:underline"
-              >
-                Cadastro
-              </button>
-            </>
-          )}
+      {/* Perfil Desktop */}
+<div className="hidden md:flex items-center space-x-4">
+  {user ? (
+    <div className="relative group">
+      {profileImageSmall ? (
+        <img
+          src={profileImageSmall}
+          alt="Foto do usuário"
+          className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+          onClick={() => navigate("/perfil")}
+        />
+      ) : profileImage ? (
+        <img
+          src={profileImage}
+          alt="Foto do usuário"
+          className="w-9 h-9 rounded-full border border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+          onClick={() => navigate("/perfil")}
+        />
+      ) : (
+        <div
+          className="w-9 h-9 rounded-full border border-white flex items-center justify-center cursor-pointer transform transition-transform duration-300 hover:scale-110"
+          onClick={() => navigate("/perfil")}
+        >
+          <User className="w-5 h-5 text-gray-300" />
         </div>
+      )}
+
+      {/* Tooltip desktop */}
+      <span className="absolute left-1/2 -translate-x-1/2 bottom-[-28px] bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
+        {user.name}
+      </span>
+    </div>
+  ) : (
+    <>
+      <button onClick={() => navigate("/login")} className="hover:underline">
+        Entrar
+      </button>
+      <button onClick={() => navigate("/cadastro")} className="hover:underline">
+        Cadastro
+      </button>
+    </>
+  )}
+</div>
+
 
         {/* Botão Hambúrguer Mobile */}
         <button

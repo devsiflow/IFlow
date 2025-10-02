@@ -1,21 +1,19 @@
+// frontend/src/pages/BancoItens.jsx
 import { useState } from "react";
 import { useItens } from "../hooks/useItens";
 import MenuBancoItens from "../components/MenuBancoItens";
 import { Search } from "lucide-react";
-import Loading from "../components/loading";
+import LogoLoader from "../components/LogoLoader";
 import ItemCard from "../components/ItemCard";
 
 function BancoItens() {
   const { itens, loading, error } = useItens();
-
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [localFilter, setLocalFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
-  if (loading) {
-    return Loading();
-  }
+  if (loading) return <LogoLoader />;
 
   if (error) {
     return <div className="p-6 text-center text-red-500">Erro: {error}</div>;
@@ -42,8 +40,11 @@ function BancoItens() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Menu fixo no topo */}
       <MenuBancoItens />
-      <div className="p-6 max-w-7xl mx-auto">
+
+      {/* Conteúdo com padding para não ficar atrás do menu */}
+      <div className="pt-28 p-6 max-w-7xl mx-auto">
         {/* Filtros */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Nome */}

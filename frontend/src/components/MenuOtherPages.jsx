@@ -84,29 +84,46 @@ export default function MenuOtherPages() {
           <li><AnimatedLink onClick={() => navigate("/bancoitens")}>Catálogo de itens</AnimatedLink></li>
         </ul>
 
-        {/* Perfil desktop */}
-        <div className="hidden md:flex items-center space-x-4">
-          {!user ? (
-            <>
-              <button onClick={() => navigate("/login")} className="hover:underline">Login</button>
-              <button onClick={() => navigate("/cadastro")} className="bg-green-500 px-4 py-1 rounded hover:bg-green-400 transition">Cadastro</button>
-            </>
-          ) : profileImage ? (
-            <img
-              src={profileImage}
-              alt="Foto do usuário"
-              className="w-10 h-10 rounded-full border-2 border-white cursor-pointer transform hover:scale-110 transition"
-              onClick={() => navigate("/perfil")}
-            />
-          ) : (
-            <div
-              className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center cursor-pointer hover:scale-110 transform transition"
-              onClick={() => navigate("/perfil")}
-            >
-              <User className="w-6 h-6 text-gray-300" />
-            </div>
-          )}
+       {/* Perfil desktop */}
+<div className="hidden md:flex items-center space-x-4">
+  {!user ? (
+    <>
+      <button onClick={() => navigate("/login")} className="hover:underline">
+        Login
+      </button>
+      <button
+        onClick={() => navigate("/cadastro")}
+        className="bg-green-500 px-4 py-1 rounded hover:bg-green-400 transition"
+      >
+        Cadastro
+      </button>
+    </>
+  ) : (
+    <div className="relative group">
+      {profileImage ? (
+        <img
+          src={profileImage}
+          alt="Foto do usuário"
+          className="w-10 h-10 rounded-full border-2 border-white cursor-pointer transform transition-transform duration-300 hover:scale-110"
+          onClick={() => navigate("/perfil")}
+        />
+      ) : (
+        <div
+          className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center cursor-pointer transform transition-transform duration-300 hover:scale-110"
+          onClick={() => navigate("/perfil")}
+        >
+          <User className="w-6 h-6 text-gray-300" />
         </div>
+      )}
+
+      {/* Tooltip desktop */}
+      <span className="absolute left-1/2 -translate-x-1/2 bottom-[-30px] bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
+        {user.name}
+      </span>
+    </div>
+  )}
+</div>
+
 
         {/* Botão hambúrguer mobile */}
         <button

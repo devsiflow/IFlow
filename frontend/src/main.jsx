@@ -58,13 +58,10 @@ const router = createBrowserRouter([
     element: <UserPage />,
   },
   {
-    path: "/paginaitem",
+    path: "/itempage",
     element: <ItemPage />,
   },
-  {
-    path: "/itempage2" ,
-    elemen: <ItemPage2 />,
-  }
+
 ]);
 
 createRoot(document.getElementById("root")).render(

@@ -13,7 +13,7 @@ import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
 import UserPage from "./pages/UserPage.jsx";
 import ItemPage from "./pages/ItemPage.jsx";
 import AdminPage from "./admin/AdminPage.jsx";
-import ItemPage2 from "./pages/ItemPage2.jsx";
+
 
 const router = createBrowserRouter([
   {

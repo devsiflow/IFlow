@@ -1,10 +1,7 @@
 import "./index.css";
-import Footer from "./components/Footer";
-import Menu from "./components/menu/Menu";
+
 import HomePage from "./pages/HomePage";
-import AboutSection from "./components/AboutSection";
-import HowItWorks from "./components/HowItWorks";
-import ObjectiveSection from "./components/ObjectiveSection";
+
 import { useEffect } from "react";
 import AOS from "aos";
 import ScrollToTopButton from "./components/ScrollTopButton";
@@ -20,10 +17,7 @@ function App() {
   return (
     <div>
       <HomePage />
-      <AboutSection />
-      <HowItWorks />
-      <ObjectiveSection />
-      <Footer />
+
       <ScrollToTopButton />
     </div>
   );

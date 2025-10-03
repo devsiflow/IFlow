@@ -1,47 +1,47 @@
-// import backgroundImage from "../assets/backgroundImage.jpg";
 import iflowlogo from "../assets/iflowlogopngwhite.png";
 import Menu from "../components/menu/Menu";
 
+// Importando as seções
+import AboutSection from "../components/AboutSection";
+import HowItWorks from "../components/HowItWorks";
+import ObjectiveSection from "../components/ObjectiveSection";
+import Footer from "../components/Footer";
+
 function HomePage() {
   return (
-    
-    // <section
-    //   className="h-screen bg-cover bg-center flex items-center justify-center"
-    //   style={{ backgroundImage: `url(${backgroundImage})` }}
-    //   data-aos="fade-in"
-    // >
-    // </section>
+    <div className="w-screen overflow-hidden">
+      {/* Seção inicial com vídeo de fundo e logo */}
+      <section className="h-screen w-screen relative overflow-hidden" data-aos="fade-in">
+        <Menu />
 
-        <section className="h-screen w-screen relative overflow-hidden" data-aos="fade-in">
-          <Menu />
-      {/* Vídeo de fundo */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute top-0 left-0 w-full h-full object-cover z-[-1]"
-      >
-        <source src={"https://www.pexels.com/download/video/3288315/"} type="video/mp4" />
-        Seu navegador não suporta vídeos HTML5.
-      </video>
+        {/* Vídeo de fundo */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute top-0 left-0 w-full h-full object-cover z-[-1]"
+        >
+          <source src={"https://www.pexels.com/download/video/3288315/"} type="video/mp4" />
+          Seu navegador não suporta vídeos HTML5.
+        </video>
 
-      {/* Conteúdo da página com a logo centralizada */}
-      <div className="flex items-center justify-center h-full">
-        <img
-          src={iflowlogo}
-          alt="Logo da Vorti Sea"
-          className="w-[27.2rem] md:w-[34rem] lg:w-[40.8rem] object-contain"
+        {/* Logo centralizada */}
+        <div className="flex items-center justify-center h-full">
+          <img
+            src={iflowlogo}
+            alt="Logo da Vorti Sea"
+            className="w-[27.2rem] md:w-[34rem] lg:w-[40.8rem] object-contain"
+          />
+        </div>
+      </section>
 
-
-        />
-      </div>
-
-      {/* Conteúdo da página */}
-      <div className="flex items-center justify-center h-full">
-        {/* Coloque aqui o conteúdo desejado */}
-      </div>
-    </section>
+      {/* Seções do site */}
+      <AboutSection />
+      <HowItWorks />
+      <ObjectiveSection />
+      <Footer />
+    </div>
   );
 }
 

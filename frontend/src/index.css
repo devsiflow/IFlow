@@ -18,3 +18,11 @@ html {
   background: linear-gradient(to bottom, rgb(0, 0, 0), rgba(0,0,0,0)); 
   color: yellow;
 }
+
+@keyframes shooting {
+  0% { transform: translateX(0) translateY(0) rotate(45deg); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(200px) translateY(200px) rotate(45deg); opacity: 0; }
+}
+
+

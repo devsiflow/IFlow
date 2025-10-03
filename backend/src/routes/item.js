@@ -91,27 +91,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const item = await prisma.item.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        category: true,
-        user: { select: { id: true, name: true, profilePic: true } },
-      },
-    });
-
-    if (!item) return res.status(404).json({ error: "Item não encontrado" });
-
-    res.json(item);
-  } catch (err) {
-    console.error("Erro ao buscar item:", err);
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
-});
-
 router.get("/me", authenticateToken, async (req, res) => {
   const items = await prisma.item.findMany({
     where: { profileId: req.user.id },

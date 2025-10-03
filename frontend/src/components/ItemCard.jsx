@@ -23,7 +23,7 @@ function ItemCard({ item }) {
       <div className="p-4 bg-gray-100 space-y-2 text-gray-900">
         <h2 className="text-lg font-bold truncate">{item.title}</h2>
         <p className="text-sm">
-          <strong>Data:</strong> {new Date(item.createdAt).toLocaleDateString()}
+          <strong>Data cadastro:</strong> {new Date(item.createdAt).toLocaleDateString()}
         </p>
         <p className="text-sm">
           <strong>Local:</strong> {item.location}

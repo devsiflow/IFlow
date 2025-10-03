@@ -9,6 +9,14 @@
   font-family: "Roboto", sans-serif;
 } */
 
+.fontgeist {
+  font-family: "Geist", sans-serif;
+
+  font-weight: 400  ;
+
+  color: rgb(102, 102, 102);
+};
+
 /* Remove scrol horizontal */
 html {
     overflow-x: hidden;

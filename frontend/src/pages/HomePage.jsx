@@ -2,10 +2,10 @@ import iflowlogo from "../assets/iflowlogopngwhite.png";
 import Menu from "../components/menu/Menu";
 
 // Importando as seções
-import AboutSection from "../components/AboutSection";
-import HowItWorks from "../components/HowItWorks";
-import ObjectiveSection from "../components/ObjectiveSection";
-import Footer from "../components/Footer";
+import AboutSection from "../components/sections/AboutSection";
+import HowItWorks from "../components/sections/HowItWorks";
+import ObjectiveSection from "../components/sections/ObjectiveSection";
+import Footer from "../components/sections/Footer";
 
 function HomePage() {
   return (

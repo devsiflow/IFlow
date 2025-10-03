@@ -3,6 +3,19 @@ import AnimatedLink from "./AnimatedLink";
 import UserAvatar from "./UserAvatar";
 
 export default function MenuMobile({ user, profileImage, profileImageSmall, navigate, menuOpen, setMenuOpen }) {
+
+const scrollToSection = (id) => {
+    setMenuOpen(false); 
+    const section = document.querySelector(id);
+    const menuHeight = 208;
+    if (section) {
+      const sectionTop = section.getBoundingClientRect().top + window.pageYOffset - menuHeight;
+      const maxScroll = document.body.scrollHeight - window.innerHeight;
+      const scrollPosition = Math.min(sectionTop, maxScroll);
+      window.scrollTo({ top: scrollPosition, behavior: "smooth" });
+    }
+  };
+
   return (
     <>
       {/* Botão Hamburguer */}
@@ -27,10 +40,10 @@ export default function MenuMobile({ user, profileImage, profileImageSmall, navi
         )}
 
         <div className="flex flex-col gap-4 text-white text-22">
-          <AnimatedLink href="#sobreNos" onClick={() => setMenuOpen(false)}>Sobre nós</AnimatedLink>
-          <AnimatedLink href="#comoFunciona" onClick={() => setMenuOpen(false)}>Como funciona</AnimatedLink>
-          <AnimatedLink href="#objetivo" onClick={() => setMenuOpen(false)}>Objetivo</AnimatedLink>
-          <AnimatedLink href="#contato" onClick={() => setMenuOpen(false)}>Contato</AnimatedLink>
+          <AnimatedLink href="#sobreNos" onClick={(e) => { e.preventDefault(); scrollToSection("#sobreNos"); }}>Sobre nós</AnimatedLink>
+          <AnimatedLink href="#comoFunciona" onClick={(e) => { e.preventDefault(); scrollToSection("#comoFunciona"); }}>Como funciona</AnimatedLink>
+          <AnimatedLink href="#objetivo" onClick={(e) => { e.preventDefault(); scrollToSection("#objetivo"); }}>Objetivo</AnimatedLink>
+          <AnimatedLink href="#contato" onClick={(e) => { e.preventDefault(); scrollToSection("#contato"); }}>Contato</AnimatedLink>
         </div>
 
         <div className="flex flex-col gap-3 mt-auto">

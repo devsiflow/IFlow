@@ -9,9 +9,10 @@ export default function ItemPage() {
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showClaimModal, setShowClaimModal] = useState(false);
-  const [claimForm, setClaimForm] = useState({ name: "", email: "", message: "" });
-  const [message, setMessage] = useState("");
+  const [message] = useState("");
+  // const [showClaimModal, setShowClaimModal] = useState(false);
+  // const [claimForm, setClaimForm] = useState({ name: "", email: "", message: "" });
+ 
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -30,26 +31,26 @@ export default function ItemPage() {
     fetchItem();
   }, [id]);
 
-  const submitClaim = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`https://iflow-zdbx.onrender.com/items/${id}/claims`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          claimantName: claimForm.name,
-          claimantEmail: claimForm.email,
-          message: claimForm.message,
-        }),
-      });
-      if (!res.ok) throw new Error("Erro ao enviar solicitação");
-      setMessage("Solicitação enviada com sucesso. Aguarde análise do funcionário.");
-      setShowClaimModal(false);
-    } catch (err) {
-      console.error(err);
-      setMessage("Erro ao enviar solicitação");
-    }
-  };
+  // const submitClaim = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     const res = await fetch(`https://iflow-zdbx.onrender.com/items/${id}/claims`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         claimantName: claimForm.name,
+  //         claimantEmail: claimForm.email,
+  //         message: claimForm.message,
+  //       }),
+  //     });
+  //     if (!res.ok) throw new Error("Erro ao enviar solicitação");
+  //     setMessage("Solicitação enviada com sucesso. Aguarde análise do funcionário.");
+  //     setShowClaimModal(false);
+  //   } catch (err) {
+  //     console.error(err);
+  //     setMessage("Erro ao enviar solicitação");
+  //   }
+  // };
 
   if (loading) return <LogoLoader />;
   if (!item) return <p className="p-6 text-center">Item não encontrado</p>;
@@ -76,7 +77,10 @@ export default function ItemPage() {
           </div>
 
           <div className="mt-6 flex gap-3">
-            <button onClick={() => setShowClaimModal(true)} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+            <button onClick={(e) => {
+            e.stopPropagation();
+            navigate("/validacao", { state: { item } });
+          }} className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
               É meu
             </button>
             <button onClick={() => alert("Relatar - implemente conforme necessidade")} className="px-4 py-2 border rounded hover:bg-gray-100 transition">
@@ -88,7 +92,7 @@ export default function ItemPage() {
         </div>
       </div>
 
-      {showClaimModal && (
+      {/* {showClaimModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold mb-3">Solicitação: Esse item é meu</h3>
@@ -121,7 +125,7 @@ export default function ItemPage() {
             </form>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

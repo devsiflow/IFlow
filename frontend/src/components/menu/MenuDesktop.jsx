@@ -7,20 +7,32 @@ export default function MenuDesktop({
   profileImageSmall,
   navigate,
 }) {
+
+   const scrollToSection = (e, id) => {
+    e.preventDefault();
+    const section = document.querySelector(id);
+    const menuHeight = 208;
+    if (section) {
+      const top = section.getBoundingClientRect().top + window.pageYOffset - menuHeight;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
+
+
   return (
     <>
       <ul className="hidden md:flex space-x-8 text-xl">
         <li>
-          <AnimatedLink href="#sobreNos">Sobre nós</AnimatedLink>
+          <AnimatedLink href="#sobreNos" onClick={(e) => scrollToSection(e, "#sobreNos")}>Sobre nós</AnimatedLink>
         </li>
         <li>
-          <AnimatedLink href="#comoFunciona">Como funciona</AnimatedLink>
+          <AnimatedLink href="#comoFunciona" onClick={(e) => scrollToSection(e, "#comoFunciona")}>Como funciona</AnimatedLink>
         </li>
         <li>
-          <AnimatedLink href="#objetivo">Objetivo</AnimatedLink>
+          <AnimatedLink href="#objetivo" onClick={(e) => scrollToSection(e, "#objetivo")}>Objetivo</AnimatedLink>
         </li>
         <li>
-          <AnimatedLink href="#contato">Contato</AnimatedLink>
+          <AnimatedLink href="#contato" onClick={(e) => scrollToSection(e, "#contato")}>Contato</AnimatedLink>
         </li>
         <li>
           <button

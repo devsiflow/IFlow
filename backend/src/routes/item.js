@@ -91,6 +91,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Achar item por id
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;

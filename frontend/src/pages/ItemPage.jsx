@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import livroImg from "../assets/livro.jpg";
-import Loading from "../components/loading";
+import LogoLoader from "../components/LogoLoader";
 
 export default function ItemPage() {
   const { id } = useParams();
@@ -51,7 +51,7 @@ export default function ItemPage() {
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <LogoLoader />;
   if (!item) return <p className="p-6 text-center">Item não encontrado</p>;
 
   return (

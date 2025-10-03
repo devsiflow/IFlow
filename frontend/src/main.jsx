@@ -58,7 +58,7 @@ const router = createBrowserRouter([
     element: <UserPage />,
   },
   {
-    path: "/itempage",
+    path: "/itempage/:id",
     element: <ItemPage />,
   },
 

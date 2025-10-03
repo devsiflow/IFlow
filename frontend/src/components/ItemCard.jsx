@@ -7,7 +7,7 @@ function ItemCard({ item }) {
   return (
     <div
       className="relative border border-gray-700 rounded-2xl overflow-hidden bg-gray-100 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
-      onClick={() => navigate(`/itemPage/${item.id}`)}
+      onClick={() => navigate(`/itempage/${item.id}`)}
     >
       {/* Imagem com brilho */}
       <div className="w-full h-40 overflow-hidden relative">

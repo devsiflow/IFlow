@@ -138,4 +138,34 @@ router.get("/me/items", authenticateToken, async (req, res) => {
   }
 });
 
+// Remover item
+router.delete("/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const item = await prisma.item.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!item) {
+      return res.status(404).json({ error: "Item não encontrado" });
+    }
+
+    // Garantir que o item pertence ao usuário autenticado
+    if (item.userId !== req.user.id) {
+      return res.status(403).json({ error: "Você não tem permissão para excluir este item" });
+    }
+
+    await prisma.item.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.json({ message: "Item removido com sucesso" });
+  } catch (err) {
+    console.error("Erro ao deletar item:", err);
+    res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
+
 export default router;

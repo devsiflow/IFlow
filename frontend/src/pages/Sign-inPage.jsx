@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Home } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import logo from "../assets/logo.jpg";
 import { supabase } from "../lib/supabaseClient";
 
@@ -84,7 +84,7 @@ export default function Cadastro() {
         onClick={() => navigate(-1)}
         className="fixed top-4 left-4 z-50 p-2 rounded hover:bg-gray-200 transition group"
       >
-        <Home className="w-6 h-6 text-gray-700" />
+        <ArrowLeft className="w-6 h-6 text-gray-700" />
       </button>
 
       {/* Logo fixa no topo */}

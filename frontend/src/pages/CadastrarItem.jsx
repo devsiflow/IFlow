@@ -86,7 +86,7 @@ function CadastrarItem() {
         throw new Error(errorData.error || "Erro ao cadastrar item");
       }
 
-      navigate("/bancoitens");
+      navigate("/catalogo");
     } catch (err) {
       console.error(err);
       alert("Erro ao cadastrar item: " + err.message);
@@ -94,32 +94,35 @@ function CadastrarItem() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 text-gray-900 font-sans">
+    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 font-sans">
       <MenuOtherPages />
 
       <div className="flex justify-center items-start px-4 pt-32 pb-16">
-        <div className="w-full max-w-2xl bg-white rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.08)] border border-gray-200 p-10 space-y-8 backdrop-blur-md">
-          <h2 className="text-4xl font-extrabold text-gray-900 tracking-wide gradient-text mb-6 text-center">
+        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.08)] dark:shadow-[0_0_40px_rgba(0,0,0,0.4)] border border-gray-200 dark:border-gray-700 p-10 space-y-8 backdrop-blur-md">
+          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 tracking-wide gradient-text mb-6 text-center">
             🚀 Cadastrar Item
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Nome */}
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700">Nome do Item</label>
+              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Nome do Item</label>
               <input
                 name="name"
                 value={form.name}
                 onChange={handleChange}
                 required
                 placeholder="Ex: Mochila, Celular..."
-                className="px-5 py-3 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 outline-none transition text-gray-900 bg-gray-50 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
+                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500
+                           outline-none transition text-gray-900 dark:text-gray-100 
+                           bg-gray-50 dark:bg-gray-700 shadow-inner"
               />
             </div>
 
             {/* Descrição */}
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700">Descrição</label>
+              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Descrição</label>
               <textarea
                 name="description"
                 value={form.description}
@@ -127,32 +130,41 @@ function CadastrarItem() {
                 required
                 placeholder="Ex: Preta, com adesivo da Marvel..."
                 rows={4}
-                className="px-5 py-3 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 outline-none transition text-gray-900 bg-gray-50 shadow-inner resize-none"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600
+                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500
+                           outline-none transition text-gray-900 dark:text-gray-100 
+                           bg-gray-50 dark:bg-gray-700 shadow-inner resize-none"
               />
             </div>
 
             {/* Local */}
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700">Local</label>
+              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Local</label>
               <input
                 name="local"
                 value={form.local}
                 onChange={handleChange}
                 required
                 placeholder="Ex: Sala 101, Corredor perto do banheiro..."
-                className="px-5 py-3 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 outline-none transition text-gray-900 bg-gray-50 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600
+                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500
+                           outline-none transition text-gray-900 dark:text-gray-100 
+                           bg-gray-50 dark:bg-gray-700 shadow-inner"
               />
             </div>
 
             {/* Categoria */}
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700">Categoria</label>
+              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Categoria</label>
               <select
                 name="category"
                 value={form.category}
                 onChange={handleChange}
                 required
-                className="px-5 py-3 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 outline-none transition text-gray-900 bg-gray-50 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600
+                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500
+                           outline-none transition text-gray-900 dark:text-gray-100 
+                           bg-gray-50 dark:bg-gray-700 shadow-inner"
               >
                 <option value="">Selecione</option>
                 <option value={1}>Eletrônico</option>
@@ -170,9 +182,11 @@ function CadastrarItem() {
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-gray-500 cursor-pointer transition ${
-                isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300 bg-gray-50"
-              } shadow-inner`}
+              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center 
+                          cursor-pointer transition shadow-inner
+                          ${isDragging ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30" 
+                                       : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"}
+                          text-gray-500 dark:text-gray-300`}
             >
               <label className="cursor-pointer w-full text-center">
                 {imagePreview ? (
@@ -184,7 +198,7 @@ function CadastrarItem() {
                 ) : (
                   <span>
                     Arraste uma imagem aqui ou{" "}
-                    <span className="underline text-indigo-600">clique para selecionar</span>
+                    <span className="underline text-indigo-600 dark:text-indigo-400">clique para selecionar</span>
                   </span>
                 )}
                 <input type="file" accept="image/*" onChange={handleImage} className="hidden" />
@@ -194,7 +208,12 @@ function CadastrarItem() {
             {/* Botão */}
             <button
               type="submit"
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 text-white font-bold rounded-2xl shadow-lg transition-transform transform hover:scale-105"
+              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-400 
+                         hover:from-indigo-700 hover:to-indigo-500 
+                         dark:from-indigo-800 dark:to-indigo-600 
+                         dark:hover:from-indigo-900 dark:hover:to-indigo-700 
+                         text-white font-bold rounded-2xl shadow-lg dark:shadow-md 
+                         transition-transform transform hover:scale-105"
             >
               ✅ Cadastrar Item
             </button>

@@ -84,7 +84,7 @@ export default function MenuOtherPages() {
           <AnimatedLink onClick={() => navigate("/home")}>Início</AnimatedLink>
         </li>
         <li>
-          <AnimatedLink onClick={() => navigate("/bancoitens")}>Catálogo de itens</AnimatedLink>
+          <AnimatedLink onClick={() => navigate("/catalogo")}>Catálogo de itens</AnimatedLink>
         </li>
       </ul>
 
@@ -162,7 +162,7 @@ export default function MenuOtherPages() {
 
         <div className="flex flex-col gap-4 mt-6">
           <AnimatedLink onClick={() => { navigate("/home"); setMenuOpen(false); }}>Início</AnimatedLink>
-          <AnimatedLink onClick={() => { navigate("/bancoitens"); setMenuOpen(false); }}>Catálogo</AnimatedLink>
+          <AnimatedLink onClick={() => { navigate("/catalago"); setMenuOpen(false); }}>Catálogo</AnimatedLink>
           <AnimatedLink onClick={() => { navigate("/cadastroitem"); setMenuOpen(false); }}>Cadastrar Item</AnimatedLink>
         </div>
 

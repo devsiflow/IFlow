@@ -16,28 +16,34 @@ function ValidarItem() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Aqui você pode processar a validação ou enviar para análise manual
     console.log("Respostas de validação:", form);
     navigate("/validacaoConfirmada");
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-neutral-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-950 transition-colors duration-300">
+      {/* Menu fixo */}
       <MenuOtherPages />
-      <div className="flex flex-col items-center justify-center flex-grow px-4 py-12">
-        <div className="bg-white rounded-xl shadow-sm w-full max-w-2xl p-10">
-          <h2 className="text-3xl font-semibold text-neutral-800 mb-6">
+
+      {/* Conteúdo central */}
+      <div className="flex flex-col items-center px-4 pt-36 pb-16 md:pt-40">
+        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.08)] dark:shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-gray-200 dark:border-gray-700 p-10 space-y-8 backdrop-blur-sm transition-colors duration-300">
+          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 tracking-wide mb-4 text-center">
             🔐 Validação do Item Perdido
           </h2>
-          <p className="text-neutral-600 mb-6">
+
+          <p className="text-gray-600 dark:text-gray-300 text-center mb-8">
             Para garantir que o item é realmente seu, responda ao questionário
             com o máximo de detalhes possível.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6 text-neutral-800">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-6 text-gray-900 dark:text-gray-100"
+          >
             {/* Cor do item */}
             <div>
-              <label className="block mb-1 text-sm font-medium">
+              <label className="block mb-2 font-semibold">
                 Qual a cor principal do item?
               </label>
               <input
@@ -47,13 +53,13 @@ function ValidarItem() {
                 onChange={handleChange}
                 placeholder="Ex: Preto com detalhes vermelhos"
                 required
-                className="w-full px-4 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 shadow-inner transition-all"
               />
             </div>
 
             {/* Local detalhado */}
             <div>
-              <label className="block mb-1 text-sm font-medium">
+              <label className="block mb-2 font-semibold">
                 Onde exatamente você perdeu o item?
               </label>
               <input
@@ -63,13 +69,13 @@ function ValidarItem() {
                 onChange={handleChange}
                 placeholder="Ex: Entre o bloco A e o estacionamento"
                 required
-                className="w-full px-4 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 shadow-inner transition-all"
               />
             </div>
 
             {/* Detalhes específicos */}
             <div>
-              <label className="block mb-1 text-sm font-medium">
+              <label className="block mb-2 font-semibold">
                 Há algo específico ou único no item?
               </label>
               <textarea
@@ -79,13 +85,13 @@ function ValidarItem() {
                 onChange={handleChange}
                 placeholder="Ex: Tinha um chaveiro do Pikachu, ou havia uma carta dentro..."
                 required
-                className="w-full px-4 py-2 border border-neutral-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 shadow-inner resize-none transition-all"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full mt-4 py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition-colors duration-300"
+              className="w-full py-4 bg-gradient-to-r from-green-700 to-green-800 hover:from-green-800 hover:to-green-900 text-white font-bold rounded-2xl shadow-[0_0_10px_rgba(21,128,61,0.7)] hover:shadow-[0_0_20px_rgba(21,128,61,0.9)] transition-all duration-300"
             >
               📩 Enviar Respostas para Validação
             </button>

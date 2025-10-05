@@ -9,9 +9,12 @@ import Footer from "../components/sections/Footer";
 
 function HomePage() {
   return (
-    <div className="w-screen overflow-hidden">
+    <div className="dark:bg-gray-900 w-screen overflow-hidden">
       {/* Seção inicial com vídeo de fundo e logo */}
-      <section className="h-screen w-screen relative overflow-hidden" data-aos="fade-in">
+      <section
+        className="h-screen w-screen relative overflow-hidden"
+        data-aos="fade-in"
+      >
         <Menu />
 
         {/* Vídeo de fundo */}
@@ -22,7 +25,10 @@ function HomePage() {
           playsInline
           className="absolute top-0 left-0 w-full h-full object-cover z-[-1]"
         >
-          <source src={"https://www.pexels.com/download/video/3288315/"} type="video/mp4" />
+          <source
+            src={"https://www.pexels.com/download/video/3288315/"}
+            type="video/mp4"
+          />
           Seu navegador não suporta vídeos HTML5.
         </video>
 

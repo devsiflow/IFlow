@@ -6,7 +6,9 @@ function ItemCard({ item }) {
 
   return (
     <div
-      className="relative border border-gray-700 rounded-2xl overflow-hidden bg-gray-100 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
+      className="relative border border-gray-300 dark:border-gray-700 rounded-2xl overflow-hidden 
+                 bg-gray-100 dark:bg-gray-800 cursor-pointer transform transition-all duration-300 
+                 hover:scale-105 hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
       onClick={() => navigate(`/itempage/${item.id}`)}
     >
       {/* Imagem com brilho */}
@@ -16,14 +18,14 @@ function ItemCard({ item }) {
           alt={item.title}
           className="w-full h-40 object-contain p-4 transition-transform duration-500 hover:scale-110 brightness-110"
         />
-        <div className="absolute inset-0 bg-green-400/10 mix-blend-screen pointer-events-none"></div>
       </div>
 
       {/* Conteúdo do card */}
-      <div className="p-4 bg-gray-100 space-y-2 text-gray-900">
+      <div className="p-4 space-y-2 text-gray-900 dark:text-gray-100">
         <h2 className="text-lg font-bold truncate">{item.title}</h2>
         <p className="text-sm">
-          <strong>Data cadastro:</strong> {new Date(item.createdAt).toLocaleDateString()}
+          <strong>Data cadastro:</strong>{" "}
+          {new Date(item.createdAt).toLocaleDateString()}
         </p>
         <p className="text-sm">
           <strong>Local:</strong> {item.location}
@@ -39,16 +41,24 @@ function ItemCard({ item }) {
         <span
           className={`inline-block mt-2 px-3 py-1 text-xs font-semibold rounded-full transition-all duration-300 ${
             item.status === "Perdido"
-              ? "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.7)] hover:shadow-[0_0_20px_rgba(239,68,68,0.9)]"
-              : "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)]"
+              ? "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.7)] hover:shadow-[0_0_20px_rgba(239,68,68,0.9)] dark:bg-red-700 dark:shadow-[0_0_10px_rgba(239,68,68,0.5)] dark:hover:shadow-[0_0_20px_rgba(239,68,68,0.8)]"
+              : "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)] dark:bg-green-600 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.8)]"
           }`}
         >
           {item.status}
         </span>
 
-        {/* Botão futurista */}
+        {/* Botão futurista escurecido */}
         <button
-          className="mt-4 w-full py-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)] transition-all duration-300"
+          className="mt-4 w-full py-2 rounded-xl 
+             bg-gradient-to-r from-green-600 to-green-700 
+             hover:from-green-700 hover:to-green-800 
+             text-white font-bold 
+             shadow-[0_0_10px_rgba(22,163,74,0.7)] 
+             hover:shadow-[0_0_20px_rgba(22,163,74,0.9)] 
+             dark:shadow-[0_0_10px_rgba(22,163,74,0.5)] 
+             dark:hover:shadow-[0_0_20px_rgba(22,163,74,0.8)] 
+             transition-all duration-300"
           onClick={(e) => {
             e.stopPropagation();
             navigate("/validacao", { state: { item } });

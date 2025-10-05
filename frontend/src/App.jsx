@@ -17,7 +17,6 @@ function App() {
   return (
     <div>
       <HomePage />
-
       <ScrollToTopButton />
     </div>
   );

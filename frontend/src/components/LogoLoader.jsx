@@ -1,6 +1,6 @@
 import React from "react";
 import IflowLogo from "../assets/iflowsvg.svg";
-import iflowBackground from "../assets/iflowBackground.jpg";
+import iflowBackground from "../assets/iflowBackgroundWhite.jpg";
 
 export default function LogoLoader() {
   return (

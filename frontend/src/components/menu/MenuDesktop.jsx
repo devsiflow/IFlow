@@ -36,7 +36,7 @@ export default function MenuDesktop({
         </li>
         <li>
           <button
-            onClick={() => navigate("/bancoitens")}
+            onClick={() => navigate("/catalogo")}
             className="relative group text-22"
           >
             <span className="inline-block">Perdi um item</span>

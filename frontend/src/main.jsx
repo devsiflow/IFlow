@@ -6,13 +6,14 @@ import "aos/dist/aos.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Cadastro from "./pages/Sign-inPage.jsx";
 import Login from "./pages/LoginPage.jsx";
-import BancoItens from "./pages/BancoItems.jsx";
+import Catalogo from "./pages/Catalogo.jsx";
 import CadastraItem from "./pages/CadastrarItem.jsx";
 import ValidarItem from "./pages/ValidarItem.jsx";
 import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
 import UserPage from "./pages/UserPage.jsx";
 import ItemPage from "./pages/ItemPage.jsx";
 import AdminPage from "./admin/AdminPage.jsx";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 
 const router = createBrowserRouter([
@@ -37,8 +38,8 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: "/bancoitens",
-    element: <BancoItens />,
+    path: "/catalogo",
+    element: <Catalogo />,
   },
   {
     path: "/cadastroitem",
@@ -61,11 +62,12 @@ const router = createBrowserRouter([
     path: "/itempage/:id",
     element: <ItemPage />,
   },
-
 ]);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>
   </StrictMode>
 );

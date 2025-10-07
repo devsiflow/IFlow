@@ -13,6 +13,7 @@ model Profile {
   matricula  String   @unique
   profilePic String?
   createdAt  DateTime @default(now())
+  isAdmin   Boolean  @default(false)
   items      Item[]
 }
 

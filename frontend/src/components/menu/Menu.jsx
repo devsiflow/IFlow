@@ -29,7 +29,8 @@ export default function Menu() {
 
         setUser({
           id: supData.user.id,
-          name: cachedName || supData.user.user_metadata?.name || "Não informado",
+          name:
+            cachedName || supData.user.user_metadata?.name || "Não informado",
           email: supData.user.email,
         });
 
@@ -49,7 +50,10 @@ export default function Menu() {
             setProfileImage(profile.profilePic);
             localStorage.setItem("profilePic", profile.profilePic);
           }
-          if (profile?.profilePicSmall && profile.profilePicSmall !== cachedPicSmall) {
+          if (
+            profile?.profilePicSmall &&
+            profile.profilePicSmall !== cachedPicSmall
+          ) {
             setProfileImageSmall(profile.profilePicSmall);
             localStorage.setItem("profilePicSmall", profile.profilePicSmall);
           }
@@ -76,9 +80,35 @@ export default function Menu() {
   return (
     <nav className="font-semibold fixed h-52 top-0 left-0 w-full text-white z-50 bg-[linear-gradient(to_bottom,rgb(0,0,0),rgba(0,0,0,0))]">
       <div className="flex items-center justify-between px-6 py-3">
-        <img src={logo} alt="Logo" className="w-32 cursor-pointer" onClick={() => navigate("/")} />
-        <MenuDesktop user={user} profileImage={profileImage} profileImageSmall={profileImageSmall} navigate={navigate} />
-        <MenuMobile user={user} profileImage={profileImage} profileImageSmall={profileImageSmall} navigate={navigate} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+        {user?.profile?.isAdmin && (
+          <Link
+            to="/admin"
+            className="flex items-center gap-2 text-sm hover:text-indigo-600"
+          >
+            🛠 Administração
+          </Link>
+        )}
+
+        <img
+          src={logo}
+          alt="Logo"
+          className="w-32 cursor-pointer"
+          onClick={() => navigate("/")}
+        />
+        <MenuDesktop
+          user={user}
+          profileImage={profileImage}
+          profileImageSmall={profileImageSmall}
+          navigate={navigate}
+        />
+        <MenuMobile
+          user={user}
+          profileImage={profileImage}
+          profileImageSmall={profileImageSmall}
+          navigate={navigate}
+          menuOpen={menuOpen}
+          setMenuOpen={setMenuOpen}
+        />
       </div>
     </nav>
   );

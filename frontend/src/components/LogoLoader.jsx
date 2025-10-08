@@ -1,65 +1,85 @@
 import React from "react";
-import IflowLogo from "../assets/iflowsvg.svg";
+import IflowLogo from "../assets/iflowtextsvg.svg";
 import iflowBackground from "../assets/iflowBackgroundWhite.jpg";
 
 export default function LogoLoader() {
   return (
     <div
-      className="flex items-center justify-center h-screen relative overflow-hidden"
+      className="flex items-center justify-center h-screen relative overflow-hidden bg-black"
       style={{
         backgroundImage: `url(${iflowBackground})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundBlendMode: "multiply",
       }}
     >
-      {/* Overlay radial preto atrás da logo */}
-      <div
-        className="absolute z-0"
-        style={{
-          width: "400px",
-          height: "400px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 70%)",
-        }}
-      />
+      {/* Glow suave ao fundo */}
+      <div className="absolute w-[600px] h-[600px] bg-emerald-500/20 rounded-full blur-[140px] animate-glow-pulse" />
 
-      {/* Efeito de glow no fundo */}
-      <div className="absolute w-[500px] h-[500px] bg-green-500/30 rounded-full blur-3xl animate-pulse" />
+      {/* Reflexos leves orbitando */}
+      <div className="absolute w-[300px] h-[300px] border border-emerald-400/10 rounded-full animate-orbit-glow" />
+      <div className="absolute w-[500px] h-[500px] border border-emerald-400/5 rounded-full animate-orbit-glow-slow" />
 
-      {/* Meteors */}
-      <div className="meteor meteor-1" />
-      <div className="meteor meteor-2" />
-      <div className="meteor meteor-3" />
-      <div className="meteor meteor-4" />
+      {/* Faixa de brilho cortando */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent animate-scanline"></div>
+      </div>
 
       {/* Logo */}
       <img
         src={IflowLogo}
         alt="IFlow Logo"
-        className="relative z-10 w-40 h-40 md:w-56 md:h-56 animate-logo-futuristic"
+        className="relative z-10 w-36 h-36 md:w-52 md:h-52 animate-logo-glow"
       />
 
-      <style>
-        {`
-          /* Logo futurista */
-          @keyframes logo-futuristic {
-            0% { transform: perspective(800px) rotateY(0deg) scale(1); filter: drop-shadow(0 0 8px #22c55e) drop-shadow(0 0 20px #22c55e);}
-            25% { transform: perspective(800px) rotateY(10deg) scale(1.05); filter: drop-shadow(0 0 12px #4ade80) drop-shadow(0 0 30px #22c55e);}
-            50% { transform: perspective(800px) rotateY(0deg) scale(1.1); filter: drop-shadow(0 0 16px #22c55e) drop-shadow(0 0 40px #86efac);}
-            75% { transform: perspective(800px) rotateY(-10deg) scale(1.05); filter: drop-shadow(0 0 12px #4ade80) drop-shadow(0 0 30px #22c55e);}
-            100% { transform: perspective(800px) rotateY(0deg) scale(1); filter: drop-shadow(0 0 8px #22c55e) drop-shadow(0 0 20px #22c55e);}
+      <style>{`
+        /* Logo brilho dinâmico */
+        @keyframes logo-glow {
+          0%, 100% {
+            transform: scale(1);
+            filter: drop-shadow(0 0 10px #22c55e) drop-shadow(0 0 25px #22c55e);
           }
-          .animate-logo-futuristic { animation: logo-futuristic 3s ease-in-out infinite; }
+          50% {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 18px #4ade80) drop-shadow(0 0 40px #86efac);
+          }
+        }
+        .animate-logo-glow {
+          animation: logo-glow 3.2s ease-in-out infinite;
+        }
 
-          /* Meteors */
-          .meteor { position: absolute; width: 120px; height: 2px; background: linear-gradient(90deg, #22c55e, transparent); border-radius: 9999px; opacity: 0.8; filter: drop-shadow(0 0 6px #22c55e);}
-          @keyframes meteor-move { 0% { transform: translateX(-150%) translateY(-150%) rotate(45deg); opacity:1;} 100% { transform: translateX(150vw) translateY(150vh) rotate(45deg); opacity:0;} }
-          .meteor-1 { top:10%; left:-20%; animation: meteor-move 1.5s linear infinite; animation-delay:0s;}
-          .meteor-2 { top:40%; left:-30%; animation: meteor-move 1.8s linear infinite; animation-delay:0.5s;}
-          .meteor-3 { top:70%; left:-25%; animation: meteor-move 2s linear infinite; animation-delay:1s;}
-          .meteor-4 { top:20%; left:-15%; animation: meteor-move 1.6s linear infinite; animation-delay:1.5s;}
-        `}
-      </style>
+        /* Glow pulsante do fundo */
+        @keyframes glow-pulse {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.8; transform: scale(1.1); }
+        }
+        .animate-glow-pulse {
+          animation: glow-pulse 6s ease-in-out infinite;
+        }
+
+        /* Linhas orbitais */
+        @keyframes orbit-glow {
+          0% { transform: rotate(0deg) scale(1); opacity: 0.3; }
+          50% { transform: rotate(180deg) scale(1.05); opacity: 0.6; }
+          100% { transform: rotate(360deg) scale(1); opacity: 0.3; }
+        }
+        .animate-orbit-glow {
+          animation: orbit-glow 8s linear infinite;
+        }
+        .animate-orbit-glow-slow {
+          animation: orbit-glow 16s linear infinite;
+        }
+
+        /* Linha de scan luminosa */
+        @keyframes scanline {
+          0% { transform: translateY(-100%) scaleY(0.5); opacity: 0; }
+          50% { transform: translateY(0%) scaleY(1); opacity: 0.8; }
+          100% { transform: translateY(100%) scaleY(0.5); opacity: 0; }
+        }
+        .animate-scanline {
+          animation: scanline 4s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }

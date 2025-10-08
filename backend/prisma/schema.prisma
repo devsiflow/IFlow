@@ -31,7 +31,7 @@ model Item {
   location    String
   createdAt   DateTime @default(now())
   imageUrl    String?
-   thumbnailUrl String?     
+  thumbnailUrl String?     
   userId      String
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])

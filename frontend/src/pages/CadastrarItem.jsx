@@ -4,6 +4,43 @@ import MenuOtherPages from "../components/MenuOtherPages";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../hooks/useAuth";
 
+// Função auxiliar para gerar miniatura antes de subir
+async function generateThumbnail(file, maxSize = 400) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+
+      if (width > height) {
+        if (width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          resolve(new File([blob], file.name, { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        0.8
+      );
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 function CadastrarItem() {
   const navigate = useNavigate();
   const { user, token, loading } = useAuth();
@@ -17,6 +54,7 @@ function CadastrarItem() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -48,20 +86,29 @@ function CadastrarItem() {
     }
     if (loading) return alert("Carregando sessão...");
     if (!token) return alert("Usuário não está logado!");
+    setIsSubmitting(true);
 
     try {
       let imageUrl = null;
+
       if (imageFile) {
-        const fileExt = imageFile.name.split(".").pop();
+        // Cria miniatura comprimida
+        const thumb = await generateThumbnail(imageFile);
+
+        const fileExt = thumb.name.split(".").pop();
         const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `public/${fileName}`;
+
         const { error: uploadError } = await supabase.storage
           .from("iflow-item")
-          .upload(`public/${fileName}`, imageFile);
+          .upload(filePath, thumb);
+
         if (uploadError) throw uploadError;
 
         const { data } = supabase.storage
           .from("iflow-item")
-          .getPublicUrl(`public/${fileName}`);
+          .getPublicUrl(filePath);
+
         imageUrl = data.publicUrl;
       }
 
@@ -90,6 +137,8 @@ function CadastrarItem() {
     } catch (err) {
       console.error(err);
       alert("Erro ao cadastrar item: " + err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -106,7 +155,9 @@ function CadastrarItem() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Nome */}
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Nome do Item</label>
+              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Nome do Item
+              </label>
               <input
                 name="name"
                 value={form.name}
@@ -122,7 +173,9 @@ function CadastrarItem() {
 
             {/* Descrição */}
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Descrição</label>
+              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Descrição
+              </label>
               <textarea
                 name="description"
                 value={form.description}
@@ -139,7 +192,9 @@ function CadastrarItem() {
 
             {/* Local */}
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Local</label>
+              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Local
+              </label>
               <input
                 name="local"
                 value={form.local}
@@ -155,7 +210,9 @@ function CadastrarItem() {
 
             {/* Categoria */}
             <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">Categoria</label>
+              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+                Categoria
+              </label>
               <select
                 name="category"
                 value={form.category}
@@ -167,10 +224,10 @@ function CadastrarItem() {
                            bg-gray-50 dark:bg-gray-700 shadow-inner"
               >
                 <option value="">Selecione</option>
-                <option value={1}>Eletrônico</option>
-                <option value={2}>Roupa</option>
-                <option value={3}>Acessório</option>
-                <option value={4}>Outros</option>
+                <option value="Eletrônico">Eletrônico</option>
+                <option value="Roupa">Roupa</option>
+                <option value="Acessório">Acessório</option>
+                <option value="Outros">Outros</option>
               </select>
             </div>
 
@@ -184,8 +241,11 @@ function CadastrarItem() {
               onDrop={handleDrop}
               className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center 
                           cursor-pointer transition shadow-inner
-                          ${isDragging ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30" 
-                                       : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"}
+                          ${
+                            isDragging
+                              ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
+                              : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
+                          }
                           text-gray-500 dark:text-gray-300`}
             >
               <label className="cursor-pointer w-full text-center">
@@ -198,24 +258,34 @@ function CadastrarItem() {
                 ) : (
                   <span>
                     Arraste uma imagem aqui ou{" "}
-                    <span className="underline text-indigo-600 dark:text-indigo-400">clique para selecionar</span>
+                    <span className="underline text-indigo-600 dark:text-indigo-400">
+                      clique para selecionar
+                    </span>
                   </span>
                 )}
-                <input type="file" accept="image/*" onChange={handleImage} className="hidden" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImage}
+                  className="hidden"
+                />
               </label>
             </div>
 
             {/* Botão */}
             <button
               type="submit"
-              className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-400 
+              disabled={isSubmitting}
+              className={`w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-400 
                          hover:from-indigo-700 hover:to-indigo-500 
                          dark:from-indigo-800 dark:to-indigo-600 
                          dark:hover:from-indigo-900 dark:hover:to-indigo-700 
                          text-white font-bold rounded-2xl shadow-lg dark:shadow-md 
-                         transition-transform transform hover:scale-105"
+                         transition-transform transform ${
+                           isSubmitting ? "opacity-70" : "hover:scale-105"
+                         }`}
             >
-              ✅ Cadastrar Item
+              {isSubmitting ? "⏳ Enviando..." : "✅ Cadastrar Item"}
             </button>
           </form>
         </div>

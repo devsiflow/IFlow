@@ -13,6 +13,7 @@ const app = express();
 app.use(cors({ origin: "*", methods: ["GET","POST","PUT","DELETE"], credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Rotas
 app.use("/auth", authRoutes);   // login, register etc.

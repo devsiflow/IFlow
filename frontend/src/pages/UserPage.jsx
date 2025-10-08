@@ -1,14 +1,51 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
-import livroImg from "../assets/livro.jpg";
 import { X, User, ArrowLeft, Trash2, Moon, Sun } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
-import { useTheme } from "../context/ThemeContext"; // 👈 import do contexto global
+import { useTheme } from "../context/ThemeContext";
+import livroImg from "../assets/livro.jpg";
+
+// Função para gerar miniatura antes de enviar
+async function generateThumbnail(file, maxSize = 400) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+
+      if (width > height) {
+        if (width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          resolve(new File([blob], file.name, { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        0.8
+      );
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 export default function UserPage() {
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme(); // 👈 usa o tema global
+  const { theme, toggleTheme } = useTheme();
 
   const [user, setUser] = useState(null);
   const [items, setItems] = useState([]);
@@ -37,13 +74,10 @@ export default function UserPage() {
           return;
         }
 
-        const metadata = supData.user.user_metadata || {};
         const session = (await supabase.auth.getSession())?.data?.session;
         const token = session?.access_token;
 
-        const cachedPic = localStorage.getItem("profilePic");
         let profileData = {};
-
         if (token) {
           try {
             const res = await fetch("https://iflow-zdbx.onrender.com/me", {
@@ -57,12 +91,14 @@ export default function UserPage() {
 
         if (!mounted) return;
 
+        const metadata = supData.user.user_metadata || {};
+
         setUser({
           id: supData.user.id,
           name: profileData?.name || metadata.name || "Não informado",
           email: supData.user.email,
           matricula: metadata.matricula || "Não informado",
-          avatar_url: profileData?.profilePic || cachedPic || null,
+          avatar_url: profileData?.profilePic || null,
         });
 
         setForm({ name: metadata.name || "", email: supData.user.email });
@@ -71,9 +107,7 @@ export default function UserPage() {
           try {
             const resItems = await fetch(
               "https://iflow-zdbx.onrender.com/items/me/items",
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
+              { headers: { Authorization: `Bearer ${token}` } }
             );
             if (resItems.ok) {
               const data = await resItems.json();
@@ -133,36 +167,24 @@ export default function UserPage() {
     } catch (err) {
       console.error("Erro ao deslogar:", err);
     } finally {
-      localStorage.removeItem("profilePic");
-      localStorage.removeItem("profileName");
       navigate("/login");
     }
   };
 
-  // Upload imagem
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) setNewImage(file);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer?.files?.[0];
-    if (file && file.type.startsWith("image/")) setNewImage(file);
-  };
-
+  // Upload imagem com miniatura
   const handleUpload = async () => {
     if (!newImage || !user) return;
     setUploading(true);
     setMessage("");
     try {
-      const fileExt = newImage.name.split(".").pop();
+      // Gera miniatura
+      const thumb = await generateThumbnail(newImage);
+      const fileExt = thumb.name.split(".").pop();
       const fileName = `${user.id}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, newImage, { upsert: true });
+        .upload(fileName, thumb, { upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: urlData, error: urlError } = supabase.storage
@@ -186,7 +208,6 @@ export default function UserPage() {
       if (!res.ok) throw new Error("Erro ao atualizar perfil");
 
       setUser((prev) => ({ ...prev, avatar_url: publicUrl }));
-      localStorage.setItem("profilePic", publicUrl);
       setShowModal(false);
       setNewImage(null);
       setMessage("✅ Foto de perfil atualizada!");
@@ -200,6 +221,14 @@ export default function UserPage() {
     }
   };
 
+  // Drag & Drop
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith("image/")) setNewImage(file);
+  };
+
   // Deletar item
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm("Tem certeza que deseja remover este item?")) return;
@@ -209,10 +238,7 @@ export default function UserPage() {
       const token = session.access_token;
       const res = await fetch(
         `https://iflow-zdbx.onrender.com/items/${itemId}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) throw new Error("Erro ao remover item");
       setItems((prev) => prev.filter((item) => item.id !== itemId));
@@ -231,12 +257,10 @@ export default function UserPage() {
 
   return (
     <div className="relative min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden py-12 px-6 transition-colors duration-300">
-      {/* Botão de tema global */}
+      {/* Tema */}
       <button
         onClick={toggleTheme}
         className="absolute top-4 right-4 z-50 p-2 rounded-full bg-gray-200 dark:bg-gray-800 shadow-md"
-        aria-label="Alternar tema"
-        title="Alternar tema claro/escuro"
       >
         {theme === "light" ? <Moon /> : <Sun />}
       </button>
@@ -251,59 +275,43 @@ export default function UserPage() {
         </button>
       </div>
 
+      {/* Mensagem */}
       {message && (
         <div
           className={`max-w-4xl mx-auto mb-4 p-4 rounded-md font-medium text-center text-white shadow-lg ${
             messageType === "success" ? "bg-green-600" : "bg-red-600"
-          } transition relative z-10`}
+          }`}
         >
           {message}
         </div>
       )}
 
- {/* Meteoros avançados */}
-<div className="absolute inset-0 pointer-events-none -z-10">
-  {Array.from({ length: 30 }).map((_, i) => {
-    const width = Math.random() * 2 + 1; // largura do meteoro
-    const height = Math.random() * 10 + 10; // comprimento do rastro
-    const duration = Math.random() * 3 + 2; // duração da animação
-    const delay = Math.random() * 5;
-    const startX = Math.random() * 100;
-    const startY = Math.random() * 50;
-    const rotate = Math.random() * 60 - 30; // diagonal aleatória
-
-    return (
-      <span
-        key={i}
-        className="absolute bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-70 rounded-full animate-meteor"
-        style={{
-          width: `${width}px`,
-          height: `${height}px`,
-          left: `${startX}%`,
-          top: `${startY}%`,
-          animationDuration: `${duration}s`,
-          animationDelay: `${delay}s`,
-          transform: `rotate(${rotate}deg)`,
-        }}
-      />
-    );
-  })}
-</div>
       {/* Perfil */}
       <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row gap-8 relative z-10 border border-gray-200 dark:border-gray-700 hover:shadow-[0_0_40px_rgba(0,255,255,0.08)] transition-transform transform hover:-translate-y-1">
-        {/* Avatar */}
         <div className="flex flex-col items-center md:w-1/3 relative">
           <div className="relative w-32 h-32 group">
             {!user.avatar_url ? (
-              <div className="w-32 h-32 rounded-full border-4 border-cyan-400 shadow-md flex items-center justify-center bg-gray-100 dark:bg-gray-700 group-hover:opacity-0 transition-opacity duration-300">
+              <div className="w-32 h-32 rounded-full border-4 border-cyan-400 shadow-md flex items-center justify-center bg-gray-100 dark:bg-gray-700 group-hover:opacity-0 transition-opacity duration-300 relative">
                 <User className="w-16 h-16 text-gray-400" />
+                {uploading && (
+                  <div className="absolute inset-0 flex justify-center items-center bg-black/30 rounded-full">
+                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
               </div>
             ) : (
-              <img
-                src={user.avatar_url}
-                alt="Foto de perfil"
-                className="w-32 h-32 rounded-full object-cover border-4 border-cyan-400 shadow-md"
-              />
+              <div className="relative w-32 h-32">
+                <img
+                  src={user.avatar_url}
+                  alt="Foto de perfil"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-cyan-400 shadow-md"
+                />
+                {uploading && (
+                  <div className="absolute inset-0 flex justify-center items-center bg-black/30 rounded-full">
+                    <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
             )}
             <div
               className="absolute inset-0 bg-cyan-500/40 opacity-0 group-hover:opacity-100 flex justify-center items-center rounded-full cursor-pointer transition-opacity"
@@ -316,7 +324,6 @@ export default function UserPage() {
           </div>
         </div>
 
-        {/* Infos */}
         <div className="flex-1 space-y-4">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">
             Meu Perfil
@@ -354,7 +361,6 @@ export default function UserPage() {
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="w-full px-4 py-2 border rounded-md border-cyan-400 focus:ring-2 focus:ring-cyan-300 focus:outline-none dark:bg-gray-700 dark:text-gray-100"
-                placeholder="Nome"
               />
               <input
                 type="email"
@@ -381,7 +387,7 @@ export default function UserPage() {
         </div>
       </div>
 
-      {/* Modal Upload */}
+      {/* Modal upload */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 px-4">
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-2xl relative shadow-2xl">
@@ -397,6 +403,7 @@ export default function UserPage() {
             <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">
               Alterar Foto de Perfil
             </h2>
+
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -404,12 +411,12 @@ export default function UserPage() {
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`w-full border-2 border-dashed ${
+              onClick={() => document.getElementById("fileInput")?.click()}
+              className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 cursor-pointer transition ${
                 isDragging
                   ? "border-cyan-400 bg-cyan-50"
                   : "border-gray-300 dark:border-gray-600"
-              } rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 cursor-pointer transition`}
-              onClick={() => document.getElementById("fileInput")?.click()}
+              }`}
             >
               {previewUrl ? (
                 <div className="flex flex-col items-center">
@@ -443,7 +450,10 @@ export default function UserPage() {
                 id="fileInput"
                 type="file"
                 accept="image/*"
-                onChange={handleImageChange}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && file.type.startsWith("image/")) setNewImage(file);
+                }}
                 className="hidden"
               />
             </div>
@@ -458,7 +468,7 @@ export default function UserPage() {
         </div>
       )}
 
-      {/* Meus Itens */}
+      {/* Meus itens */}
       <div className="max-w-4xl mx-auto mt-12 relative z-10">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
           📦 Meus Itens
@@ -506,28 +516,6 @@ export default function UserPage() {
           </p>
         )}
       </div>
-
-     {/* Style */}
-<style jsx>{`
-  @keyframes meteor {
-    0% {
-      transform: translate(0, 0) rotate(0deg);
-      opacity: 0;
-    }
-    10% {
-      opacity: 1;
-    }
-    100% {
-      transform: translate(600px, 600px) rotate(360deg);
-      opacity: 0;
-    }
-  }
-  .animate-meteor {
-    animation-name: meteor;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-  }
-`}</style>
     </div>
   );
 }

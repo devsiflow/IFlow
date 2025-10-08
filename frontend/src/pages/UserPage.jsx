@@ -495,8 +495,8 @@ export default function UserPage() {
                 <span
                   className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${
                     item.status === "Perdido"
-                      ? "bg-red-500 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                      ? "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)] dark:bg-green-600 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.8)]"
+                      : "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.7)] hover:shadow-[0_0_20px_rgba(239,68,68,0.9)] dark:bg-red-700 dark:shadow-[0_0_10px_rgba(239,68,68,0.5)] dark:hover:shadow-[0_0_20px_rgba(239,68,68,0.8)]"
                   }`}
                 >
                   {item.status}

@@ -6,30 +6,55 @@ import LogoLoader from "../components/LogoLoader";
 import { useTheme } from "../context/ThemeContext";
 import livroImg from "../assets/livro.jpg";
 
-// Função para gerar miniatura antes de enviar
-async function generateThumbnail(file, maxSize = 400) {
+//Função para gerar recorte da imagem
+async function generateCroppedImage(file, crop = null, maxSize = 400) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      let { width, height } = img;
 
-      if (width > height) {
-        if (width > maxSize) {
-          height *= maxSize / width;
-          width = maxSize;
+      let cropX = 0;
+      let cropY = 0;
+      let cropWidth = img.width;
+      let cropHeight = img.height;
+
+      if (crop) {
+        cropX = crop.x;
+        cropY = crop.y;
+        cropWidth = crop.width;
+        cropHeight = crop.height;
+      }
+
+      let finalWidth = cropWidth;
+      let finalHeight = cropHeight;
+
+      if (finalWidth > finalHeight) {
+        if (finalWidth > maxSize) {
+          finalHeight *= maxSize / finalWidth;
+          finalWidth = maxSize;
         }
       } else {
-        if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
+        if (finalHeight > maxSize) {
+          finalWidth *= maxSize / finalHeight;
+          finalHeight = maxSize;
         }
       }
 
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
+
+      ctx.drawImage(
+        img,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        finalWidth,
+        finalHeight
+      );
 
       canvas.toBlob(
         (blob) => {
@@ -170,15 +195,28 @@ export default function UserPage() {
       navigate("/login");
     }
   };
-
-  // Upload imagem com miniatura
+    // Upload imagem com recorte
   const handleUpload = async () => {
     if (!newImage || !user) return;
     setUploading(true);
     setMessage("");
     try {
-      // Gera miniatura
-      const thumb = await generateThumbnail(newImage);
+      // Cria crop quadrado central
+      const img = new Image();
+      img.src = URL.createObjectURL(newImage);
+      await new Promise((res) => (img.onload = res));
+
+      const minSide = Math.min(img.width, img.height);
+      const crop = {
+        x: (img.width - minSide) / 2,
+        y: (img.height - minSide) / 2,
+        width: minSide,
+        height: minSide,
+      };
+
+      const thumb = await generateCroppedImage(newImage, crop, 400);
+
+  // Upload imagem com miniatura
       const fileExt = thumb.name.split(".").pop();
       const fileName = `${user.id}.${fileExt}`;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useItens } from "../hooks/useItens";
 import MenuCatalogo from "../components/MenuCatalogo";
 import { Search } from "lucide-react";
@@ -13,143 +13,78 @@ function Catalogo() {
   const [dateFilter, setDateFilter] = useState("");
 
   if (loading) return <LogoLoader />;
-
-  if (error) {
-    return <div className="p-6 text-center text-red-500">Erro: {error}</div>;
-  }
+  if (error) return <div className="p-6 text-center text-red-500">Erro: {error}</div>;
 
   const filteredItems = itens.filter((item) => {
-    const nameMatch = (item.title ?? "")
-      .toLowerCase()
-      .includes((searchTerm ?? "").toLowerCase());
-
-    const statusMatch =
-      statusFilter === "Todos" || item.status === statusFilter;
-
-    const localMatch = (item.location ?? "")
-      .toLowerCase()
-      .includes((localFilter ?? "").toLowerCase());
-
-    const dateMatch =
-      !dateFilter ||
-      new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
-
+    const nameMatch = (item.title ?? "").toLowerCase().includes(searchTerm.toLowerCase());
+    const statusMatch = statusFilter === "Todos" || item.status === statusFilter;
+    const localMatch = (item.location ?? "").toLowerCase().includes(localFilter.toLowerCase());
+    const dateMatch = !dateFilter || new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
     return nameMatch && statusMatch && localMatch && dateMatch;
   });
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-white via-gray-50 to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-green-950 text-gray-900 dark:text-gray-100 overflow-hidden">
-      {/* Meteoros */}
-      <div className="meteors absolute inset-0 pointer-events-none -z-10">
-        {Array.from({ length: 15 }).map((_, i) => (
-          <span
-            key={i}
-            className="absolute top-0 w-0.5 h-10 opacity-70 animate-meteor"
-            style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 8}s`,
-              animationDuration: `${3 + Math.random() * 2}s`,
-              transform: `rotate(${45 + Math.random() * 20}deg)`,
-              background: "linear-gradient(to bottom, #22c55e, transparent)", // verde
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Menu fixo */}
+    <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
       <MenuCatalogo />
 
-      {/* Conteúdo */}
-      <div className="pt-28 p-6 max-w-7xl mx-auto relative z-10">
+      <div className="pt-24 px-6 max-w-7xl mx-auto">
+        {/* Cabeçalho */}
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight">Catálogo</h1>
+        </div>
+
         {/* Filtros */}
-        <div className="mb-10 grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Nome */}
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 w-5 h-5" />
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-5 h-5" />
             <input
               type="text"
-              placeholder="Pesquisar por nome..."
+              placeholder="Pesquisar item..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-green-400 focus:outline-none shadow-md transition-all group-hover:border-green-400"
+              className="w-full pl-9 pr-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-1 focus:ring-green-600"
             />
           </div>
 
-          {/* Status */}
-          <div className="relative">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full pl-3 pr-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-green-400 shadow-md transition-all"
-            >
-              <option value="Todos">Todos os status</option>
-              <option value="Perdido">Perdido</option>
-              <option value="Encontrado">Encontrado</option>
-            </select>
-          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-1 focus:ring-green-600"
+          >
+            <option value="Todos">Todos</option>
+            <option value="Perdido">Perdido</option>
+            <option value="Encontrado">Encontrado</option>
+          </select>
 
-          {/* Local */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Filtrar por local..."
-              value={localFilter}
-              onChange={(e) => setLocalFilter(e.target.value)}
-              className="w-full pl-3 pr-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-green-400 shadow-md transition-all"
-            />
-          </div>
+          <input
+            type="text"
+            placeholder="Local..."
+            value={localFilter}
+            onChange={(e) => setLocalFilter(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-1 focus:ring-green-600"
+          />
 
-          {/* Data */}
-          <div className="relative">
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full pl-3 pr-4 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-green-400 shadow-md transition-all"
-            />
-          </div>
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-full px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-1 focus:ring-green-600"
+          />
         </div>
 
         {/* Itens */}
         {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="hover:scale-105 transition-transform duration-300"
-              >
-                <ItemCard item={item} darkMode />
-              </div>
+              <ItemCard key={item.id} item={item} darkMode />
             ))}
           </div>
         ) : (
-          <div className="text-center text-gray-500 dark:text-gray-400 mt-16 text-lg">
-            Nenhum item encontrado com esses filtros.
+          <div className="text-center text-neutral-500 mt-16 text-sm">
+            Nenhum item encontrado.
           </div>
         )}
       </div>
-
-      {/* Estilos extras para meteoros */}
-      <style jsx>{`
-        .animate-meteor {
-          animation-name: meteor;
-          animation-timing-function: linear;
-          animation-iteration-count: infinite;
-        }
-        @keyframes meteor {
-          0% {
-            transform: translateY(-100vh) rotate(45deg);
-            opacity: 0;
-          }
-          20% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(120vh) rotate(45deg);
-            opacity: 0;
-          }
-        }
-      `}</style>
     </div>
   );
 }

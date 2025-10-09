@@ -1,28 +1,14 @@
-// frontend/src/pages/ItemPage.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import livroImg from "../assets/livro.jpg";
 import MenuOtherPages from "../components/MenuOtherPages";
-import LogoLoader from "../components/LogoLoader";
-import {
-  ArrowLeft,
-  Cpu,
-  Globe2,
-  MapPin,
-  Calendar,
-  User,
-  Zap,
-  ListIcon,
-  InfoIcon,
-  DessertIcon,
-  NotepadText,
-} from "lucide-react";
+import livroImg from "../assets/livro.jpg";
 
 export default function ItemPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentImage, setCurrentImage] = useState(0);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -41,130 +27,63 @@ export default function ItemPage() {
     fetchItem();
   }, [id]);
 
-  if (loading) return <LogoLoader />;
-  if (!item)
-    return (
-      <p className="p-6 text-center text-gray-500 dark:text-gray-400 text-lg">
-        Item não encontrado.
-      </p>
-    );
+  if (loading) return <p className="p-6 text-center text-gray-500 dark:text-gray-400 text-lg">Carregando...</p>;
+  if (!item) return <p className="p-6 text-center text-gray-500 dark:text-gray-400 text-lg">Item não encontrado.</p>;
+
+  const images = item.images && item.images.length ? item.images : [item.imageUrl || livroImg];
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-white via-gray-50 to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-green-950 text-gray-900 dark:text-gray-100 overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 px-4">
       <MenuOtherPages />
 
-      {/* Container principal */}
-      <div className="flex justify-center items-center min-h-screen px-4 py-20 relative z-10">
-        <div className="w-full max-w-6xl bg-white/90 dark:bg-gray-900/60 backdrop-blur-xl border border-green-200/40 dark:border-emerald-700/40 rounded-3xl shadow-[0_0_40px_rgba(0,128,50,0.1)] dark:shadow-[0_0_40px_rgba(0,255,128,0.15)] overflow-hidden hover:shadow-[0_0_60px_rgba(0,128,50,0.2)] dark:hover:shadow-[0_0_60px_rgba(0,255,128,0.3)] transition-all duration-500">
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Imagem */}
-            <div className="relative bg-gradient-to-br from-green-50 via-white to-white dark:from-emerald-700/10 dark:via-transparent dark:to-transparent p-10 flex items-center justify-center">
-              <div className="absolute inset-0 blur-3xl bg-green-100/20 dark:bg-emerald-700/10 rounded-full" />
-              <img
-                src={item.imageUrl || livroImg}
-                alt={item.title}
-                className="relative max-h-[28rem] object-contain rounded-2xl shadow-[0_0_30px_rgba(0,128,50,0.3)] dark:shadow-[0_0_30px_rgba(0,255,128,0.3)] transition-transform duration-500 hover:scale-105"
-              />
-            </div>
+      <div className="w-full max-w-5xl bg-white dark:bg-neutral-800 rounded-xl border border-neutral-300 dark:border-neutral-700 overflow-hidden shadow-md flex flex-col md:flex-row gap-6">
+        
+        {/* Coluna esquerda: imagem / carrossel */}
+        <div className="md:w-1/2 h-96 bg-neutral-200 dark:bg-neutral-700 relative overflow-hidden flex items-center justify-center">
+          <img
+            src={images[currentImage]}
+            alt={`${item.title} - ${currentImage + 1}`}
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          />
+          {images.length > 1 && (
+            <>
+              <button
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50"
+                onClick={() => setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+              >
+                ◀
+              </button>
+              <button
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50"
+                onClick={() => setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+              >
+                ▶
+              </button>
+            </>
+          )}
+        </div>
 
-            {/* Conteúdo */}
-            <div className="p-10 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-green-700 dark:text-emerald-600 mb-2">
-                  <Cpu size={18} />
-                  <span className="uppercase tracking-wider text-xs font-semibold">
-                    Registro #{item.id}
-                  </span>
-                </div>
+        {/* Coluna direita: infos */}
+        <div className="md:w-1/2 p-6 flex flex-col justify-between">
+          <div className="space-y-4">
+            <h1 className="text-3xl font-bold">{item.title}</h1>
 
-                <h1 className="text-4xl font-extrabold bg-gradient-to-r from-green-600 to-green-700 dark:from-emerald-600 dark:to-emerald-700 bg-clip-text text-transparent">
-                  {item.title}
-                </h1>
-
-                <p className="flex items-center gap-2">
-                  <NotepadText
-                    size={16}
-                    className="text-green-700 dark:text-emerald-600"
-                  />
-                  <strong>Descrição:</strong>{" "}
-                  <span>{item.description || "—"}</span>
-                </p>
-
-                <div className="mt-12 space-y-6 text-sm">
-                  <p className="flex items-center gap-2">
-                    <Zap
-                      size={16}
-                      className="text-green-700 dark:text-emerald-600"
-                    />
-                    <strong>Status:</strong>{" "}
-                    <span
-                      className={`px-2 py-1 rounded-md text-xs ${
-                        item.status === "Perdido"
-                          ? "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)] dark:bg-green-600 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.8)]"
-                          : "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.7)] hover:shadow-[0_0_20px_rgba(239,68,68,0.9)] dark:bg-red-700 dark:shadow-[0_0_10px_rgba(239,68,68,0.5)] dark:hover:shadow-[0_0_20px_rgba(239,68,68,0.8)]"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Globe2
-                      size={16}
-                      className="text-green-700 dark:text-emerald-600"
-                    />
-                    <strong>Categoria:</strong>{" "}
-                    <span>{item.category?.name || "—"}</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <MapPin
-                      size={16}
-                      className="text-green-700 dark:text-emerald-600"
-                    />
-                    <strong>Local:</strong>{" "}
-                    <span>{item.location || item.local || "—"}</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Calendar
-                      size={16}
-                      className="text-green-700 dark:text-emerald-600"
-                    />
-                    <strong>Data:</strong>{" "}
-                    <span>
-                      {new Date(
-                        item.createdAt || item.date || Date.now()
-                      ).toLocaleDateString()}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Botões futuristas */}
-              <div className="mt-10 flex gap-4">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate("/validacao", { state: { item } });
-                  }}
-                  className="flex-1 px-5 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-700 dark:from-emerald-700 dark:to-emerald-600 text-white font-bold tracking-wide shadow-[0_0_15px_rgba(0,128,50,0.25)] dark:shadow-[0_0_15px_rgba(0,255,128,0.3)] hover:shadow-[0_0_25px_rgba(0,128,50,0.4)] dark:hover:shadow-[0_0_25px_rgba(0,255,128,0.4)] transform hover:-translate-y-0.5 transition-all duration-300"
-                >
-                  É meu
-                </button>
-              </div>
+            <div className="text-sm text-neutral-600 dark:text-neutral-400 space-y-2">
+              <p><strong>Data cadastro:</strong> {new Date(item.createdAt).toLocaleDateString()}</p>
+              <p><strong>Local:</strong> {item.location || "—"}</p>
+              <p><strong>Categoria:</strong> {item.category?.name || "—"}</p>
+              <p className="line-clamp-6">{item.description || "Sem descrição"}</p>
             </div>
           </div>
+
+          <button
+            onClick={() => navigate("/validacao", { state: { item } })}
+            className="w-full py-4 mt-6 rounded-md bg-green-600 dark:bg-green-700 text-white font-semibold hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+          >
+            Solicitar
+          </button>
         </div>
       </div>
-
-      {/* Fundo animado */}
-      <style>{`
-        @keyframes pulseGlow {
-          0%, 100% { opacity: 0.4; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.05); }
-        }
-        .glow {
-          animation: pulseGlow 6s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 }

@@ -6,64 +6,40 @@ function ItemCard({ item }) {
 
   return (
     <div
-      className="relative border border-gray-300 dark:border-gray-700 rounded-2xl overflow-hidden 
-                 bg-gray-100 dark:bg-gray-800 cursor-pointer transform transition-all duration-300 
-                 hover:scale-105 hover:shadow-[0_0_20px_rgba(34,197,94,0.6)]"
+      className="relative w-full rounded-lg overflow-hidden cursor-pointer border border-neutral-300 dark:border-neutral-700
+                 bg-white dark:bg-neutral-800 transition-transform duration-200 hover:scale-105"
       onClick={() => navigate(`/itempage/${item.id}`)}
     >
-      {/* Imagem com brilho */}
-      <div className="w-full h-40 overflow-hidden relative">
+      {/* Imagem do item */}
+      <div className="w-full h-48 overflow-hidden">
         <img
           src={item.imageUrl || livroImg}
           alt={item.title}
-          className="w-full h-40 object-contain p-4 transition-transform duration-500 hover:scale-110 brightness-110"
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
         />
       </div>
 
       {/* Conteúdo do card */}
-      <div className="p-4 space-y-2 text-gray-900 dark:text-gray-100">
-        <h2 className="text-lg font-bold truncate">{item.title}</h2>
-        <p className="text-sm">
-          <strong>Data cadastro:</strong>{" "}
-          {new Date(item.createdAt).toLocaleDateString()}
+      <div className="p-4 space-y-2 text-neutral-900 dark:text-neutral-100">
+        <h2 className="text-lg font-semibold truncate">{item.title}</h2>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+          {item.location}
         </p>
-        <p className="text-sm">
-          <strong>Local:</strong> {item.location}
+        <p className="text-xs text-neutral-500">
+          Cadastrado em: {new Date(item.createdAt).toLocaleDateString()}
         </p>
-        <p className="text-sm line-clamp-2">
-          <strong>Descrição:</strong> {item.description}
-        </p>
-        <p className="text-sm">
-          <strong>Categoria:</strong> {item.category?.name}
+        <p className="text-sm line-clamp-3 text-neutral-700 dark:text-neutral-300">
+          {item.description || "Sem descrição"}
         </p>
 
-        {/* Status neon */}
-        <span
-          className={`inline-block mt-2 px-3 py-1 text-xs font-semibold rounded-full transition-all duration-300 ${
-            item.status === "Perdido"
-              ? "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)] dark:bg-green-600 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.8)]"
-              : "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.7)] hover:shadow-[0_0_20px_rgba(239,68,68,0.9)] dark:bg-red-700 dark:shadow-[0_0_10px_rgba(239,68,68,0.5)] dark:hover:shadow-[0_0_20px_rgba(239,68,68,0.8)]"
- 
-          }`}
-        >
-          {item.status}
-        </span>
-
-        {/* Botão futurista escurecido */}
+        {/* Botão “É meu” full width */}
         <button
-          className="mt-4 w-full py-2 rounded-xl 
-             bg-gradient-to-r from-green-600 to-green-700 
-             hover:from-green-700 hover:to-green-800 
-             text-white font-bold 
-             shadow-[0_0_10px_rgba(22,163,74,0.7)] 
-             hover:shadow-[0_0_20px_rgba(22,163,74,0.9)] 
-             dark:shadow-[0_0_10px_rgba(22,163,74,0.5)] 
-             dark:hover:shadow-[0_0_20px_rgba(22,163,74,0.8)] 
-             transition-all duration-300"
           onClick={(e) => {
             e.stopPropagation();
             navigate("/validacao", { state: { item } });
           }}
+          className="mt-4 w-full py-3 rounded-md bg-green-600 text-white font-semibold 
+                     hover:bg-green-700 transition-colors"
         >
           É meu
         </button>

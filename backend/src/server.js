@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.js";
 import meRoutes from "./routes/me.js";
 import itemsRouter from "./routes/item.js";
 import adminRoutes from "./routes/admin.js";
+import itemValidationRoutes from "./routes/itemValidation.js";
 
 dotenv.config();
 
@@ -22,6 +23,9 @@ app.use("/auth", authRoutes);   // login, register etc.
 app.use("/me", meRoutes);       // GET /me e PUT /me
 app.use("/items", itemsRouter); // itens do banco de itens
 app.use("/admin", adminRoutes); // rota protegida para admins
+
+// validar itens perdidos, solicitação "é meu"
+app.use("/api/validacao", itemValidationRoutes);
 
 
 const PORT = process.env.PORT || 5000;

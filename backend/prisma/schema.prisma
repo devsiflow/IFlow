@@ -36,5 +36,21 @@ model Item {
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
   user        Profile  @relation(fields: [userId], references: [id])
+
+  ItemValidation ItemValidation[]
 }
 
+model ItemValidation {
+  id              Int       @id @default(autoincrement())
+  userId          String?   // ID do usuário autenticado (pode ser do Supabase)
+  itemId          Int       // ID do item sendo validado
+  descricao       String
+  localPerda      String
+  detalhesUnicos  String
+  conteudoInterno String
+  momentoPerda    String
+  createdAt       DateTime  @default(now())
+
+  // Relação opcional (caso tenha model Item)
+  item Item? @relation(fields: [itemId], references: [id])
+}

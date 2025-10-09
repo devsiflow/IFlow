@@ -1,16 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import IflowLogo from "../assets/iflowtextsvg.svg";
 import iflowBackground from "../assets/iflowBackgroundWhite.jpg";
+import iflowBackgroundDark from "../assets/iflowBackgroundDark.jpg";
 
 export default function LogoLoader() {
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const updateDarkMode = () => setIsDark(root.classList.contains("dark"));
+    updateDarkMode();
+
+    const observer = new MutationObserver(updateDarkMode);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
-      className="flex items-center justify-center h-screen relative overflow-hidden bg-black"
+      className="flex items-center justify-center h-screen relative overflow-hidden transition-all duration-700"
       style={{
-        backgroundImage: `url(${iflowBackground})`,
+        backgroundImage: `url(${isDark ? iflowBackgroundDark : iflowBackground})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundBlendMode: "multiply",
+        backgroundColor: isDark ? "#0b0b0b" : "#ffffff",
+        transition: "background-image 0.6s ease-in-out, background-color 0.6s ease-in-out",
       }}
     >
       {/* Glow suave ao fundo */}

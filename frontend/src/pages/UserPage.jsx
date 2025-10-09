@@ -5,6 +5,7 @@ import { X, User, ArrowLeft, Trash2, Moon, Sun } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
 import { useTheme } from "../context/ThemeContext";
 import livroImg from "../assets/livro.jpg";
+import Cropper from "react-easy-crop";
 
 //Função para gerar recorte da imagem
 async function generateCroppedImage(file, crop = null, maxSize = 400) {
@@ -85,7 +86,34 @@ export default function UserPage() {
   const [newImage, setNewImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  
+   const getCroppedImg = (imageSrc, crop) => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.crossOrigin = "anonymous";
+      image.src = imageSrc;
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
+        const { width, height, x, y } = crop;
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.drawImage(image, x, y, width, height, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error("Canvas vazio"));
+          const file = new File([blob], "cropped.jpg", { type: "image/jpeg" });
+          resolve(file);
+        }, "image/jpeg");
+      };
+      image.onerror = reject;
+    });
+  };
   // Buscar usuário e itens
   useEffect(() => {
     let mounted = true;
@@ -201,20 +229,12 @@ export default function UserPage() {
     setUploading(true);
     setMessage("");
     try {
-      // Cria crop quadrado central
-      const img = new Image();
-      img.src = URL.createObjectURL(newImage);
-      await new Promise((res) => (img.onload = res));
+      let fileToUpload = newImage;
+      if (croppedAreaPixels) {
+        fileToUpload = await getCroppedImg(previewUrl, croppedAreaPixels);
+      }
 
-      const minSide = Math.min(img.width, img.height);
-      const crop = {
-        x: (img.width - minSide) / 2,
-        y: (img.height - minSide) / 2,
-        width: minSide,
-        height: minSide,
-      };
-
-      const thumb = await generateCroppedImage(newImage, crop, 400);
+      const thumb = await generateCroppedImage(fileToUpload);
 
   // Upload imagem com miniatura
       const fileExt = thumb.name.split(".").pop();
@@ -457,11 +477,27 @@ export default function UserPage() {
               }`}
             >
               {previewUrl ? (
-                <div className="flex flex-col items-center">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="max-h-64 mx-auto rounded-lg object-contain mb-4 shadow-lg"
+                <div className="w-full h-64 relative">
+                  {/* ADICIONADO: Cropper para recorte da imagem */}
+                  <Cropper
+                    image={previewUrl}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={(_, croppedPixels) =>
+                      setCroppedAreaPixels(croppedPixels)
+                    }
+                  />
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    className="mt-2 w-full"
                   />
                   <button
                     type="button"
@@ -470,7 +506,7 @@ export default function UserPage() {
                       setNewImage(null);
                       setPreviewUrl(null);
                     }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500 transition"
+                    className="absolute bottom-2 right-2 px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-500"
                   >
                     Remover imagem
                   </button>

@@ -4,7 +4,7 @@ import MenuOtherPages from "../components/MenuOtherPages";
 
 function ValidarItem() {
   const navigate = useNavigate();
-  const { id: itemId } = useParams(); // pega o id do item da URL
+  const { id } = useParams(); // pega o id do item da URL
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     descricao: "",
@@ -18,37 +18,56 @@ function ValidarItem() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    const response = await fetch("https://iflow-zdbx.onrender.com/validacao", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erro do servidor: ${response.status} - ${errorText}`);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Você precisa estar logado para validar itens.");
+      return;
     }
 
-    console.log("✅ Respostas enviadas com sucesso!");
-    navigate("/validacaoConfirmada");
-  } catch (error) {
-    console.error("❌ Erro ao enviar validação:", error);
-    alert("Erro ao enviar validação. Veja o console para mais detalhes.");
-  }
-};
+    const numericItemId = parseInt(id);
+    if (!numericItemId) {
+      alert("ID do item inválido.");
+      return;
+    }
+
+    const bodyData = { ...form, itemId: numericItemId };
+
+    setLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
+
+      const response = await fetch(`${API_URL}/validacao`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(bodyData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`Erro do servidor: ${response.status} - ${JSON.stringify(data)}`);
+      }
+
+      console.log("✅ Respostas enviadas com sucesso!", data);
+      navigate("/validacaoConfirmada");
+    } catch (error) {
+      console.error("❌ Erro ao enviar validação:", error);
+      alert(`Erro ao enviar validação: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-950 transition-colors duration-300">
-      {/* Menu fixo */}
       <MenuOtherPages />
 
-      {/* Conteúdo central */}
       <div className="flex flex-col items-center px-4 pt-36 pb-16 md:pt-40">
         <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.08)] dark:shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-gray-200 dark:border-gray-700 p-10 space-y-8 backdrop-blur-sm transition-colors duration-300">
           <h2 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 tracking-wide mb-4 text-center">
@@ -56,19 +75,13 @@ const handleSubmit = async (e) => {
           </h2>
 
           <p className="text-gray-600 dark:text-gray-300 text-center mb-8">
-            Para garantir que o item é realmente seu, responda ao questionário
-            com o máximo de detalhes possível.
+            Para garantir que o item é realmente seu, responda ao questionário com o máximo de detalhes possível.
           </p>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6 text-gray-900 dark:text-gray-100"
-          >
-            {/* Descrição geral */}
+          <form onSubmit={handleSubmit} className="space-y-6 text-gray-900 dark:text-gray-100">
+            {/* Descrição */}
             <div>
-              <label className="block mb-2 font-semibold">
-                Descreva o item em detalhes.
-              </label>
+              <label className="block mb-2 font-semibold">Descreva o item em detalhes.</label>
               <textarea
                 name="descricao"
                 rows={3}
@@ -82,9 +95,7 @@ const handleSubmit = async (e) => {
 
             {/* Local exato */}
             <div>
-              <label className="block mb-2 font-semibold">
-                Onde exatamente você perdeu o item?
-              </label>
+              <label className="block mb-2 font-semibold">Onde exatamente você perdeu o item?</label>
               <input
                 name="localPerda"
                 type="text"
@@ -98,9 +109,7 @@ const handleSubmit = async (e) => {
 
             {/* Detalhes únicos */}
             <div>
-              <label className="block mb-2 font-semibold">
-                Há algo específico ou único no item?
-              </label>
+              <label className="block mb-2 font-semibold">Há algo específico ou único no item?</label>
               <textarea
                 name="detalhesUnicos"
                 rows={3}
@@ -114,9 +123,7 @@ const handleSubmit = async (e) => {
 
             {/* Conteúdo interno */}
             <div>
-              <label className="block mb-2 font-semibold">
-                O que havia dentro ou junto do item?
-              </label>
+              <label className="block mb-2 font-semibold">O que havia dentro ou junto do item?</label>
               <textarea
                 name="conteudoInterno"
                 rows={3}
@@ -128,11 +135,9 @@ const handleSubmit = async (e) => {
               />
             </div>
 
-            {/* Momento aproximado */}
+            {/* Momento da perda */}
             <div>
-              <label className="block mb-2 font-semibold">
-                Quando você percebeu que havia perdido o item?
-              </label>
+              <label className="block mb-2 font-semibold">Quando você percebeu que havia perdido o item?</label>
               <input
                 name="momentoPerda"
                 type="text"

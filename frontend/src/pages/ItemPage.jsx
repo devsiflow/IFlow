@@ -4,16 +4,13 @@ import MenuOtherPages from "../components/MenuOtherPages";
 import livroImg from "../assets/livro.jpg";
 import LogoLoader from "../components/LogoLoader";
 
-
 export default function ItemPage() {
-  
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
-  
-  
+
   useEffect(() => {
     const fetchItem = async () => {
       try {
@@ -32,17 +29,25 @@ export default function ItemPage() {
   }, [id]);
 
   if (loading) return <LogoLoader />;
-  
-  if (!item) return <p className="p-6 text-center text-gray-500 dark:text-gray-400 text-lg">Item não encontrado.</p>;
+
+  if (!item)
+    return (
+      <p className="p-6 text-center text-gray-500 dark:text-gray-400 text-lg">
+        Item não encontrado.
+      </p>
+    );
 
   const images = item.images && item.images.length ? item.images : [item.imageUrl || livroImg];
+
+  const handleValidar = () => {
+    navigate(`/validacao/${item.id}`); // ✅ envia o ID do item
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 px-4">
       <MenuOtherPages />
 
       <div className="w-full max-w-5xl bg-white dark:bg-neutral-800 rounded-xl border border-neutral-300 dark:border-neutral-700 overflow-hidden shadow-md flex flex-col md:flex-row gap-6">
-        
         {/* Coluna esquerda: imagem / carrossel */}
         <div className="md:w-1/2 h-96 bg-neutral-200 dark:bg-neutral-700 relative overflow-hidden flex items-center justify-center">
           <img
@@ -54,13 +59,21 @@ export default function ItemPage() {
             <>
               <button
                 className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50"
-                onClick={() => setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                onClick={() =>
+                  setCurrentImage((prev) =>
+                    prev === 0 ? images.length - 1 : prev - 1
+                  )
+                }
               >
                 ◀
               </button>
               <button
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50"
-                onClick={() => setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                onClick={() =>
+                  setCurrentImage((prev) =>
+                    prev === images.length - 1 ? 0 : prev + 1
+                  )
+                }
               >
                 ▶
               </button>
@@ -74,15 +87,24 @@ export default function ItemPage() {
             <h1 className="text-3xl font-bold">{item.title}</h1>
 
             <div className="text-sm text-neutral-600 dark:text-neutral-400 space-y-2">
-              <p><strong>Data cadastro:</strong> {new Date(item.createdAt).toLocaleDateString()}</p>
-              <p><strong>Local:</strong> {item.location || "—"}</p>
-              <p><strong>Categoria:</strong> {item.category?.name || "—"}</p>
-              <p className="line-clamp-6">{item.description || "Sem descrição"}</p>
+              <p>
+                <strong>Data cadastro:</strong>{" "}
+                {new Date(item.createdAt).toLocaleDateString()}
+              </p>
+              <p>
+                <strong>Local:</strong> {item.location || "—"}
+              </p>
+              <p>
+                <strong>Categoria:</strong> {item.category?.name || "—"}
+              </p>
+              <p className="line-clamp-6">
+                {item.description || "Sem descrição"}
+              </p>
             </div>
           </div>
 
           <button
-            onClick={() => navigate("/validacao", { state: { item } })}
+            onClick={handleValidar} // ✅ redireciona para /validacao/:id
             className="w-full py-4 mt-6 rounded-md bg-green-600 dark:bg-green-700 text-white font-semibold hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
           >
             Solicitar

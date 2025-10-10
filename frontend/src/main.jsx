@@ -18,6 +18,17 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 
 const router = createBrowserRouter([
   {
+    path: "/validacao/:id",  // <-- adiciona :id
+    element: <ValidarItem />,
+  },
+  {
+    path: "/validacaoConfirmada",
+    element: <ValidacaoConfirmada />,
+  },
+  {
+    path: "/itempage/:id",
+    element: <ItemPage />,
+  },{
     path: "/",
     element: <App />,
   },
@@ -44,15 +55,6 @@ const router = createBrowserRouter([
   {
     path: "/cadastroitem",
     element: <CadastraItem />,
-  },
-
-  {
-    path: "/validacao",
-    element: <ValidarItem />,
-  },
-  {
-    path: "/validacaoConfirmada",
-    element: <ValidacaoConfirmada />,
   },
   {
     path: "/perfil",

@@ -4,7 +4,7 @@ import MenuOtherPages from "../components/MenuOtherPages";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../hooks/useAuth";
 
-// Função auxiliar para gerar miniatura antes de subir
+// Função para gerar miniatura antes de subir
 async function generateThumbnail(file, maxSize = 400) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -30,9 +30,7 @@ async function generateThumbnail(file, maxSize = 400) {
       ctx.drawImage(img, 0, 0, width, height);
 
       canvas.toBlob(
-        (blob) => {
-          resolve(new File([blob], file.name, { type: "image/jpeg" }));
-        },
+        (blob) => resolve(new File([blob], file.name, { type: "image/jpeg" })),
         "image/jpeg",
         0.8
       );
@@ -41,7 +39,7 @@ async function generateThumbnail(file, maxSize = 400) {
   });
 }
 
-function CadastrarItem() {
+export default function CadastrarItem() {
   const navigate = useNavigate();
   const { user, token, loading } = useAuth();
 
@@ -51,8 +49,9 @@ function CadastrarItem() {
     local: "",
     category: "",
   });
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -60,22 +59,20 @@ function CadastrarItem() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleImage = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith("image/")) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
+  const handleImages = (e) => {
+    const files = Array.from(e.target.files).slice(0, 5); // máximo 5 imagens
+    const validFiles = files.filter((file) => file.type.startsWith("image/"));
+    setImageFiles(validFiles);
+    setImagePreviews(validFiles.map((f) => URL.createObjectURL(f)));
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
+    const files = Array.from(e.dataTransfer.files).slice(0, 5);
+    const validFiles = files.filter((file) => file.type.startsWith("image/"));
+    setImageFiles(validFiles);
+    setImagePreviews(validFiles.map((f) => URL.createObjectURL(f)));
   };
 
   const handleSubmit = async (e) => {
@@ -89,27 +86,24 @@ function CadastrarItem() {
     setIsSubmitting(true);
 
     try {
-      let imageUrl = null;
+      const uploadedUrls = [];
 
-      if (imageFile) {
-        // Cria miniatura comprimida
-        const thumb = await generateThumbnail(imageFile);
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
+        const thumb = await generateThumbnail(file);
 
-        const fileExt = thumb.name.split(".").pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+        const ext = thumb.name.split(".").pop();
+        const fileName = `${Date.now()}_${i}.${ext}`;
         const filePath = `public/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("iflow-item")
-          .upload(filePath, thumb);
+          .upload(filePath, thumb, { upsert: true });
 
         if (uploadError) throw uploadError;
 
-        const { data } = supabase.storage
-          .from("iflow-item")
-          .getPublicUrl(filePath);
-
-        imageUrl = data.publicUrl;
+        const { data } = supabase.storage.from("iflow-item").getPublicUrl(filePath);
+        uploadedUrls.push(data.publicUrl);
       }
 
       const API_URL = import.meta.env.VITE_API_URL;
@@ -124,7 +118,7 @@ function CadastrarItem() {
           description: form.description,
           location: form.local,
           categoryName: form.category,
-          image: imageUrl,
+          images: uploadedUrls, // envia todas as URLs
         }),
       });
 
@@ -145,10 +139,9 @@ function CadastrarItem() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 font-sans">
       <MenuOtherPages />
-
       <div className="flex justify-center items-start px-4 pt-32 pb-16">
-        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.08)] dark:shadow-[0_0_40px_rgba(0,0,0,0.4)] border border-gray-200 dark:border-gray-700 p-10 space-y-8 backdrop-blur-md">
-          <h2 className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 tracking-wide gradient-text mb-6 text-center">
+        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-md border border-gray-200 dark:border-gray-700 p-10 space-y-8">
+          <h2 className="text-4xl font-extrabold text-center gradient-text mb-6">
             🚀 Cadastrar Item
           </h2>
 
@@ -164,10 +157,7 @@ function CadastrarItem() {
                 onChange={handleChange}
                 required
                 placeholder="Ex: Mochila, Celular..."
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 
-                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500
-                           outline-none transition text-gray-900 dark:text-gray-100 
-                           bg-gray-50 dark:bg-gray-700 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 shadow-inner"
               />
             </div>
 
@@ -183,10 +173,7 @@ function CadastrarItem() {
                 required
                 placeholder="Ex: Preta, com adesivo da Marvel..."
                 rows={4}
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600
-                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500
-                           outline-none transition text-gray-900 dark:text-gray-100 
-                           bg-gray-50 dark:bg-gray-700 shadow-inner resize-none"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 shadow-inner resize-none"
               />
             </div>
 
@@ -201,10 +188,7 @@ function CadastrarItem() {
                 onChange={handleChange}
                 required
                 placeholder="Ex: Sala 101, Corredor perto do banheiro..."
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600
-                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500
-                           outline-none transition text-gray-900 dark:text-gray-100 
-                           bg-gray-50 dark:bg-gray-700 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 shadow-inner"
               />
             </div>
 
@@ -218,10 +202,7 @@ function CadastrarItem() {
                 value={form.category}
                 onChange={handleChange}
                 required
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600
-                           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500
-                           outline-none transition text-gray-900 dark:text-gray-100 
-                           bg-gray-50 dark:bg-gray-700 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 shadow-inner"
               >
                 <option value="">Selecione</option>
                 <option value="Eletrônico">Eletrônico</option>
@@ -231,7 +212,7 @@ function CadastrarItem() {
               </select>
             </div>
 
-            {/* Drag & Drop */}
+            {/* Upload de imagens */}
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -239,25 +220,27 @@ function CadastrarItem() {
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center 
-                          cursor-pointer transition shadow-inner
-                          ${
-                            isDragging
-                              ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
-                              : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
-                          }
-                          text-gray-500 dark:text-gray-300`}
+              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition shadow-inner ${
+                isDragging
+                  ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
+                  : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
+              } text-gray-500 dark:text-gray-300`}
             >
               <label className="cursor-pointer w-full text-center">
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="max-h-44 mx-auto rounded-xl object-contain mb-3 shadow-md"
-                  />
+                {imagePreviews.length ? (
+                  <div className="flex gap-2 overflow-x-auto">
+                    {imagePreviews.map((src, i) => (
+                      <img
+                        key={i}
+                        src={src}
+                        alt={`preview-${i}`}
+                        className="h-28 rounded-lg object-cover"
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <span>
-                    Arraste uma imagem aqui ou{" "}
+                    Arraste até 5 imagens aqui ou{" "}
                     <span className="underline text-indigo-600 dark:text-indigo-400">
                       clique para selecionar
                     </span>
@@ -266,7 +249,8 @@ function CadastrarItem() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleImage}
+                  multiple
+                  onChange={handleImages}
                   className="hidden"
                 />
               </label>
@@ -276,14 +260,9 @@ function CadastrarItem() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-400 
-                         hover:from-indigo-700 hover:to-indigo-500 
-                         dark:from-indigo-800 dark:to-indigo-600 
-                         dark:hover:from-indigo-900 dark:hover:to-indigo-700 
-                         text-white font-bold rounded-2xl shadow-lg dark:shadow-md 
-                         transition-transform transform ${
-                           isSubmitting ? "opacity-70" : "hover:scale-105"
-                         }`}
+              className={`w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 dark:from-indigo-800 dark:to-indigo-600 dark:hover:from-indigo-900 dark:hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg transition-transform transform ${
+                isSubmitting ? "opacity-70" : "hover:scale-105"
+              }`}
             >
               {isSubmitting ? "⏳ Enviando..." : "✅ Cadastrar Item"}
             </button>
@@ -293,5 +272,3 @@ function CadastrarItem() {
     </div>
   );
 }
-
-export default CadastrarItem;

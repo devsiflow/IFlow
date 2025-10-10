@@ -89,8 +89,8 @@ export default function UserPage() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  
-   const getCroppedImg = (imageSrc, crop) => {
+
+  const getCroppedImg = (imageSrc, crop) => {
     return new Promise((resolve, reject) => {
       const image = new Image();
       image.crossOrigin = "anonymous";
@@ -223,7 +223,7 @@ export default function UserPage() {
       navigate("/login");
     }
   };
-    // Upload imagem com recorte
+  // Upload imagem com recorte
   const handleUpload = async () => {
     if (!newImage || !user) return;
     setUploading(true);
@@ -236,7 +236,7 @@ export default function UserPage() {
 
       const thumb = await generateCroppedImage(fileToUpload);
 
-  // Upload imagem com miniatura
+      // Upload imagem com miniatura
       const fileExt = thumb.name.split(".").pop();
       const fileName = `${user.id}.${fileExt}`;
 
@@ -336,9 +336,8 @@ export default function UserPage() {
       {/* Mensagem */}
       {message && (
         <div
-          className={`max-w-4xl mx-auto mb-4 p-4 rounded-md font-medium text-center text-white shadow-lg ${
-            messageType === "success" ? "bg-green-600" : "bg-red-600"
-          }`}
+          className={`max-w-4xl mx-auto mb-4 p-4 rounded-md font-medium text-center text-white shadow-lg ${messageType === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
         >
           {message}
         </div>
@@ -469,13 +468,18 @@ export default function UserPage() {
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              onClick={() => document.getElementById("fileInput")?.click()}
-              className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 cursor-pointer transition ${
-                isDragging
-                  ? "border-cyan-400 bg-cyan-50"
-                  : "border-gray-300 dark:border-gray-600"
-              }`}
+              onClick={() => {
+                // Impede o clique se já existir imagem carregada
+                if (!previewUrl) {
+                  document.getElementById("fileInput")?.click();
+                }
+              }}
+              className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition ${previewUrl
+                  ? "cursor-default opacity-100"
+                  : "cursor-pointer hover:bg-cyan-50"
+                } ${isDragging ? "border-cyan-400 bg-cyan-50" : "border-gray-300 dark:border-gray-600"}`}
             >
+
               {previewUrl ? (
                 <div className="w-full h-64 relative">
                   {/* ADICIONADO: Cropper para recorte da imagem */}
@@ -489,15 +493,6 @@ export default function UserPage() {
                     onCropComplete={(_, croppedPixels) =>
                       setCroppedAreaPixels(croppedPixels)
                     }
-                  />
-                  <input
-                    type="range"
-                    min={1}
-                    max={3}
-                    step={0.1}
-                    value={zoom}
-                    onChange={(e) => setZoom(Number(e.target.value))}
-                    className="mt-2 w-full"
                   />
                   <button
                     type="button"
@@ -567,11 +562,10 @@ export default function UserPage() {
                   {item.description}
                 </p>
                 <span
-                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${
-                    item.status === "Perdido"
+                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${item.status === "Perdido"
                       ? "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)] dark:bg-green-600 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.8)]"
                       : "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.7)] hover:shadow-[0_0_20px_rgba(239,68,68,0.9)] dark:bg-red-700 dark:shadow-[0_0_10px_rgba(239,68,68,0.5)] dark:hover:shadow-[0_0_20px_rgba(239,68,68,0.8)]"
-                  }`}
+                    }`}
                 >
                   {item.status}
                 </span>

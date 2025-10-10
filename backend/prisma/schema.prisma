@@ -23,6 +23,13 @@ model Category {
   items Item[]
 }
 
+model ItemImage {
+  id     Int    @id @default(autoincrement())
+  url    String
+  itemId Int
+  item   Item   @relation(fields: [itemId], references: [id])
+}
+
 model Item {
   id          Int      @id @default(autoincrement())
   title       String
@@ -36,14 +43,15 @@ model Item {
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
   user        Profile  @relation(fields: [userId], references: [id])
+  images      ItemImage[]
 
-  ItemValidation ItemValidation[]
+  validations ItemValidation[]  // ✅ relação oposta
 }
 
 model ItemValidation {
   id              Int       @id @default(autoincrement())
-  userId          String?   // ID do usuário autenticado (pode ser do Supabase)
-  itemId          Int       // ID do item sendo validado
+  userId          String?   
+  itemId          Int       
   descricao       String
   localPerda      String
   detalhesUnicos  String
@@ -51,6 +59,6 @@ model ItemValidation {
   momentoPerda    String
   createdAt       DateTime  @default(now())
 
-  // Relação opcional (caso tenha model Item)
-  item Item? @relation(fields: [itemId], references: [id])
+  // Relação com Item
+  item Item @relation(fields: [itemId], references: [id]) // ✅ remove o opcional se itemId é obrigatório
 }

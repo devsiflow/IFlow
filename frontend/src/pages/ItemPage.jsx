@@ -39,40 +39,35 @@ export default function ItemPage() {
 
   const images = item.images && item.images.length ? item.images : [item.imageUrl || livroImg];
 
-  const handleValidar = () => {
-    navigate(`/validacao/${item.id}`); // ✅ envia o ID do item
-  };
+  const handleValidar = () => navigate(`/validacao/${item.id}`);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 px-4">
       <MenuOtherPages />
 
-      <div className="w-full max-w-5xl bg-white dark:bg-neutral-800 rounded-xl border border-neutral-300 dark:border-neutral-700 overflow-hidden shadow-md flex flex-col md:flex-row gap-6">
-        {/* Coluna esquerda: imagem / carrossel */}
-        <div className="md:w-1/2 h-96 bg-neutral-200 dark:bg-neutral-700 relative overflow-hidden flex items-center justify-center">
+      <div className="w-full max-w-5xl bg-white dark:bg-neutral-800 rounded-xl border border-neutral-300 dark:border-neutral-700 overflow-hidden shadow-md flex flex-col md:flex-row gap-6 mt-10">
+        {/* Coluna esquerda: carrossel */}
+        <div className="md:w-1/2 h-96 bg-neutral-200 dark:bg-neutral-700 relative flex items-center justify-center overflow-hidden rounded-xl">
           <img
             src={images[currentImage]}
             alt={`${item.title} - ${currentImage + 1}`}
             className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           />
+
           {images.length > 1 && (
             <>
               <button
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition"
                 onClick={() =>
-                  setCurrentImage((prev) =>
-                    prev === 0 ? images.length - 1 : prev - 1
-                  )
+                  setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))
                 }
               >
                 ◀
               </button>
               <button
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition"
                 onClick={() =>
-                  setCurrentImage((prev) =>
-                    prev === images.length - 1 ? 0 : prev + 1
-                  )
+                  setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
                 }
               >
                 ▶
@@ -98,13 +93,13 @@ export default function ItemPage() {
                 <strong>Categoria:</strong> {item.category?.name || "—"}
               </p>
               <p className="line-clamp-6">
-                {item.description || "Sem descrição"}
+                <strong>Descrição:</strong> {item.description || "Sem descrição"}
               </p>
             </div>
           </div>
 
           <button
-            onClick={handleValidar} // ✅ redireciona para /validacao/:id
+            onClick={handleValidar}
             className="w-full py-4 mt-6 rounded-md bg-green-600 dark:bg-green-700 text-white font-semibold hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
           >
             Solicitar

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import livroImg from "../assets/livro.jpg";
 
 export function useItens() {
   const [itens, setItens] = useState([]);
@@ -9,14 +10,24 @@ export function useItens() {
     async function fetchItens() {
       try {
         const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
         const res = await fetch(`${API_URL}/items`);
 
         if (!res.ok) {
           throw new Error("Erro ao buscar itens");
         }
+
         const data = await res.json();
-        setItens(data);
+
+        // Transformar cada item para garantir que images seja sempre array
+        const itensComImagens = data.map(item => ({
+          ...item,
+          images:
+            item.images?.length > 0
+              ? item.images.map(img => img.url)
+              : [item.imageUrl || livroImg],
+        }));
+
+        setItens(itensComImagens);
       } catch (err) {
         console.error(err);
         setError(err.message);

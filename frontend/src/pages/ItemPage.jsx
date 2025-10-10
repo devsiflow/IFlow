@@ -2,14 +2,18 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
 import livroImg from "../assets/livro.jpg";
+import LogoLoader from "../components/LogoLoader";
+
 
 export default function ItemPage() {
+  
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
-
+  
+  
   useEffect(() => {
     const fetchItem = async () => {
       try {
@@ -27,7 +31,8 @@ export default function ItemPage() {
     fetchItem();
   }, [id]);
 
-  if (loading) return <p className="p-6 text-center text-gray-500 dark:text-gray-400 text-lg">Carregando...</p>;
+  if (loading) return <LogoLoader />;
+  
   if (!item) return <p className="p-6 text-center text-gray-500 dark:text-gray-400 text-lg">Item não encontrado.</p>;
 
   const images = item.images && item.images.length ? item.images : [item.imageUrl || livroImg];

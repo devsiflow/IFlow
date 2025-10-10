@@ -25,7 +25,7 @@ app.use("/items", itemsRouter); // itens do banco de itens
 app.use("/admin", adminRoutes); // rota protegida para admins
 
 // validar itens perdidos, solicitação "é meu"
-app.use("/api/validacao", itemValidationRoutes);
+app.use("/validacao", itemValidationRoutes);
 
 
 const PORT = process.env.PORT || 5000;

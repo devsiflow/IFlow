@@ -18,35 +18,30 @@ function ValidarItem() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const response = await fetch("http://localhost:3000/api/validacao", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`, // se usar auth
-        },
-        body: JSON.stringify({
-          itemId: Number(itemId),
-          ...form,
-        }),
-      });
+  try {
+    const response = await fetch("https://iflow-zdbx.onrender.com/validacao", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(form),
+    });
 
-      if (!response.ok) throw new Error("Erro ao enviar respostas.");
-
-      const data = await response.json();
-      console.log("Validação salva:", data);
-      navigate("/validacaoConfirmada");
-    } catch (err) {
-      console.error(err);
-      alert("❌ Erro ao enviar a validação. Tente novamente.");
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erro do servidor: ${response.status} - ${errorText}`);
     }
-  };
+
+    console.log("✅ Respostas enviadas com sucesso!");
+    navigate("/validacaoConfirmada");
+  } catch (error) {
+    console.error("❌ Erro ao enviar validação:", error);
+    alert("Erro ao enviar validação. Veja o console para mais detalhes.");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-950 transition-colors duration-300">

@@ -41,7 +41,7 @@ async function generateThumbnail(file, maxSize = 400) {
 
 export default function CadastrarItem() {
   const navigate = useNavigate();
-  const { user, token, loading } = useAuth();
+  const { token, loading } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -60,7 +60,7 @@ export default function CadastrarItem() {
   };
 
   const handleImages = (e) => {
-    const files = Array.from(e.target.files).slice(0, 5); // máximo 5 imagens
+    const files = Array.from(e.target.files).slice(0, 5);
     const validFiles = files.filter((file) => file.type.startsWith("image/"));
     setImageFiles(validFiles);
     setImagePreviews(validFiles.map((f) => URL.createObjectURL(f)));
@@ -91,7 +91,6 @@ export default function CadastrarItem() {
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         const thumb = await generateThumbnail(file);
-
         const ext = thumb.name.split(".").pop();
         const fileName = `${Date.now()}_${i}.${ext}`;
         const filePath = `public/${fileName}`;
@@ -102,11 +101,15 @@ export default function CadastrarItem() {
 
         if (uploadError) throw uploadError;
 
-        const { data } = supabase.storage.from("iflow-item").getPublicUrl(filePath);
+        const { data } = supabase.storage
+          .from("iflow-item")
+          .getPublicUrl(filePath);
         uploadedUrls.push(data.publicUrl);
       }
 
-      const API_URL = import.meta.env.VITE_API_URL;
+      const API_URL = import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
+
+      // Enviar item para o backend — agora com campos esperados
       const res = await fetch(`${API_URL}/items`, {
         method: "POST",
         headers: {
@@ -116,18 +119,20 @@ export default function CadastrarItem() {
         body: JSON.stringify({
           title: form.name,
           description: form.description,
+          imageUrl: uploadedUrls[0] || null, // usa a primeira imagem como principal
+          status: "Perdido",
           location: form.local,
           categoryName: form.category,
-          images: uploadedUrls, // envia todas as URLs
         }),
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || "Erro ao cadastrar item");
       }
 
-      navigate("/catalogo"); 
+      alert("✅ Item cadastrado com sucesso!");
+      navigate("/userpage");
     } catch (err) {
       console.error(err);
       alert("Erro ao cadastrar item: " + err.message);
@@ -157,7 +162,7 @@ export default function CadastrarItem() {
                 onChange={handleChange}
                 required
                 placeholder="Ex: Mochila, Celular..."
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-400 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
               />
             </div>
 
@@ -173,7 +178,7 @@ export default function CadastrarItem() {
                 required
                 placeholder="Ex: Preta, com adesivo da Marvel..."
                 rows={4}
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 shadow-inner resize-none"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-400 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 resize-none"
               />
             </div>
 
@@ -188,7 +193,7 @@ export default function CadastrarItem() {
                 onChange={handleChange}
                 required
                 placeholder="Ex: Sala 101, Corredor perto do banheiro..."
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-400 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
               />
             </div>
 
@@ -202,7 +207,7 @@ export default function CadastrarItem() {
                 value={form.category}
                 onChange={handleChange}
                 required
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-300 dark:focus:border-indigo-400 dark:focus:ring-indigo-500 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 shadow-inner"
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-400 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
               >
                 <option value="">Selecione</option>
                 <option value="Eletrônico">Eletrônico</option>
@@ -220,7 +225,7 @@ export default function CadastrarItem() {
               }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
-              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition shadow-inner ${
+              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition ${
                 isDragging
                   ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
                   : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
@@ -260,8 +265,8 @@ export default function CadastrarItem() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-400 hover:from-indigo-700 hover:to-indigo-500 dark:from-indigo-800 dark:to-indigo-600 dark:hover:from-indigo-900 dark:hover:to-indigo-700 text-white font-bold rounded-2xl shadow-lg transition-transform transform ${
-                isSubmitting ? "opacity-70" : "hover:scale-105"
+              className={`w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-lg transition ${
+                isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
               }`}
             >
               {isSubmitting ? "⏳ Enviando..." : "✅ Cadastrar Item"}

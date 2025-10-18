@@ -127,7 +127,7 @@ export default function CadastrarItem() {
         throw new Error(errorData.error || "Erro ao cadastrar item");
       }
 
-      navigate("/catalogo");
+      navigate("/catalogo"); 
     } catch (err) {
       console.error(err);
       alert("Erro ao cadastrar item: " + err.message);

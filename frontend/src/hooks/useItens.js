@@ -18,13 +18,15 @@ export function useItens() {
 
         const data = await res.json();
 
-        // Transformar cada item para garantir que images seja sempre array
+        // Transformar cada item para garantir que images seja sempre array válido
         const itensComImagens = data.map(item => ({
           ...item,
           images:
             item.images?.length > 0
-              ? item.images.map(img => img.url)
-              : [item.imageUrl || livroImg],
+              ? item.images
+                  .map(img => img?.url) // Protege contra img null
+                  .filter(Boolean)      // Remove undefined/null
+              : [item.imageUrl || livroImg], // Fallback para imagem padrão
         }));
 
         setItens(itensComImagens);

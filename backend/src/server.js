@@ -6,6 +6,7 @@ import meRoutes from "./routes/me.js";
 import itemsRouter from "./routes/item.js";
 import adminRoutes from "./routes/admin.js";
 import itemValidationRoutes from "./routes/itemValidation.js";
+import dashboardRouter from "./routes/dashboard.js";
 
 dotenv.config();
 
@@ -14,8 +15,8 @@ const app = express();
 app.use(cors({ origin: "*", methods: ["GET","POST","PUT","DELETE"], credentials: true }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/dashboard", dashboardRouter);
 
-// tua linha leandro viado
 // app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Rotas

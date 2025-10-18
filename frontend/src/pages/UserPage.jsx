@@ -6,6 +6,7 @@ import LogoLoader from "../components/LogoLoader";
 import { useTheme } from "../context/ThemeContext";
 import livroImg from "../assets/livro.jpg";
 import Cropper from "react-easy-crop";
+import { motion } from "framer-motion";
 
 //Função para gerar recorte da imagem
 async function generateCroppedImage(file, crop = null, maxSize = 400) {
@@ -315,6 +316,33 @@ export default function UserPage() {
 
   return (
     <div className="relative min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden py-12 px-6 transition-colors duration-300">
+      {/* Fundo Animado - Barras voando */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        {[...Array(10)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute bg-gradient-to-r from-cyan-400/20 to-cyan-600/20 dark:from-cyan-400/10 dark:to-cyan-600/10 rounded-full"
+            style={{
+              width: Math.random() * 250 + 100,
+              height: 4,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              rotate: Math.random() * 45,
+            }}
+            initial={{ opacity: 0, x: -100 }}
+            animate={{
+              opacity: [0, 0.6, 0],
+              x: [0, 400, -400],
+              transition: {
+                duration: 10 + Math.random() * 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              },
+            }}
+          />
+        ))}
+      </div>
+
       {/* Tema */}
       <button
         onClick={toggleTheme}
@@ -336,8 +364,9 @@ export default function UserPage() {
       {/* Mensagem */}
       {message && (
         <div
-          className={`max-w-4xl mx-auto mb-4 p-4 rounded-md font-medium text-center text-white shadow-lg ${messageType === "success" ? "bg-green-600" : "bg-red-600"
-            }`}
+          className={`max-w-4xl mx-auto mb-4 p-4 rounded-md font-medium text-center text-white shadow-lg ${
+            messageType === "success" ? "bg-green-600" : "bg-red-600"
+          }`}
         >
           {message}
         </div>
@@ -474,12 +503,16 @@ export default function UserPage() {
                   document.getElementById("fileInput")?.click();
                 }
               }}
-              className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition ${previewUrl
+              className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition ${
+                previewUrl
                   ? "cursor-default opacity-100"
                   : "cursor-pointer hover:bg-cyan-50"
-                } ${isDragging ? "border-cyan-400 bg-cyan-50" : "border-gray-300 dark:border-gray-600"}`}
+              } ${
+                isDragging
+                  ? "border-cyan-400 bg-cyan-50"
+                  : "border-gray-300 dark:border-gray-600"
+              }`}
             >
-
               {previewUrl ? (
                 <div className="w-full h-64 relative">
                   {/* ADICIONADO: Cropper para recorte da imagem */}
@@ -562,10 +595,11 @@ export default function UserPage() {
                   {item.description}
                 </p>
                 <span
-                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${item.status === "Perdido"
+                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${
+                    item.status === "Perdido"
                       ? "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)] dark:bg-green-600 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.8)]"
                       : "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.7)] hover:shadow-[0_0_20px_rgba(239,68,68,0.9)] dark:bg-red-700 dark:shadow-[0_0_10px_rgba(239,68,68,0.5)] dark:hover:shadow-[0_0_20px_rgba(239,68,68,0.8)]"
-                    }`}
+                  }`}
                 >
                   {item.status}
                 </span>

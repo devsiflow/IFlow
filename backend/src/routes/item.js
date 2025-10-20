@@ -54,6 +54,55 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.post("/", authenticateToken, async (req, res) => {
+  try {
+    const { title, description, imageUrls, status, location, categoryName } = req.body;
+    const userId = req.user.id;
+
+    // Validações básicas
+    if (!title || !description || !location || !categoryName) {
+      return res.status(400).json({ error: "Preencha todos os campos obrigatórios" });
+    }
+
+    // Encontrar ou criar categoria
+    let category = await prisma.category.findFirst({
+      where: { name: categoryName }
+    });
+
+    if (!category) {
+      category = await prisma.category.create({
+        data: { name: categoryName }
+      });
+    }
+
+    // Criar item com imagens
+    const newItem = await prisma.item.create({
+      data: {
+        title,
+        description,
+        status: status || "Perdido",
+        location,
+        userId,
+        categoryId: category.id,
+        imageUrl: imageUrls?.[0] || null, // Primeira imagem como principal
+        images: imageUrls && imageUrls.length > 0 ? {
+          create: imageUrls.map(url => ({ url }))
+        } : undefined
+      },
+      include: {
+        category: true,
+        images: true,
+        user: { select: { id: true, name: true, profilePic: true } }
+      }
+    });
+
+    res.status(201).json(newItem);
+  } catch (err) {
+    console.error("Erro ao criar item:", err);
+    res.status(500).json({ error: "Erro interno do servidor: " + err.message });
+  }
+});
+
 
 
 export default router;

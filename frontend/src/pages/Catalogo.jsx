@@ -13,13 +13,21 @@ function Catalogo() {
   const [dateFilter, setDateFilter] = useState("");
 
   if (loading) return <LogoLoader />;
-  if (error) return <div className="p-6 text-center text-red-500">Erro: {error}</div>;
+  if (error)
+    return <div className="p-6 text-center text-red-500">Erro: {error}</div>;
 
   const filteredItems = itens.filter((item) => {
-    const nameMatch = (item.title ?? "").toLowerCase().includes(searchTerm.toLowerCase());
-    const statusMatch = statusFilter === "Todos" || item.status === statusFilter;
-    const localMatch = (item.location ?? "").toLowerCase().includes(localFilter.toLowerCase());
-    const dateMatch = !dateFilter || new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
+    const nameMatch = (item.title ?? "")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const statusMatch =
+      statusFilter === "Todos" || item.status === statusFilter;
+    const localMatch = (item.location ?? "")
+      .toLowerCase()
+      .includes(localFilter.toLowerCase());
+    const dateMatch =
+      !dateFilter ||
+      new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
     return nameMatch && statusMatch && localMatch && dateMatch;
   });
 
@@ -45,16 +53,6 @@ function Catalogo() {
               className="w-full pl-9 pr-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-1 focus:ring-green-600"
             />
           </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:outline-none focus:ring-1 focus:ring-green-600"
-          >
-            <option value="Todos">Todos</option>
-            <option value="Perdido">Perdido</option>
-            <option value="Encontrado">Encontrado</option>
-          </select>
 
           <input
             type="text"

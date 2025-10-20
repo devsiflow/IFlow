@@ -8,7 +8,7 @@ import livroImg from "../assets/livro.jpg";
 import Cropper from "react-easy-crop";
 import { motion } from "framer-motion";
 
-//Função para gerar recorte da imagem
+// Função para gerar recorte da imagem (mantida igual)
 async function generateCroppedImage(file, crop = null, maxSize = 400) {
   return new Promise((resolve) => {
     const img = new Image();
@@ -70,6 +70,120 @@ async function generateCroppedImage(file, crop = null, maxSize = 400) {
   });
 }
 
+// Componente de Partícula para o fundo
+const FloatingParticle = ({ index }) => {
+  const colors = [
+    "from-cyan-400/30 to-blue-500/30",
+    "from-purple-400/30 to-pink-500/30", 
+    "from-emerald-400/30 to-teal-500/30",
+    "from-amber-400/30 to-orange-500/30",
+    "from-violet-400/30 to-purple-500/30"
+  ];
+  
+  const sizes = [
+    { width: 120, height: 4 },
+    { width: 80, height: 3 },
+    { width: 200, height: 2 },
+    { width: 150, height: 5 },
+    { width: 100, height: 4 }
+  ];
+  
+  const color = colors[index % colors.length];
+  const size = sizes[index % sizes.length];
+  
+  return (
+    <motion.div
+      className={`absolute bg-gradient-to-r ${color} rounded-full blur-[1px]`}
+      style={{
+        width: size.width,
+        height: size.height,
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        rotate: Math.random() * 360,
+      }}
+      initial={{ 
+        opacity: 0, 
+        x: -100,
+        scale: 0.8 
+      }}
+      animate={{
+        opacity: [0, 0.8, 0],
+        x: [0, 500, -500],
+        y: [0, Math.random() * 100 - 50, 0],
+        scale: [0.8, 1.2, 0.8],
+        rotate: [0, 180, 360],
+        transition: {
+          duration: 15 + Math.random() * 10,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: Math.random() * 5,
+        },
+      }}
+    />
+  );
+};
+
+// Componente de Bolha Flutuante
+const FloatingBubble = ({ index }) => {
+  const sizes = [40, 60, 80, 100, 120];
+  const opacities = [0.1, 0.15, 0.2, 0.25];
+  
+  return (
+    <motion.div
+      className="absolute rounded-full bg-gradient-to-br from-cyan-400/20 to-blue-600/20 backdrop-blur-sm border border-cyan-300/30"
+      style={{
+        width: sizes[index % sizes.length],
+        height: sizes[index % sizes.length],
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+        opacity: opacities[index % opacities.length],
+      }}
+      initial={{ 
+        y: 100,
+        scale: 0 
+      }}
+      animate={{
+        y: [-100, 100, -100],
+        x: [0, Math.random() * 50 - 25, 0],
+        scale: [0, 1, 0],
+        rotate: [0, 180, 360],
+        transition: {
+          duration: 20 + Math.random() * 10,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: Math.random() * 8,
+        },
+      }}
+    />
+  );
+};
+
+// Componente de Efeito de Luz
+const LightBeam = ({ index }) => {
+  return (
+    <motion.div
+      className="absolute bg-gradient-to-b from-cyan-200/10 via-transparent to-transparent"
+      style={{
+        width: 2,
+        height: 300,
+        top: `${Math.random() * 100}%`,
+        left: `${Math.random() * 100}%`,
+      }}
+      initial={{ opacity: 0 }}
+      animate={{
+        opacity: [0, 0.6, 0],
+        x: [0, Math.random() * 200 - 100],
+        transition: {
+          duration: 8 + Math.random() * 4,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: Math.random() * 3,
+        },
+      }}
+    />
+  );
+};
+
 export default function UserPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -90,9 +204,8 @@ export default function UserPage() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  // Usa VITE_API_URL + fallback para dev local
-  const API_URL =
-    import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
+  
+  const API_URL = import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
 
   const getCroppedImg = (imageSrc, crop) => {
     return new Promise((resolve, reject) => {
@@ -118,14 +231,14 @@ export default function UserPage() {
       image.onerror = reject;
     });
   };
-  // Buscar usuário e itens
+
+  // Buscar usuário e itens (mantido igual)
   useEffect(() => {
     let mounted = true;
     const fetchUserAndItems = async () => {
       try {
         setLoading(true);
-        const { data: supData, error: supError } =
-          await supabase.auth.getUser();
+        const { data: supData, error: supError } = await supabase.auth.getUser();
         if (supError || !supData?.user) {
           navigate("/login");
           return;
@@ -137,7 +250,6 @@ export default function UserPage() {
         let profileData = {};
         if (token) {
           try {
-            // usar API_URL (substitui hardcode)
             const res = await fetch(`${API_URL}/me`, {
               headers: { Authorization: `Bearer ${token}` },
             });
@@ -163,13 +275,11 @@ export default function UserPage() {
 
         if (token) {
           try {
-            // buscar todos os itens e filtrar pelo usuário logado
             const resItems = await fetch(`${API_URL}/items`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             if (resItems.ok) {
               const data = await resItems.json();
-              // filtra items do usuário supData.user.id
               const myItems = Array.isArray(data)
                 ? data.filter((it) => it.user?.id === supData.user.id)
                 : [];
@@ -195,7 +305,7 @@ export default function UserPage() {
     };
   }, [navigate]);
 
-  // Preview imagem
+  // Preview imagem (mantido igual)
   useEffect(() => {
     if (!newImage) {
       setPreviewUrl(null);
@@ -206,7 +316,7 @@ export default function UserPage() {
     return () => URL.revokeObjectURL(objectUrl);
   }, [newImage]);
 
-  // Atualizar perfil
+  // Restante das funções mantidas iguais...
   const handleUpdate = async () => {
     try {
       const { error } = await supabase.auth.updateUser({
@@ -224,7 +334,6 @@ export default function UserPage() {
     }
   };
 
-  // Logout
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -234,7 +343,7 @@ export default function UserPage() {
       navigate("/login");
     }
   };
-  // Upload imagem com recorte
+
   const handleUpload = async () => {
     if (!newImage || !user) return;
     setUploading(true);
@@ -247,7 +356,6 @@ export default function UserPage() {
 
       const thumb = await generateCroppedImage(fileToUpload);
 
-      // Upload imagem com miniatura
       const fileExt = thumb.name.split(".").pop();
       const fileName = `${user.id}.${fileExt}`;
 
@@ -266,7 +374,6 @@ export default function UserPage() {
       if (!session) throw new Error("Usuário não está logado");
       const token = session.access_token;
 
-      // usar API_URL
       const res = await fetch(`${API_URL}/me`, {
         method: "PUT",
         headers: {
@@ -291,7 +398,6 @@ export default function UserPage() {
     }
   };
 
-  // Drag & Drop
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
@@ -299,7 +405,6 @@ export default function UserPage() {
     if (file && file.type.startsWith("image/")) setNewImage(file);
   };
 
-  // Deletar item
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm("Tem certeza que deseja remover este item?")) return;
     try {
@@ -327,71 +432,85 @@ export default function UserPage() {
 
   return (
     <div className="relative min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden py-12 px-6 transition-colors duration-300">
-      {/* Fundo Animado */}
+      {/* Fundo Animado Melhorado */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {[...Array(10)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute bg-gradient-to-r from-cyan-400/20 to-cyan-600/20 dark:from-cyan-400/10 dark:to-cyan-600/10 rounded-full"
-            style={{
-              width: Math.random() * 250 + 100,
-              height: 4,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              rotate: Math.random() * 45,
-            }}
-            initial={{ opacity: 0, x: -100 }}
-            animate={{
-              opacity: [0, 0.6, 0],
-              x: [0, 400, -400],
-              transition: {
-                duration: 10 + Math.random() * 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              },
-            }}
-          />
+        {/* Partículas flutuantes */}
+        {[...Array(25)].map((_, i) => (
+          <FloatingParticle key={`particle-${i}`} index={i} />
         ))}
+        
+        {/* Bolhas flutuantes */}
+        {[...Array(12)].map((_, i) => (
+          <FloatingBubble key={`bubble-${i}`} index={i} />
+        ))}
+        
+        {/* Raios de luz */}
+        {[...Array(8)].map((_, i) => (
+          <LightBeam key={`light-${i}`} index={i} />
+        ))}
+        
+        {/* Efeito de brilho central */}
+        <motion.div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400/10 to-blue-600/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
       </div>
 
       {/* Tema */}
       <button
         onClick={toggleTheme}
-        className="absolute top-4 right-4 z-50 p-2 rounded-full bg-gray-200 dark:bg-gray-800 shadow-md"
+        className="absolute top-4 right-4 z-50 p-3 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:scale-110"
       >
-        {theme === "light" ? <Moon /> : <Sun />}
+        {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
       </button>
 
       {/* Botão voltar */}
       <div className="flex items-center mb-6 relative z-10">
         <button
           onClick={() => navigate(-1)}
-          className="group p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition shadow-md"
+          className="group p-3 rounded-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 transition-all shadow-lg hover:shadow-xl border border-gray-200 dark:border-gray-700"
         >
-          <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+          <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-200 group-hover:scale-110 transition-transform" />
         </button>
       </div>
 
       {/* Mensagem */}
       {message && (
-        <div
-          className={`max-w-4xl mx-auto mb-4 p-4 rounded-md font-medium text-center text-white shadow-lg ${
-            messageType === "success" ? "bg-green-600" : "bg-red-600"
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`max-w-4xl mx-auto mb-6 p-4 rounded-xl font-medium text-center text-white shadow-2xl backdrop-blur-sm ${
+            messageType === "success" 
+              ? "bg-gradient-to-r from-green-500 to-emerald-600 border border-green-400" 
+              : "bg-gradient-to-r from-red-500 to-rose-600 border border-red-400"
           }`}
         >
           {message}
-        </div>
+        </motion.div>
       )}
 
       {/* Perfil */}
-      <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row gap-8 relative z-10 border border-gray-200 dark:border-gray-700 hover:shadow-[0_0_40px_rgba(0,255,255,0.08)] transition-transform transform hover:-translate-y-1">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-4xl mx-auto bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row gap-8 relative z-10 border border-white/20 dark:border-gray-700/50 hover:shadow-[0_0_50px_rgba(34,211,238,0.15)] transition-all duration-500"
+      >
         <div className="flex flex-col items-center md:w-1/3 relative">
           <div className="relative w-32 h-32 group">
             {!user.avatar_url ? (
-              <div className="w-32 h-32 rounded-full border-4 border-cyan-400 shadow-md flex items-center justify-center bg-gray-100 dark:bg-gray-700 group-hover:opacity-0 transition-opacity duration-300 relative">
+              <div className="w-32 h-32 rounded-full border-4 border-cyan-400 shadow-2xl flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 group-hover:opacity-0 transition-all duration-500 relative">
                 <User className="w-16 h-16 text-gray-400" />
                 {uploading && (
-                  <div className="absolute inset-0 flex justify-center items-center bg-black/30 rounded-full">
+                  <div className="absolute inset-0 flex justify-center items-center bg-black/30 rounded-full backdrop-blur-sm">
                     <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 )}
@@ -401,20 +520,20 @@ export default function UserPage() {
                 <img
                   src={user.avatar_url}
                   alt="Foto de perfil"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-cyan-400 shadow-md"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-cyan-400 shadow-2xl"
                 />
                 {uploading && (
-                  <div className="absolute inset-0 flex justify-center items-center bg-black/30 rounded-full">
+                  <div className="absolute inset-0 flex justify-center items-center bg-black/30 rounded-full backdrop-blur-sm">
                     <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 )}
               </div>
             )}
             <div
-              className="absolute inset-0 bg-cyan-500/40 opacity-0 group-hover:opacity-100 flex justify-center items-center rounded-full cursor-pointer transition-opacity"
+              className="absolute inset-0 bg-gradient-to-br from-cyan-500/60 to-blue-600/60 opacity-0 group-hover:opacity-100 flex justify-center items-center rounded-full cursor-pointer transition-all duration-500 backdrop-blur-sm"
               onClick={() => setShowModal(true)}
             >
-              <span className="text-white font-semibold text-center">
+              <span className="text-white font-semibold text-center text-sm">
                 + Alterar Foto
               </span>
             </div>
@@ -422,7 +541,7 @@ export default function UserPage() {
         </div>
 
         <div className="flex-1 space-y-4">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 tracking-wide">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent tracking-wide">
             Meu Perfil
           </h1>
           {!editing ? (
@@ -438,13 +557,13 @@ export default function UserPage() {
               </p>
               <div className="flex gap-3 mt-4">
                 <button
-                  className="px-5 py-2 bg-cyan-500 text-white rounded-xl hover:bg-cyan-400 transition-shadow shadow-md hover:shadow-lg"
+                  className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl hover:from-cyan-400 hover:to-blue-400 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                   onClick={() => setEditing(true)}
                 >
                   Editar Perfil
                 </button>
                 <button
-                  className="px-5 py-2 bg-red-600 text-white rounded-xl hover:bg-red-500 transition-shadow shadow-md hover:shadow-lg"
+                  className="px-5 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl hover:from-red-400 hover:to-rose-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                   onClick={handleLogout}
                 >
                   Sair
@@ -457,24 +576,24 @@ export default function UserPage() {
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2 border rounded-md border-cyan-400 focus:ring-2 focus:ring-cyan-300 focus:outline-none dark:bg-gray-700 dark:text-gray-100"
+                className="w-full px-4 py-2 border-2 rounded-xl border-cyan-400 focus:ring-2 focus:ring-cyan-300 focus:outline-none dark:bg-gray-700 dark:text-gray-100 transition-all"
               />
               <input
                 type="email"
                 value={form.email}
                 disabled
-                className="w-full px-4 py-2 border rounded-md bg-gray-100 dark:bg-gray-700 cursor-not-allowed dark:text-gray-300"
+                className="w-full px-4 py-2 border-2 rounded-xl bg-gray-100 dark:bg-gray-700 cursor-not-allowed dark:text-gray-300 border-gray-300"
               />
               <div className="flex gap-3">
                 <button
                   onClick={handleUpdate}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-500"
+                  className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-400 hover:to-emerald-500 transition-all shadow-lg hover:scale-105"
                 >
                   Salvar
                 </button>
                 <button
                   onClick={() => setEditing(false)}
-                  className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500"
+                  className="px-4 py-2 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-xl hover:from-gray-300 hover:to-gray-400 transition-all shadow-lg hover:scale-105"
                 >
                   Cancelar
                 </button>
@@ -482,22 +601,22 @@ export default function UserPage() {
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Modal upload */}
+      {/* Modal upload (mantido igual) */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 px-4">
-          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-2xl relative shadow-2xl">
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 px-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 w-full max-w-2xl relative shadow-2xl border border-white/20 dark:border-gray-700/50">
             <button
               onClick={() => {
                 setShowModal(false);
                 setNewImage(null);
               }}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all"
             >
               <X size={24} />
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
               Alterar Foto de Perfil
             </h2>
 
@@ -509,24 +628,22 @@ export default function UserPage() {
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
               onClick={() => {
-                // Impede o clique se já existir imagem carregada
                 if (!previewUrl) {
                   document.getElementById("fileInput")?.click();
                 }
               }}
-              className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition ${
+              className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition-all duration-300 ${
                 previewUrl
-                  ? "cursor-default opacity-100"
-                  : "cursor-pointer hover:bg-cyan-50"
+                  ? "cursor-default opacity-100 border-cyan-400 bg-cyan-50/50 dark:bg-cyan-900/20"
+                  : "cursor-pointer hover:bg-cyan-50 dark:hover:bg-cyan-900/10"
               } ${
                 isDragging
-                  ? "border-cyan-400 bg-cyan-50"
+                  ? "border-cyan-400 bg-cyan-50 dark:bg-cyan-900/20"
                   : "border-gray-300 dark:border-gray-600"
               }`}
             >
               {previewUrl ? (
                 <div className="w-full h-64 relative">
-                  {/* ADICIONADO: Cropper para recorte da imagem */}
                   <Cropper
                     image={previewUrl}
                     crop={crop}
@@ -545,7 +662,7 @@ export default function UserPage() {
                       setNewImage(null);
                       setPreviewUrl(null);
                     }}
-                    className="absolute bottom-2 right-2 px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-500"
+                    className="absolute bottom-2 right-2 px-3 py-1 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-400 hover:to-rose-500 transition-all shadow-lg"
                   >
                     Remover imagem
                   </button>
@@ -573,7 +690,7 @@ export default function UserPage() {
             <button
               onClick={handleUpload}
               disabled={uploading || !newImage}
-              className="mt-6 w-full py-3 bg-cyan-500 text-white font-medium rounded-xl hover:bg-cyan-400 disabled:opacity-50"
+              className="mt-6 w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-xl hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl hover:scale-105 disabled:hover:scale-100"
             >
               {uploading ? "Enviando..." : "Salvar Foto"}
             </button>
@@ -582,21 +699,27 @@ export default function UserPage() {
       )}
 
       {/* Meus itens */}
-      <div className="max-w-4xl mx-auto mt-12 relative z-10">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="max-w-4xl mx-auto mt-12 relative z-10"
+      >
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-6">
           📦 Meus Itens
         </h2>
         {items.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {items.map((item) => (
-              <div
+              <motion.div
                 key={item.id}
-                className="border rounded-2xl shadow-md bg-white dark:bg-gray-800 hover:shadow-xl transition-transform transform hover:-translate-y-1 p-4 flex flex-col border-cyan-200 dark:border-gray-700"
+                whileHover={{ scale: 1.05 }}
+                className="border rounded-2xl shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 p-4 flex flex-col border-cyan-200 dark:border-gray-700"
               >
                 <img
                   src={item.imageUrl || livroImg}
                   alt={item.title}
-                  className="w-full h-36 object-contain mb-3 cursor-pointer rounded-lg"
+                  className="w-full h-36 object-contain mb-3 cursor-pointer rounded-lg hover:scale-105 transition-transform"
                   onClick={() => navigate(`/item/${item.id}`)}
                 />
                 <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
@@ -606,29 +729,29 @@ export default function UserPage() {
                   {item.description}
                 </p>
                 <span
-                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-md ${
+                  className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-xl ${
                     item.status === "Perdido"
-                      ? "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.7)] hover:shadow-[0_0_20px_rgba(34,197,94,0.9)] dark:bg-green-600 dark:shadow-[0_0_10px_rgba(34,197,94,0.5)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.8)]"
-                      : "bg-red-600 text-white shadow-[0_0_10px_rgba(239,68,68,0.7)] hover:shadow-[0_0_20px_rgba(239,68,68,0.9)] dark:bg-red-700 dark:shadow-[0_0_10px_rgba(239,68,68,0.5)] dark:hover:shadow-[0_0_20px_rgba(239,68,68,0.8)]"
+                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-2xl"
+                      : "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg hover:shadow-2xl"
                   }`}
                 >
                   {item.status}
                 </span>
                 <button
                   onClick={() => handleDeleteItem(item.id)}
-                  className="mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 transition"
+                  className="mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white text-sm rounded-lg hover:from-red-400 hover:to-rose-500 transition-all shadow-lg hover:scale-105"
                 >
                   <Trash2 className="w-4 h-4" /> Remover
                 </button>
-              </div>
+              </motion.div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-gray-500 dark:text-gray-400 text-center py-8 bg-white/50 dark:bg-gray-800/50 rounded-2xl backdrop-blur-sm">
             Você ainda não cadastrou nenhum item.
           </p>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

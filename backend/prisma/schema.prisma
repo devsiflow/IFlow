@@ -8,19 +8,39 @@ datasource db {
 }
 
 model Profile {
-  id         String   @id // UUID do Supabase Auth
-  name       String
-  matricula  String   @unique
-  profilePic String?
-  createdAt  DateTime @default(now())
-  isAdmin   Boolean  @default(false)
-  items      Item[]
+  id           String           @id // UUID do Supabase Auth
+  name         String
+  matricula    String            @unique
+  profilePic   String?
+  createdAt    DateTime          @default(now())
+  isAdmin      Boolean           @default(false)
+  isSuperAdmin Boolean           @default(false)
+
+  // Relações
+  items        Item[]
+  validations  ItemValidation[]  @relation("ProfileValidations")
 }
 
 model Category {
   id    Int    @id @default(autoincrement())
   name  String @unique
   items Item[]
+}
+
+model Item {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String
+  status      String           @default("perdido")
+  location    String
+  createdAt   DateTime         @default(now())
+  userId      String
+  categoryId  Int?
+
+  user        Profile           @relation(fields: [userId], references: [id])
+  category    Category?         @relation(fields: [categoryId], references: [id])
+  images      ItemImage[]
+  validations ItemValidation[]  @relation("ItemValidations")
 }
 
 model ItemImage {
@@ -30,28 +50,10 @@ model ItemImage {
   item   Item   @relation(fields: [itemId], references: [id])
 }
 
-model Item {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String
-  status      String   @default("perdido")
-  location    String
-  createdAt   DateTime @default(now())
-  imageUrl    String?
-  thumbnailUrl String?     
-  userId      String
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
-  user        Profile  @relation(fields: [userId], references: [id])
-  images      ItemImage[]
-
-  validations ItemValidation[]  // ✅ relação oposta
-}
-
 model ItemValidation {
   id              Int       @id @default(autoincrement())
-  userId          String?   
-  itemId          Int       
+  userId          String?
+  itemId          Int
   descricao       String
   localPerda      String
   detalhesUnicos  String
@@ -59,6 +61,7 @@ model ItemValidation {
   momentoPerda    String
   createdAt       DateTime  @default(now())
 
-  // Relação com Item
-  item Item @relation(fields: [itemId], references: [id]) // ✅ remove o opcional se itemId é obrigatório
+  // Relações
+  profile Profile? @relation("ProfileValidations", fields: [userId], references: [id])
+  item    Item     @relation("ItemValidations", fields: [itemId], references: [id])
 }

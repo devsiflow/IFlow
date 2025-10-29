@@ -13,26 +13,30 @@ export function useItens() {
         const res = await fetch(`${API_URL}/items`);
 
         if (!res.ok) {
-          throw new Error("Erro ao buscar itens");
+          throw new Error(`Erro ao buscar itens: ${res.status}`);
         }
 
         const data = await res.json();
+        console.log("Resposta da API /items:", data);
 
-        // Transformar cada item para garantir que images seja sempre array válido
-        const itensComImagens = data.map(item => ({
+        // Se o backend retorna { items, total }
+        const itemsArray = Array.isArray(data.items) ? data.items : Array.isArray(data) ? data : [];
+
+        // Garantir que cada item tenha imagens válidas
+        const itensComImagens = itemsArray.map((item) => ({
           ...item,
           images:
             item.images?.length > 0
               ? item.images
-                  .map(img => img?.url) // Protege contra img null
-                  .filter(Boolean)      // Remove undefined/null
-              : [item.imageUrl || livroImg], // Fallback para imagem padrão
+                  .map((img) => img?.url)
+                  .filter(Boolean)
+              : [item.imageUrl || livroImg],
         }));
 
         setItens(itensComImagens);
       } catch (err) {
-        console.error(err);
-        setError(err.message);
+        console.error("Erro no useItens:", err);
+        setError(err.message || "Erro ao carregar itens");
       } finally {
         setLoading(false);
       }

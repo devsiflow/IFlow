@@ -113,19 +113,32 @@ O desenvolvimento do IFLOW seguiu uma *metodologia ágil e incremental*, com foc
 iflow/
 ├── backend/
 │   ├── src/
+
 │   │   ├── routes/
+
 │   │   ├── middleware/
+
 │   │   ├── lib/
+
 │   │   └── prisma/
+
 │   └── server.js
+
 │
-├── frontend/
+├── frontend
+
 │   ├── src/
+
 │   │   ├── pages/
+
 │   │   ├── components/
+
 │   │   ├── hooks/
+
 │   │   └── assets/
+
 │   └── main.jsx
+
 │
 └── README.md
 

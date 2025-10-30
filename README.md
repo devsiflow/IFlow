@@ -138,9 +138,9 @@ iflow/
 | Nome                                   | Função                         | Contato                                                                     |
 | -------------------------------------- | ------------------------------ | --------------------------------------------------------------------------- |
 
-| *Jackson Luis Fagundes Schirigatti*     | Backend / Banco de Dados | [jacksonschirigatti.fag@gmail.com](mailto:jacksonschirigatti.fag@gmail.com) |       )                 |
-| *Leandro Raphael de Souza Klaen*  | Frontend / Design de Interface | [leandroklaen16@gmail.com](mailto:leandroklaen16@gmail.com) |       )
-| *João Vitor Vicente Franco de Souza* | Fullstack / Deploy             | [joaovitorvicente769@gmail.com](mailto:joaovitorvicente769@gmail.com)       |
+| *Jackson Luis Fagundes Schirigatti*   
+| *Leandro Raphael de Souza Klaen*  
+| *João Vitor Vicente Franco de Souza* 
 
 *Orientadores:*
 👨‍🏫 Prof. Fábio Luiz Pessoa Albini

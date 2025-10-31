@@ -87,18 +87,23 @@ O desenvolvimento do IFLOW seguiu uma *metodologia ágil e incremental*, com foc
 
 
 🧭 **Página Inicial**
+
 <img src="./frontend/src/assets/prints/home.png" width="600"/>
 
 🔎 **Catálogo de itens**
+
 <img src="./frontend/src/assets/prints/catalogo.png" width="600"/>
 
 ⚙️ **Painel Administrativo**
+
 <img src="./frontend/src/assets/prints/admin.png" width="600"/>
 
 📊 **Dashboard**
+
 <img src="./frontend/src/assets/prints/dashboard.png" width="600"/>
 
 👤 **Página do usuário**
+
 <img src="./frontend/src/assets/prints/user.png" width="600"/>
 
 

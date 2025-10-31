@@ -74,23 +74,23 @@ async function generateCroppedImage(file, crop = null, maxSize = 400) {
 const FloatingParticle = ({ index }) => {
   const colors = [
     "from-cyan-400/30 to-blue-500/30",
-    "from-purple-400/30 to-pink-500/30", 
+    "from-purple-400/30 to-pink-500/30",
     "from-emerald-400/30 to-teal-500/30",
     "from-amber-400/30 to-orange-500/30",
-    "from-violet-400/30 to-purple-500/30"
+    "from-violet-400/30 to-purple-500/30",
   ];
-  
+
   const sizes = [
     { width: 120, height: 4 },
     { width: 80, height: 3 },
     { width: 200, height: 2 },
     { width: 150, height: 5 },
-    { width: 100, height: 4 }
+    { width: 100, height: 4 },
   ];
-  
+
   const color = colors[index % colors.length];
   const size = sizes[index % sizes.length];
-  
+
   return (
     <motion.div
       className={`absolute bg-gradient-to-r ${color} rounded-full blur-[1px]`}
@@ -101,10 +101,10 @@ const FloatingParticle = ({ index }) => {
         left: `${Math.random() * 100}%`,
         rotate: Math.random() * 360,
       }}
-      initial={{ 
-        opacity: 0, 
+      initial={{
+        opacity: 0,
         x: -100,
-        scale: 0.8 
+        scale: 0.8,
       }}
       animate={{
         opacity: [0, 0.8, 0],
@@ -127,7 +127,7 @@ const FloatingParticle = ({ index }) => {
 const FloatingBubble = ({ index }) => {
   const sizes = [40, 60, 80, 100, 120];
   const opacities = [0.1, 0.15, 0.2, 0.25];
-  
+
   return (
     <motion.div
       className="absolute rounded-full bg-gradient-to-br from-cyan-400/20 to-blue-600/20 backdrop-blur-sm border border-cyan-300/30"
@@ -138,9 +138,9 @@ const FloatingBubble = ({ index }) => {
         left: `${Math.random() * 100}%`,
         opacity: opacities[index % opacities.length],
       }}
-      initial={{ 
+      initial={{
         y: 100,
-        scale: 0 
+        scale: 0,
       }}
       animate={{
         y: [-100, 100, -100],
@@ -204,8 +204,37 @@ export default function UserPage() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  
-  const API_URL = import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
+
+  const API_URL =
+    import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
+
+  const fetchMyItems = async (token, userId) => {
+    try {
+      // Primeiro busca todos os itens
+      const res = await fetch(`${API_URL}/items`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const allItems = data.items || [];
+
+        // Filtra apenas os itens do usuário atual
+        const myItems = allItems.filter((item) => item.userId === userId);
+        console.log(
+          "🎯 Itens filtrados:",
+          myItems.length,
+          "de",
+          allItems.length
+        );
+        return myItems;
+      }
+      return [];
+    } catch (error) {
+      console.error("Erro ao buscar itens:", error);
+      return [];
+    }
+  };
 
   const getCroppedImg = (imageSrc, crop) => {
     return new Promise((resolve, reject) => {
@@ -238,7 +267,8 @@ export default function UserPage() {
     const fetchUserAndItems = async () => {
       try {
         setLoading(true);
-        const { data: supData, error: supError } = await supabase.auth.getUser();
+        const { data: supData, error: supError } =
+          await supabase.auth.getUser();
         if (supError || !supData?.user) {
           navigate("/login");
           return;
@@ -275,18 +305,12 @@ export default function UserPage() {
 
         if (token) {
           try {
-            const resItems = await fetch(`${API_URL}/items`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (resItems.ok) {
-              const data = await resItems.json();
-              const myItems = Array.isArray(data)
-                ? data.filter((it) => it.user?.id === supData.user.id)
-                : [];
-              if (mounted) setItems(myItems);
-            } else {
-              console.error("Erro ao buscar itens:", await resItems.text());
-            }
+            // 🔥 AGORA USA A FUNÇÃO fetchMyItems
+            console.log("🔄 Buscando itens do usuário:", supData.user.id);
+            const myItems = await fetchMyItems(token, supData.user.id);
+
+            console.log("✅ Itens carregados:", myItems.length);
+            if (mounted) setItems(myItems);
           } catch (err) {
             console.error("Erro fetch items:", err);
           }
@@ -438,17 +462,17 @@ export default function UserPage() {
         {[...Array(25)].map((_, i) => (
           <FloatingParticle key={`particle-${i}`} index={i} />
         ))}
-        
+
         {/* Bolhas flutuantes */}
         {[...Array(12)].map((_, i) => (
           <FloatingBubble key={`bubble-${i}`} index={i} />
         ))}
-        
+
         {/* Raios de luz */}
         {[...Array(8)].map((_, i) => (
           <LightBeam key={`light-${i}`} index={i} />
         ))}
-        
+
         {/* Efeito de brilho central */}
         <motion.div
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400/10 to-blue-600/10 rounded-full blur-3xl"
@@ -469,7 +493,11 @@ export default function UserPage() {
         onClick={toggleTheme}
         className="absolute top-4 right-4 z-50 p-3 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:scale-110"
       >
-        {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+        {theme === "light" ? (
+          <Moon className="w-5 h-5" />
+        ) : (
+          <Sun className="w-5 h-5" />
+        )}
       </button>
 
       {/* Botão voltar */}
@@ -488,8 +516,8 @@ export default function UserPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className={`max-w-4xl mx-auto mb-6 p-4 rounded-xl font-medium text-center text-white shadow-2xl backdrop-blur-sm ${
-            messageType === "success" 
-              ? "bg-gradient-to-r from-green-500 to-emerald-600 border border-green-400" 
+            messageType === "success"
+              ? "bg-gradient-to-r from-green-500 to-emerald-600 border border-green-400"
               : "bg-gradient-to-r from-red-500 to-rose-600 border border-red-400"
           }`}
         >
@@ -717,10 +745,10 @@ export default function UserPage() {
                 className="border rounded-2xl shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 p-4 flex flex-col border-cyan-200 dark:border-gray-700"
               >
                 <img
-                  src={item.imageUrl || livroImg}
+                  src={item.images?.[0]?.url || livroImg}
                   alt={item.title}
                   className="w-full h-36 object-contain mb-3 cursor-pointer rounded-lg hover:scale-105 transition-transform"
-                  onClick={() => navigate(`/item/${item.id}`)}
+                  onClick={() => navigate(`/itempage/${item.id}`)}
                 />
                 <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-lg">
                   {item.title}

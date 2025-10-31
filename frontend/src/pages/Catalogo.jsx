@@ -35,11 +35,8 @@ function Catalogo() {
     <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
       <MenuCatalogo />
 
-      <div className="pt-24 px-6 max-w-7xl mx-auto">
-        {/* Cabeçalho */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight">Catálogo</h1>
-        </div>
+      <div className="pt-32 px-6 max-w-7xl mx-auto">
+      
 
         {/* Filtros */}
         <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">

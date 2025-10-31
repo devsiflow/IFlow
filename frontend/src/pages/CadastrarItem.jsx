@@ -91,10 +91,10 @@ export default function CadastrarItem() {
     setImagePreviews(newPreviews);
   };
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validações
+    // Suas validações atuais...
     if (!form.name || !form.description || !form.local || !form.category) {
       alert("Preencha todos os campos!");
       return;
@@ -113,9 +113,41 @@ export default function CadastrarItem() {
     setIsSubmitting(true);
 
     try {
+      // PRIMEIRO: Verificar/criar perfil do usuário
+      const API_URL =
+        import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
+
+      // Obter dados do usuário logado
+      const userData = await supabase.auth.getUser(token);
+      const user = userData.data.user;
+
+      // Tenta criar/atualizar o perfil usando a rota /me
+      const profileResponse = await fetch(`${API_URL}/me`, {
+        method: "PUT", // Usa PUT para criar/atualizar
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: user.user_metadata?.name || "Usuário",
+          matricula:
+            user.user_metadata?.matricula || `user_${user.id.slice(0, 8)}`,
+          profilePic: user.user_metadata?.avatar_url || null,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        const errorText = await profileResponse.text();
+        console.error("Resposta do perfil:", errorText);
+        throw new Error(`Erro ao criar perfil: ${profileResponse.status}`);
+      }
+
+      const profileData = await profileResponse.json();
+      console.log("Perfil sincronizado:", profileData);
+
+      // DEPOIS: Continua com o upload das imagens e criação do item
       const uploadedUrls = [];
 
-      // Upload de imagens para o Supabase
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         const thumb = await generateThumbnail(file);
@@ -139,19 +171,7 @@ export default function CadastrarItem() {
         uploadedUrls.push(data.publicUrl);
       }
 
-      const API_URL =
-        import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
-
-      console.log("Enviando dados para API:", {
-        title: form.name,
-        description: form.description,
-        imageUrls: uploadedUrls,
-        status: "Perdido",
-        location: form.local,
-        categoryName: form.category,
-      });
-
-      // Enviar item para o backend
+      // Agora cria o item
       const res = await fetch(`${API_URL}/items`, {
         method: "POST",
         headers: {
@@ -161,14 +181,25 @@ export default function CadastrarItem() {
         body: JSON.stringify({
           title: form.name,
           description: form.description,
-          imageUrls: uploadedUrls, // Envia TODAS as imagens
-          status: "Perdido",
+          imageUrls: uploadedUrls,
+          status: "perdido",
           location: form.local,
           categoryName: form.category,
         }),
       });
 
-      const responseData = await res.json();
+      // Verifica se a resposta é JSON válido
+      const responseText = await res.text();
+      let responseData;
+
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Resposta não é JSON:", responseText);
+        throw new Error(
+          `Resposta inválida da API: ${responseText.substring(0, 100)}`
+        );
+      }
 
       if (!res.ok) {
         throw new Error(
@@ -177,10 +208,7 @@ export default function CadastrarItem() {
       }
 
       console.log("Item criado com sucesso:", responseData);
-      
-      // REMOVENDO O ALERT E REDIRECIONANDO DIRETAMENTE
-      navigate("/catalogo"); // Alterado de "/perfil" para "/catalogo"
-      
+      navigate("/catalogo");
     } catch (err) {
       console.error("Erro completo:", err);
       alert("Erro ao cadastrar item: " + err.message);

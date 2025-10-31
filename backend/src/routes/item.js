@@ -7,7 +7,7 @@ const router = express.Router();
 /* LISTAR ITENS (público) */
 router.get("/", async (req, res) => {
   try {
-    const { status, category, q, page = 1, pageSize = 20 } = req.query;
+    const { status, category, q, page = 1, pageSize = 20, user } = req.query;
     const where = {};
 
     if (status && status !== "Todos") where.status = status;
@@ -19,6 +19,9 @@ router.get("/", async (req, res) => {
         { title: { contains: q, mode: "insensitive" } },
         { description: { contains: q, mode: "insensitive" } }
       ];
+    }
+    if (user) {
+      where.userId = user;
     }
 
     const items = await prisma.item.findMany({
@@ -33,6 +36,32 @@ router.get("/", async (req, res) => {
     res.json({ items, total });
   } catch (err) {
     console.error("Erro listando items:", err);
+    res.status(500).json({ error: "Erro interno do servidor: " + err.message });
+  }
+});
+
+/* LISTAR ITENS DO USUÁRIO LOGADO (autenticado) */
+router.get("/meus-itens", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { page = 1, pageSize = 20 } = req.query;
+
+    const items = await prisma.item.findMany({
+      where: { userId }, // Filtra apenas os itens do usuário logado
+      include: { 
+        images: true, 
+        category: true, 
+        user: { select: { id: true, name: true, profilePic: true } } 
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (Number(page) - 1) * Number(pageSize),
+      take: Number(pageSize)
+    });
+
+    const total = await prisma.item.count({ where: { userId } });
+    res.json({ items, total });
+  } catch (err) {
+    console.error("Erro listando itens do usuário:", err);
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
@@ -59,8 +88,9 @@ router.post("/", authenticateToken, async (req, res) => {
     const { title, description, imageUrls = [], status = "perdido", location, categoryName } = req.body;
     const userId = req.user.id;
 
-    if (!title || !description || !location) {
-      return res.status(400).json({ error: "Preencha title, description e location" });
+    // Validação mais robusta
+    if (!title || !description || !location || !categoryName) {
+      return res.status(400).json({ error: "Preencha title, description, location e categoryName" });
     }
 
     // encontrar/ criar categoria

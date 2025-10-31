@@ -84,29 +84,25 @@ O desenvolvimento do IFLOW seguiu uma *metodologia ágil e incremental*, com foc
 
 ## 🖼️ Demonstração
 
-### 💻 Interface do Usuário
 
-![Tela inicial](./assets/demo/home.gif)
 
-### ⚙️ Painel Administrativo
+🧭 **Página Inicial**
+<img src="./frontend/src/assets/prints/home.png" width="600"/>
 
-![Painel admin](./assets/demo/admin.gif)
+🔎 **Catálogo de itens**
+<img src="./frontend/src/assets/prints/catalogo.png" width="600"/>
 
-### 📊 Dashboard e Relatórios
+⚙️ **Painel Administrativo**
+<img src="./frontend/src/assets/prints/admin.png" width="600"/>
 
-![Dashboard](./assets/demo/dashboard.gif)
+📊 **Dashboard**
+<img src="./frontend/src/assets/prints/dashboard.png" width="600"/>
 
-### 📱 Layout Responsivo
+👤 **Página do usuário**
+<img src="./frontend/src/assets/prints/user.png" width="600"/>
 
-![Responsivo](./assets/demo/mobile.gif)
 
-> 💡 Para adicionar GIFs no README, basta colocá-los dentro de uma pasta (ex: ./assets/demo/) e usar a sintaxe:
->
-> md
-> ![Descrição do GIF](./assets/demo/nome-do-gif.gif)
-> 
 
----
 
 ## 🧩 Estrutura do Projeto
 
@@ -166,20 +162,17 @@ bash
 # Clone o repositório
 git clone https://github.com/seu-usuario/iflow.git
 
-# Acesse o diretório
-cd iflow
-
-# Instale as dependências
-npm install
-
 # Configure as variáveis de ambiente (.env)
 
 # Rode o backend
 cd backend
+npm install
+npx prisma generate 
 npm run dev
 
 # Rode o frontend
-cd ../frontend
+cd frontend
+npm install
 npm run dev
 
 

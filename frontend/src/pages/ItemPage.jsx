@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
@@ -10,7 +11,8 @@ export default function ItemPage() {
   const navigate = useNavigate();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentImage, setCurrentImage] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -30,6 +32,34 @@ export default function ItemPage() {
     fetchItem();
   }, [id]);
 
+  const images = item?.images && item.images.length > 0 
+    ? item.images.map(img => img.url) 
+    : [livroImg];
+
+  const nextImage = () => {
+    if (isTransitioning || images.length <= 1) return;
+    
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setTimeout(() => setIsTransitioning(false), 500);
+  };
+
+  const prevImage = () => {
+    if (isTransitioning || images.length <= 1) return;
+    
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setTimeout(() => setIsTransitioning(false), 500);
+  };
+
+  const goToImage = (index) => {
+    if (isTransitioning || index === currentIndex) return;
+    
+    setIsTransitioning(true);
+    setCurrentIndex(index);
+    setTimeout(() => setIsTransitioning(false), 500);
+  };
+
   if (loading) return <LogoLoader />;
 
   if (!item)
@@ -38,12 +68,6 @@ export default function ItemPage() {
         Item não encontrado.
       </p>
     );
-
-  const images = item.images && item.images.length > 0 
-    ? item.images.map(img => img.url) 
-    : [livroImg];
-
-  console.log("Imagens processadas:", images);
 
   const handleValidar = () => navigate(`/validacao/${item.id}`);
 
@@ -56,31 +80,40 @@ export default function ItemPage() {
         <div className="md:w-1/2 h-96 bg-neutral-200 dark:bg-neutral-700 relative flex items-center justify-center overflow-hidden rounded-xl">
           {images.length > 0 ? (
             <>
-              <img
-                src={images[currentImage]}
-                alt={`${item.title} - ${currentImage + 1}`}
-                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                onError={(e) => {
-                  console.error("Erro ao carregar imagem:", images[currentImage]);
-                  e.target.src = livroImg;
-                }}
-              />
+              <div className="relative w-full h-full">
+                {images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image}
+                    alt={`${item.title} - ${index + 1}`}
+                    className={`absolute w-full h-full object-cover transition-all duration-500 ease-in-out
+                      ${index === currentIndex 
+                        ? 'opacity-100 scale-100' 
+                        : 'opacity-0 scale-105'
+                      } hover:scale-105`}
+                    onError={(e) => {
+                      console.error("Erro ao carregar imagem:", images[currentIndex]);
+                      e.target.src = livroImg;
+                    }}
+                  />
+                ))}
+              </div>
 
               {images.length > 1 && (
                 <>
                   <button
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition"
-                    onClick={() =>
-                      setCurrentImage((prev) => (prev === 0 ? images.length - 1 : prev - 1))
-                    }
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/70 text-white p-2 rounded-full 
+                               hover:bg-black/90 transition-all duration-300 ease-in-out transform hover:scale-110 
+                               shadow-lg"
+                    onClick={prevImage}
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition"
-                    onClick={() =>
-                      setCurrentImage((prev) => (prev === images.length - 1 ? 0 : prev + 1))
-                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/70 text-white p-2 rounded-full 
+                               hover:bg-black/90 transition-all duration-300 ease-in-out transform hover:scale-110 
+                               shadow-lg"
+                    onClick={nextImage}
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -90,12 +123,12 @@ export default function ItemPage() {
                     {images.map((_, index) => (
                       <button
                         key={index}
-                        className={`w-3 h-3 rounded-full transition-all ${
-                          index === currentImage
-                            ? "bg-white"
-                            : "bg-white/50"
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          index === currentIndex
+                            ? "bg-white scale-125 shadow-lg"
+                            : "bg-white/60 hover:bg-white/80"
                         }`}
-                        onClick={() => setCurrentImage(index)}
+                        onClick={() => goToImage(index)}
                       />
                     ))}
                   </div>
@@ -148,7 +181,9 @@ export default function ItemPage() {
 
           <button
             onClick={handleValidar}
-            className="w-full py-4 mt-6 rounded-md bg-green-600 dark:bg-green-700 text-white font-semibold hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+            className="w-full py-4 mt-6 rounded-md bg-green-600 dark:bg-green-700 text-white font-semibold 
+                       hover:bg-green-700 dark:hover:bg-green-600 transition-all duration-300 transform hover:scale-105
+                       shadow-md hover:shadow-lg"
           >
             Solicitar
           </button>

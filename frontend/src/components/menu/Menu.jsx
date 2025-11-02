@@ -93,7 +93,7 @@ export default function Menu() {
           src={logo}
           alt="Logo"
           className="w-32 cursor-pointer"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/admin")}
         />
         <MenuDesktop
           user={user}

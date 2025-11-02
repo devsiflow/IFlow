@@ -1,3 +1,4 @@
+// components/admin/DashboardAdmin.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import {
@@ -15,7 +16,7 @@ import {
   Tooltip,
 } from "recharts";
 
-const COLORS = ["#4F46E5", "#22C55E", "#FACC15", "#EF4444", "#60A5FA"];
+const COLORS = ["#16A34A", "#22C55E", "#84CC16", "#EF4444", "#60A5FA"];
 
 export default function DashboardAdmin() {
   const [loading, setLoading] = useState(true);
@@ -40,79 +41,87 @@ export default function DashboardAdmin() {
   async function carregarDados() {
     setLoading(true);
     try {
-      // tenta várias variações comuns de tabela para items
-      const itemTables = ["itens", "items", "item", "Itens"];
-      let itensData = null;
-      for (const t of itemTables) {
-        const { data, error } = await supabase.from(t).select("*");
-        if (!error) {
-          itensData = data || [];
-          break;
-        }
-      }
-      if (itensData === null) {
-        console.warn("Tabela de itens não encontrada nas variações esperadas.");
-        itensData = [];
-      }
+      // Buscar dados do backend em vez do Supabase diretamente
+      const [itensResponse, solicitacoesResponse, dashboardResponse] = await Promise.all([
+        fetch("/items?pageSize=1000").then(res => res.ok ? res.json() : { items: [] }),
+        fetch("/dashboard").then(res => res.ok ? res.json() : {}),
+        fetch("/dashboard").then(res => res.ok ? res.json() : {})
+      ]);
 
-      // solicitações (usuário já usava "solicitacoes")
-      const solicitacoesTables = ["solicitacoes", "solicitations", "solicitacao"];
-      let solicitacoesData = null;
-      for (const t of solicitacoesTables) {
-        const { data, error } = await supabase.from(t).select("*");
-        if (!error) {
-          solicitacoesData = data || [];
-          break;
-        }
-      }
-      if (solicitacoesData === null) {
-        console.warn("Tabela de solicitacoes não encontrada nas variações esperadas.");
-        solicitacoesData = [];
-      }
-
+      const itensData = itensResponse.items || [];
+      const dashboardData = dashboardResponse || {};
+      
+      // Para solicitações, vamos usar os dados do dashboard ou simular
+      let solicitacoesData = [];
+      
       setItens(itensData);
       setSolicitacoes(solicitacoesData);
 
       processarTotais(itensData, solicitacoesData);
-      gerarDadosGrafico(itensData, solicitacoesData);
+      gerarDadosGrafico(itensData, solicitacoesData, dashboardData);
     } catch (err) {
       console.error("Erro ao carregar dashboard:", err);
+      // Fallback: tentar carregar dados básicos
+      carregarDadosFallback();
     } finally {
       setLoading(false);
     }
   }
 
+  async function carregarDadosFallback() {
+    try {
+      // Tentar buscar dados básicos do endpoint /dashboard
+      const response = await fetch("/dashboard");
+      if (response.ok) {
+        const data = await response.json();
+        
+        setTotais({
+          totalItens: data.totalItens || 0,
+          totalUsuarios: data.totalUsuarios || 0,
+          devolvidos: data.itensPorStatus?.find(item => item.status === 'devolvido')?._count?.status || 0,
+          perdidos: data.itensPorStatus?.find(item => item.status === 'perdido')?._count?.status || 0,
+          pendentesSolicitacoes: 0 // Não temos esse dado no dashboard atual
+        });
+
+        // Processar dados para gráficos
+        if (data.itensPorStatus) {
+          setDadosPizza(
+            data.itensPorStatus.map(item => ({
+              name: item.status,
+              value: item._count.status
+            }))
+          );
+        }
+
+        if (data.itensPorMes) {
+          const linhaData = Object.entries(data.itensPorMes).map(([mes, quantidade]) => ({
+            mes,
+            itens: quantidade,
+            solicitacoes: 0 // Não temos dados de solicitações por mês
+          }));
+          setDadosLinha(linhaData);
+        }
+      }
+    } catch (err) {
+      console.error("Erro no fallback:", err);
+    }
+  }
+
   function processarTotais(itensData, solicData) {
-    // adaptações: detecta campos de status em diversas convenções
-    const statusFieldCandidates = ["status", "estado", "situacao"];
-    const createdAtCandidates = ["criado_em", "created_at", "createdAt", "data_criacao", "data_solicitacao"];
-
-    const detectField = (obj, candidates) => {
-      for (const c of candidates) if (Object.prototype.hasOwnProperty.call(obj, c)) return c;
-      return null;
-    };
-
-    const statusField = itensData.length ? detectField(itensData[0], statusFieldCandidates) : "status";
-    const itemDateField = itensData.length ? detectField(itensData[0], createdAtCandidates) : null;
-    const solicDateField = solicData.length ? detectField(solicData[0], createdAtCandidates.concat(["data_solicitacao"])) : null;
-    const solicStatusField = solicData.length ? detectField(solicData[0], statusFieldCandidates) : "status";
-
-    // contagens para itens
+    // Contagens para itens
     let devolvidos = 0;
     let perdidos = 0;
     for (const it of itensData) {
-      const st = (statusField && it[statusField]) ? String(it[statusField]).toLowerCase() : "";
-      if (st.includes("devol") || st.includes("solucionad") || st.includes("returned")) devolvidos++;
+      const st = it.status ? String(it.status).toLowerCase() : "";
+      if (st.includes("devol") || st.includes("solucionad") || st.includes("returned") || st.includes("encontrado")) devolvidos++;
       else if (st.includes("perd") || st.includes("lost")) perdidos++;
-      // outros estados podem existir; você pode adaptar aqui
     }
 
-    // contagem de solicitações pendentes
-    let pendentesSolic = 0;
-    for (const s of solicData) {
-      const st = (solicStatusField && s[solicStatusField]) ? String(s[solicStatusField]).toLowerCase() : "";
-      if (st.includes("pend") || st.includes("pending")) pendentesSolic++;
-    }
+    // Contagem de solicitações pendentes (usando dados mock por enquanto)
+    let pendentesSolic = solicData.filter(s => {
+      const st = s.status ? String(s.status).toLowerCase() : "";
+      return st.includes("pend") || st.includes("pending") || st.includes("em análise");
+    }).length;
 
     setTotais({
       totalItens: itensData.length,
@@ -121,16 +130,27 @@ export default function DashboardAdmin() {
       pendentesSolicitacoes: pendentesSolic,
     });
 
-    // dados para pizza
+    // Dados para pizza
     setDadosPizza([
-      { name: "Devolvidos", value: devolvidos },
+      { name: "Devolvidos/Encontrados", value: devolvidos },
       { name: "Perdidos", value: perdidos },
       { name: "Outros", value: Math.max(0, itensData.length - devolvidos - perdidos) },
     ]);
   }
 
-  function gerarDadosGrafico(itensData, solicData) {
-    // cria um mapa mês->{itens, solicitacoes}
+  function gerarDadosGrafico(itensData, solicData, dashboardData) {
+    // Se temos dados do dashboard, usá-los
+    if (dashboardData.itensPorMes) {
+      const arr = Object.entries(dashboardData.itensPorMes).map(([mes, quantidade]) => ({
+        mes,
+        itens: quantidade,
+        solicitacoes: 0 // Não temos esse dado ainda
+      }));
+      setDadosLinha(arr);
+      return;
+    }
+
+    // Fallback: criar mapa mês->{itens, solicitacoes}
     const map = {}; // key "YYYY-MM"
     const mkkey = (date) => {
       if (!date) return null;
@@ -141,35 +161,23 @@ export default function DashboardAdmin() {
       return `${y}-${m}`;
     };
 
-    // detect date fields heuristically
-    const itemDateCandidates = ["criado_em", "created_at", "createdAt", "data_criacao", "data_registro", "data"];
-    const solicDateCandidates = ["data_solicitacao", "created_at", "createdAt", "data"];
-    const detectField = (arr, candidates) => {
-      if (!arr.length) return null;
-      const obj = arr[0];
-      for (const c of candidates) if (Object.prototype.hasOwnProperty.call(obj, c)) return c;
-      return null;
-    };
-    const itemDateField = detectField(itensData, itemDateCandidates);
-    const solicDateField = detectField(solicData, solicDateCandidates);
-
-    // acumula itens
+    // Acumula itens
     for (const it of itensData) {
-      const key = mkkey(itemDateField ? it[itemDateField] : it.created_at || it.createdAt || it.data);
+      const key = mkkey(it.createdAt);
       if (!key) continue;
       if (!map[key]) map[key] = { mes: key, itens: 0, solicitacoes: 0 };
       map[key].itens++;
     }
 
-    // acumula solicitacoes
+    // Acumula solicitacoes
     for (const s of solicData) {
-      const key = mkkey(solicDateField ? s[solicDateField] : s.data_solicitacao || s.created_at || s.createdAt || s.data);
+      const key = mkkey(s.data_solicitacao || s.created_at || s.createdAt || s.data);
       if (!key) continue;
       if (!map[key]) map[key] = { mes: key, itens: 0, solicitacoes: 0 };
       map[key].solicitacoes++;
     }
 
-    // ordenar por chave e transformar para array legível (label de mês mais amigável)
+    // Ordenar por chave e transformar para array legável
     const keys = Object.keys(map).sort();
     const arr = keys.map((k) => {
       const [y, m] = k.split("-");
@@ -178,13 +186,17 @@ export default function DashboardAdmin() {
       return { mes: mesLabel, itens: map[k].itens, solicitacoes: map[k].solicitacoes };
     });
 
-    // se não houver dados, cria um placeholder com último 6 meses (zeros)
+    // Se não houver dados, cria um placeholder com último 6 meses (zeros)
     if (!arr.length) {
       const placeholder = [];
       const today = new Date();
       for (let i = 5; i >= 0; i--) {
         const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-        placeholder.push({ mes: d.toLocaleString("pt-BR", { month: "short", year: "numeric" }), itens: 0, solicitacoes: 0 });
+        placeholder.push({ 
+          mes: d.toLocaleString("pt-BR", { month: "short", year: "numeric" }), 
+          itens: 0, 
+          solicitacoes: 0 
+        });
       }
       setDadosLinha(placeholder);
     } else {
@@ -197,8 +209,8 @@ export default function DashboardAdmin() {
       <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <ResumoCard title="Total de Itens" value={totais.totalItens} color="bg-indigo-600" />
-        <ResumoCard title="Devolvidos" value={totais.devolvidos} color="bg-green-500" />
+        <ResumoCard title="Total de Itens" value={totais.totalItens} color="bg-green-600" />
+        <ResumoCard title="Devolvidos/Encontrados" value={totais.devolvidos} color="bg-green-500" />
         <ResumoCard title="Perdidos" value={totais.perdidos} color="bg-red-500" />
         <ResumoCard title="Solicitações pendentes" value={totais.pendentesSolicitacoes} color="bg-yellow-500" />
       </div>
@@ -209,7 +221,13 @@ export default function DashboardAdmin() {
           <div style={{ width: "100%", height: 320 }}>
             <ResponsiveContainer>
               <PieChart>
-                <Pie dataKey="value" data={dadosPizza} nameKey="name" outerRadius={100} label>
+                <Pie 
+                  dataKey="value" 
+                  data={dadosPizza} 
+                  nameKey="name" 
+                  outerRadius={100} 
+                  label={({ name, value }) => `${name}: ${value}`}
+                >
                   {dadosPizza.map((entry, idx) => (
                     <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
                   ))}
@@ -225,13 +243,30 @@ export default function DashboardAdmin() {
           <h3 className="font-semibold mb-2">Itens e Solicitações por Mês</h3>
           <div style={{ width: "100%", height: 320 }}>
             <ResponsiveContainer>
-              <LineChart data={dadosLinha} margin={{ top: 10, right: 12, left: -6, bottom: 6 }}>
+              <LineChart 
+                data={dadosLinha} 
+                margin={{ top: 10, right: 12, left: -6, bottom: 6 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                 <XAxis dataKey="mes" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="itens" stroke="#4F46E5" strokeWidth={2} dot />
-                <Line type="monotone" dataKey="solicitacoes" stroke="#22C55E" strokeWidth={2} dot />
+                <Line 
+                  type="monotone" 
+                  dataKey="itens" 
+                  stroke="#16A34A" 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  name="Itens"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="solicitacoes" 
+                  stroke="#22C55E" 
+                  strokeWidth={2} 
+                  dot={{ r: 4 }}
+                  name="Solicitações"
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -239,6 +274,16 @@ export default function DashboardAdmin() {
       </div>
 
       {loading && <p className="text-sm text-gray-500 mt-4">Carregando dados...</p>}
+      
+      {/* Botão para recarregar dados */}
+      <div className="mt-6 text-center">
+        <button
+          onClick={carregarDados}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+        >
+          Atualizar Dados
+        </button>
+      </div>
     </div>
   );
 }

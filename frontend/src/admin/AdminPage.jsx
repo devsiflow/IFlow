@@ -17,8 +17,10 @@ import {
 import GerenciarSenhasAdmin from "../components/admin/GerenciarSenhasAdmin";
 import TabelaUsuariosAdmin from "../components/admin/TabelaUsuariosAdmin";
 import TabelaItensAdmin from "../components/admin/TabelaItensAdmin";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminPage() {
+  const navigate = useNavigate();
   const [solicitacoes, setSolicitacoes] = useState([]);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mostrarRelatorio, setMostrarRelatorio] = useState(false);
@@ -52,6 +54,10 @@ export default function AdminPage() {
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-neutral-900 text-gray-900 dark:text-white">
       {/* ==== MENU LATERAL ==== */}
+
+     <button className="">
+
+     </button>
       <aside
         className={`transition-all duration-300 bg-white dark:bg-neutral-800 shadow-xl p-4 flex flex-col justify-between ${
           menuHover ? "w-64" : "w-20"
@@ -61,7 +67,7 @@ export default function AdminPage() {
       >
         <div>
           <h2
-            className={`text-2xl font-bold text-center mb-8 text-indigo-600 dark:text-indigo-400 transition-opacity duration-300 ${
+            className={`text-2xl font-bold text-center mb-8 text-green-600 dark:text-green-400 transition-opacity duration-300 ${
               menuHover ? "opacity-100" : "opacity-0"
             }`}
           >
@@ -138,6 +144,12 @@ export default function AdminPage() {
 
       {/* ==== CONTEÚDO PRINCIPAL ==== */}
       <main className="flex-1 p-8 overflow-y-auto">
+         <button
+            onClick={() => navigate("/")}
+            className="bg-gray-200 hover:bg-gray-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-gray-800 dark:text-gray-100 px-3 py-1 rounded-md"
+          >
+            Voltar ao Início
+          </button>
         {activeTab === "dashboard" && <DashboardAdmin />}
 
         {activeTab === "solicitacoes" && (
@@ -159,7 +171,7 @@ export default function AdminPage() {
               <h1 className="text-3xl font-bold">Gerar Relatório</h1>
               <button
                 onClick={() => setMostrarRelatorio(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl transition-all"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl transition-all"
               >
                 <FileText className="inline mr-2" size={18} />
                 Gerar Relatório
@@ -242,8 +254,8 @@ function MenuButton({ icon, label, active, expanded, onClick }) {
       onClick={onClick}
       className={`flex items-center gap-3 w-full px-4 py-2 rounded-xl transition-all duration-200 ${
         active
-          ? "bg-indigo-500 text-white"
-          : "hover:bg-indigo-100 dark:hover:bg-indigo-900 text-gray-700 dark:text-gray-200"
+          ? "bg-green-500 text-white"
+          : "hover:bg-green-100 dark:hover:bg-green-900 text-gray-700 dark:text-gray-200"
       }`}
     >
       {icon}

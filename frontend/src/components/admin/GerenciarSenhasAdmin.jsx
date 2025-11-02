@@ -37,7 +37,7 @@ export default function GerenciarSenhasAdmin() {
             />
             <button
               onClick={() => redefinirSenha(u.id)}
-              className="bg-indigo-600 text-white px-3 py-1 rounded text-sm"
+              className="bg-green-600 text-white px-3 py-1 rounded text-sm"
             >
               Redefinir
             </button>

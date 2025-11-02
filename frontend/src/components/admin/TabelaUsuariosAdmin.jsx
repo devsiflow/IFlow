@@ -63,7 +63,7 @@ export default function TabelaUsuariosAdmin() {
             value={editando.nome}
             onChange={(e) => setEditando({ ...editando, nome: e.target.value })}
           />
-          <button onClick={salvarEdicao} className="bg-indigo-600 text-white px-4 py-2 rounded">
+          <button onClick={salvarEdicao} className="bg-green-600 text-white px-4 py-2 rounded">
             Salvar
           </button>
         </div>

@@ -3,7 +3,11 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import "aos/dist/aos.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
+
 import Cadastro from "./pages/Sign-inPage.jsx";
 import Login from "./pages/LoginPage.jsx";
 import Catalogo from "./pages/Catalogo.jsx";
@@ -14,56 +18,86 @@ import UserPage from "./pages/UserPage.jsx";
 import ItemPage from "./pages/ItemPage.jsx";
 import AdminPage from "./admin/AdminPage.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
+import AdminFloatingButton from "./components/AdminFloatingButton.jsx"; // ✅
 
+// eslint-disable-next-line react-refresh/only-export-components
+function LayoutWrapper({ children }) {
+  return (
+    <>
+      {children}
+      <AdminFloatingButton /> {/* ✅ global, dentro do Router */}
+    </>
+  );
+}
 
 const router = createBrowserRouter([
   {
-    path: "/validacao/:id",  // <-- adiciona :id
-    element: <ValidarItem />,
-  },
-  {
-    path: "/validacaoConfirmada",
-    element: <ValidacaoConfirmada />,
-  },
-  {
-    path: "/itempage/:id",
-    element: <ItemPage />,
-  },{
     path: "/",
-    element: <App />,
-  },
-  {
-    path: "/admin",
-    element: <AdminPage />,
+    element: (
+      <LayoutWrapper>
+        <App />
+      </LayoutWrapper>
+    ),
   },
   {
     path: "/home",
-    element: <App />,
-  },
-  {
-    path: "/cadastro",
-    element: <Cadastro />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
+    element: (
+      <LayoutWrapper>
+        <App />
+      </LayoutWrapper>
+    ),
   },
   {
     path: "/catalogo",
-    element: <Catalogo />,
+    element: (
+      <LayoutWrapper>
+        <Catalogo />
+      </LayoutWrapper>
+    ),
   },
   {
     path: "/cadastroitem",
-    element: <CadastraItem />,
+    element: (
+      <LayoutWrapper>
+        <CadastraItem />
+      </LayoutWrapper>
+    ),
   },
   {
     path: "/perfil",
-    element: <UserPage />,
+    element: (
+      <LayoutWrapper>
+        <UserPage />
+      </LayoutWrapper>
+    ),
   },
   {
     path: "/itempage/:id",
-    element: <ItemPage />,
+    element: (
+      <LayoutWrapper>
+        <ItemPage />
+      </LayoutWrapper>
+    ),
   },
+  {
+    path: "/validacao/:id",
+    element: (
+      <LayoutWrapper>
+        <ValidarItem />
+      </LayoutWrapper>
+    ),
+  },
+  {
+    path: "/validacaoConfirmada",
+    element: (
+      <LayoutWrapper>
+        <ValidacaoConfirmada />
+      </LayoutWrapper>
+    ),
+  },
+  { path: "/admin", element: <AdminPage /> }, // ❌ sem botão aqui
+  { path: "/login", element: <Login /> },
+  { path: "/cadastro", element: <Cadastro /> },
 ]);
 
 createRoot(document.getElementById("root")).render(

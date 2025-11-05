@@ -1,32 +1,36 @@
-// src/routes/dashboard.js
 import express from "express";
-import prisma from "../lib/prismaClient.js";
+import { PrismaClient } from "@prisma/client";
 
 const router = express.Router();
+const prisma = new PrismaClient();
 
+// 📊 Rota do Dashboard Admin
 router.get("/", async (req, res) => {
   try {
-    // Totais
+    // Total de itens cadastrados
     const totalItens = await prisma.item.count();
-    const totalUsuarios = await prisma.user.count();
 
-    // Itens por status (para gráfico de pizza)
+    // Total de perfis (usuários)
+    const totalUsuarios = await prisma.profile.count();
+
+    // Itens por status
     const itensPorStatus = await prisma.item.groupBy({
       by: ["status"],
       _count: { status: true },
     });
 
-    // Itens criados por mês (para gráfico de linha)
-    const itensPorMesDB = await prisma.item.findMany({
+    // Itens cadastrados por mês (últimos 12 meses)
+    const itens = await prisma.item.findMany({
       select: { createdAt: true },
     });
 
     const itensPorMes = {};
-    itensPorMesDB.forEach((item) => {
-      const mes = new Date(item.createdAt).toLocaleString("pt-BR", {
+    itens.forEach((item) => {
+      const mesAno = item.createdAt.toLocaleDateString("pt-BR", {
         month: "short",
+        year: "numeric",
       });
-      itensPorMes[mes] = (itensPorMes[mes] || 0) + 1;
+      itensPorMes[mesAno] = (itensPorMes[mesAno] || 0) + 1;
     });
 
     res.json({
@@ -36,8 +40,8 @@ router.get("/", async (req, res) => {
       itensPorMes,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Erro ao buscar dados do dashboard" });
+    console.error("Erro ao carregar dados do dashboard:", error);
+    res.status(500).json({ error: "Erro ao carregar dados do dashboard" });
   }
 });
 

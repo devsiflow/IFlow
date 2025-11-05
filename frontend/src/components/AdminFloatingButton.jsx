@@ -52,13 +52,14 @@ export default function AdminFloatingButton() {
 
   if (!isAdmin) return null;
 
-  return (
+ return (
     <button
       onClick={() => navigate("/admin")}
-      className="fixed bottom-6 right-6 z-[1000] bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-lg transition-transform transform hover:scale-110"
+      className="fixed bottom-6 right-6 z-[1000] flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 py-3 rounded-full shadow-lg shadow-green-500/30 transition-all transform hover:scale-110 hover:shadow-green-400/40 animate-bounce-slow"
       title="Painel Administrativo"
     >
-      <Shield className="w-6 h-6" />
+      <Shield className="w-5 h-5" />
+      <span className="font-medium hidden sm:inline">Painel Admin</span>
     </button>
   );
 }

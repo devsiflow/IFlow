@@ -1,9 +1,10 @@
 import "./index.css";
+
 import HomePage from "./pages/HomePage";
+
 import { useEffect } from "react";
 import AOS from "aos";
 import ScrollToTopButton from "./components/ScrollTopButton";
-import AdminFloatingButton from "./components/AdminFloatingButton"; // ✅ novo
 
 function App() {
   useEffect(() => {
@@ -17,7 +18,6 @@ function App() {
     <div>
       <HomePage />
       <ScrollToTopButton />
-      <AdminFloatingButton /> {/* ✅ botão flutuante global */}
     </div>
   );
 }

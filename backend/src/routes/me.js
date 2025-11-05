@@ -4,13 +4,22 @@ import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// GET /me → retorna perfil
+// GET /me → retorna perfil com campos de admin
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
+
     const profile = await prisma.profile.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, matricula: true, profilePic: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        matricula: true,
+        profilePic: true,
+        isAdmin: true,          // ✅ incluído
+        isSuperAdmin: true,     // ✅ incluído
+        createdAt: true,
+      },
     });
 
     if (!profile) {
@@ -30,11 +39,9 @@ router.put("/", authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const { name, matricula, profilePic } = req.body;
 
-    // Verifica se já existe perfil
     let profile = await prisma.profile.findUnique({ where: { id: userId } });
 
     if (!profile) {
-      // Cria novo perfil
       profile = await prisma.profile.create({
         data: {
           id: userId,
@@ -42,10 +49,17 @@ router.put("/", authenticateToken, async (req, res) => {
           matricula: matricula || "Não informado",
           profilePic: profilePic || null,
         },
-        select: { id: true, name: true, matricula: true, profilePic: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          matricula: true,
+          profilePic: true,
+          isAdmin: true,          // ✅ incluído
+          isSuperAdmin: true,     // ✅ incluído
+          createdAt: true,
+        },
       });
     } else {
-      // Atualiza perfil existente
       profile = await prisma.profile.update({
         where: { id: userId },
         data: {
@@ -53,7 +67,15 @@ router.put("/", authenticateToken, async (req, res) => {
           ...(matricula && { matricula }),
           ...(profilePic && { profilePic }),
         },
-        select: { id: true, name: true, matricula: true, profilePic: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          matricula: true,
+          profilePic: true,
+          isAdmin: true,          // ✅ incluído
+          isSuperAdmin: true,     // ✅ incluído
+          createdAt: true,
+        },
       });
     }
 
@@ -65,4 +87,3 @@ router.put("/", authenticateToken, async (req, res) => {
 });
 
 export default router;
-  

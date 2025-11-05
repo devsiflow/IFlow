@@ -19,7 +19,8 @@ app.use(express.json());
 // ✅ CORS configurado corretamente (localhost + Vercel)
 const allowedOrigins = [
   "http://localhost:5173", // ambiente local
-  "https://iflow.vercel.app", // produção
+  "https://iflow.vercel.app",
+  "https://www.iflowapp.com.br" // produção
 ];
 
 app.use(

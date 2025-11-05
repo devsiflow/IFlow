@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../hooks/useAuth";
+import { ArchiveRestore } from "lucide-react";
 
 // Função para gerar miniatura antes de subir
 async function generateThumbnail(file, maxSize = 400) {
@@ -194,6 +195,7 @@ export default function CadastrarItem() {
 
       try {
         responseData = JSON.parse(responseText);
+      // eslint-disable-next-line no-unused-vars
       } catch (parseError) {
         console.error("Resposta não é JSON:", responseText);
         throw new Error(
@@ -217,165 +219,181 @@ export default function CadastrarItem() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 font-sans">
-      <MenuOtherPages />
-      <div className="flex justify-center items-start px-4 pt-32 pb-16">
-        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-md border border-gray-200 dark:border-gray-700 p-10 space-y-8">
-          <h2 className="text-4xl font-extrabold text-center gradient-text mb-6">
-            🚀 Cadastrar Item
-          </h2>
+return (
+  <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 font-sans">
+    <MenuOtherPages />
+    <div className="flex justify-center items-start px-4 pt-32 pb-16">
+      <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-md border border-gray-200 dark:border-gray-700 p-10 space-y-8">
+        
+        {/* Título com ícone */}
+        <h2 className="flex items-center justify-center gap-3 text-4xl font-extrabold text-center gradient-text mb-6">
+          <ArchiveRestore className="w-10 h-10 text-green-700 dark:text-green-400" />
+          Cadastrar Item
+        </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nome */}
-            <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                Nome do Item
-              </label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                placeholder="Ex: Mochila, Celular..."
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-400 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Nome */}
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+              Nome do Item
+            </label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+              placeholder="Ex: Mochila, Celular..."
+              className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-600 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
+            />
+          </div>
 
-            {/* Descrição */}
-            <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                Descrição
-              </label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                required
-                placeholder="Ex: Preta, com adesivo da Marvel..."
-                rows={4}
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-400 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 resize-none"
-              />
-            </div>
+          {/* Descrição */}
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+              Descrição
+            </label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              required
+              placeholder="Ex: Preta, com adesivo da Marvel..."
+              rows={4}
+              className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-600 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 resize-none"
+            />
+          </div>
 
-            {/* Local */}
-            <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                Local
-              </label>
-              <input
-                name="local"
-                value={form.local}
-                onChange={handleChange}
-                required
-                placeholder="Ex: Sala 101, Corredor perto do banheiro..."
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-400 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
-              />
-            </div>
+          {/* Local */}
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+              Local
+            </label>
+            <input
+              name="local"
+              value={form.local}
+              onChange={handleChange}
+              required
+              placeholder="Ex: Sala 101, Corredor perto do banheiro..."
+              className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-600 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
+            />
+          </div>
 
-            {/* Categoria */}
-            <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                Categoria
-              </label>
-              <select
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-                required
-                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-400 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
-              >
-                <option value="">Selecione</option>
-                <option value="Eletrônico">Eletrônico</option>
-                <option value="Roupa">Roupa</option>
-                <option value="Acessório">Acessório</option>
-                <option value="Material Escolar">Material Escolar</option>
-                <option value="Documentos">Documentos</option>
-                <option value="Outros">Outros</option>
-              </select>
-            </div>
-
-            {/* Upload de imagens */}
-            <div className="flex flex-col">
-              <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-                Imagens do Item (até 5)
-              </label>
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={handleDrop}
-                className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition ${
-                  isDragging
-                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30"
-                    : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
-                } text-gray-500 dark:text-gray-300`}
-              >
-                <label className="cursor-pointer w-full text-center">
-                  {imagePreviews.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {imagePreviews.map((src, i) => (
-                          <div key={i} className="relative">
-                            <img
-                              src={src}
-                              alt={`preview-${i}`}
-                              className="h-28 w-28 rounded-lg object-cover border"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(i)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-sm">Clique para alterar as imagens</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="text-4xl">📷</div>
-                      <p>
-                        Arraste até 5 imagens aqui ou{" "}
-                        <span className="underline text-indigo-600 dark:text-indigo-400">
-                          clique para selecionar
-                        </span>
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        PNG, JPG, JPEG até 5MB cada
-                      </p>
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImages}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Botão */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-lg transition ${
-                isSubmitting
-                  ? "opacity-70 cursor-not-allowed"
-                  : "hover:scale-105"
-              }`}
+          {/* Categoria */}
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+              Categoria
+            </label>
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              required
+              className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-600 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
             >
-              {isSubmitting ? "⏳ Enviando..." : "✅ Cadastrar Item"}
-            </button>
-          </form>
-        </div>
+              <option value="">Selecione</option>
+              <option value="Eletrônico">Eletrônico</option>
+              <option value="Roupa">Roupa</option>
+              <option value="Acessório">Acessório</option>
+              <option value="Material Escolar">Material Escolar</option>
+              <option value="Documentos">Documentos</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+
+          {/* Upload de imagens */}
+          <div className="flex flex-col">
+            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
+              Imagens do Item (até 5)
+            </label>
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition ${
+                isDragging
+                  ? "border-green-500 bg-green-50 dark:bg-green-900/30"
+                  : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
+              } text-gray-500 dark:text-gray-300`}
+            >
+              <label className="cursor-pointer w-full text-center">
+                {imagePreviews.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {imagePreviews.map((src, i) => (
+                        <div key={i} className="relative">
+                          <img
+                            src={src}
+                            alt={`preview-${i}`}
+                            className="h-28 w-28 rounded-lg object-cover border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm">Clique para alterar as imagens</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="text-4xl">📷</div>
+                    <p>
+                      Arraste até 5 imagens aqui ou{" "}
+                      <span className="underline text-green-700 dark:text-green-400">
+                        clique para selecionar
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      PNG, JPG, JPEG até 5MB cada
+                    </p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImages}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Botão */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-full py-4 rounded-2xl font-bold shadow-md transition-all duration-300 flex items-center justify-center gap-2
+              ${
+                isSubmitting
+                  ? "bg-green-800/70 text-white cursor-not-allowed"
+                  : "bg-green-800 hover:bg-green-700 text-white hover:scale-[1.02] shadow-lg hover:shadow-green-900/40"
+              }`}
+          >
+            {isSubmitting ? (
+              <>
+                <span className="animate-spin border-2 border-t-transparent border-white rounded-full w-5 h-5"></span>
+                <span>Enviando...</span>
+              </>
+            ) : (
+              <>
+                <ArchiveRestore className="w-6 h-6 text-white" />
+                <span>Cadastrar Item</span>
+              </>
+            )}
+          </button>
+        </form>
       </div>
     </div>
-  );
+  </div>
+);
+
+
 }

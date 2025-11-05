@@ -16,16 +16,15 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// 🔒 Configuração CORS (ESSENCIAL para o dashboard funcionar com cookies)
+// ✅ CORS configurado corretamente (localhost + Vercel)
 const allowedOrigins = [
-  "http://localhost:5173", // ambiente local (Vite)
-  "https://iflow.vercel.app", // produção (Vercel)
+  "http://localhost:5173", // ambiente local
+  "https://iflow.vercel.app", // produção
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permite requests sem origem (ex: Postman) ou dos domínios listados
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -33,14 +32,15 @@ app.use(
         callback(new Error("Não permitido pelo CORS"));
       }
     },
-    credentials: true, // permite cookies/autenticação
+    credentials: true,
   })
 );
 
+// ✅ __dirname e __filename
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Rotas
+// ✅ Rotas principais
 app.use("/auth", authRoutes);
 app.use("/me", meRoutes);
 app.use("/items", itemsRouter);
@@ -48,14 +48,27 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 
-// ✅ Servir o frontend (em produção)
+// ✅ Servir frontend (em produção)
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
-  // Wildcard pra SPA (React Router)
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(frontendPath, "index.html"));
+  // ⚡ Compatível com Express 5 (sem pathToRegexpError)
+  app.use((req, res, next) => {
+    if (
+      req.method === "GET" &&
+      !req.path.startsWith("/auth") &&
+      !req.path.startsWith("/api") &&
+      !req.path.startsWith("/items") &&
+      !req.path.startsWith("/admin") &&
+      !req.path.startsWith("/dashboard") &&
+      !req.path.startsWith("/itemValidation") &&
+      !req.path.startsWith("/me")
+    ) {
+      res.sendFile(path.join(frontendPath, "index.html"));
+    } else {
+      next();
+    }
   });
 }
 

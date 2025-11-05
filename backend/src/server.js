@@ -14,13 +14,33 @@ import dashboardRouter from "./routes/dashboard.js";
 dotenv.config();
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+
+// 🔒 Configuração CORS (ESSENCIAL para o dashboard funcionar com cookies)
+const allowedOrigins = [
+  "http://localhost:5173", // ambiente local (Vite)
+  "https://iflow.vercel.app", // produção (Vercel)
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Permite requests sem origem (ex: Postman) ou dos domínios listados
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn("❌ CORS bloqueado para origem:", origin);
+        callback(new Error("Não permitido pelo CORS"));
+      }
+    },
+    credentials: true, // permite cookies/autenticação
+  })
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 🔗 Rotas principais
+// ✅ Rotas
 app.use("/auth", authRoutes);
 app.use("/me", meRoutes);
 app.use("/items", itemsRouter);
@@ -28,16 +48,17 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 
-// Servir frontend (se estiver hospedando no mesmo servidor)
+// ✅ Servir o frontend (em produção)
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
-  app.get("*", (req, res) => {
+  // Wildcard pra SPA (React Router)
+  app.get("/*", (req, res) => {
     res.sendFile(path.join(frontendPath, "index.html"));
   });
 }
 
-// Porta
+// ✅ Porta
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));

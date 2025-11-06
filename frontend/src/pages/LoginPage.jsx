@@ -35,10 +35,8 @@ export default function Login() {
       const profile = await profileRes.json();
 
       localStorage.setItem("token", data.session.access_token);
-      localStorage.setItem("token", data.token);
-
       localStorage.setItem("user", JSON.stringify(profile));
-      navigate("/admin");
+      navigate("/home");
     } catch (err) {
       console.error(err);
       setError("Erro de conexão com o servidor");
@@ -64,9 +62,7 @@ export default function Login() {
 
       {/* Formulário */}
       <div className="w-full max-w-md space-y-6 mt-20">
-        <h1 className="text-3xl font-semibold text-gray-900 text-center">
-          Fazer login
-        </h1>
+        <h1 className="text-3xl font-semibold text-gray-900 text-center">Fazer login</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -77,7 +73,7 @@ export default function Login() {
             className="w-full px-4 py-2 border rounded-md"
             required
           />
-
+          
           {/* Campo de senha com ícone de visualização */}
           <div className="relative">
             <input

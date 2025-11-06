@@ -1,66 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function GerenciarSenhasAdmin() {
-  const [email, setEmail] = useState("");
-  const [uid, setUid] = useState("");
+  const [usuarios, setUsuarios] = useState([]);
   const [novaSenha, setNovaSenha] = useState("");
-  const token = localStorage.getItem("token");
 
-  const enviarEmailReset = async () => {
-    const res = await fetch(`/api/admin/usuarios/dummy/reset-password`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ method: "email", email }),
-    });
-    const data = await res.json();
-    alert(data.message || data.error);
-  };
+  useEffect(() => {
+    fetch("/api/admin/usuarios").then((r) => r.json()).then(setUsuarios);
+  }, []);
 
-  const resetDireto = async () => {
-    const res = await fetch(`/api/admin/usuarios/${uid}/reset-password`, {
+  async function redefinirSenha(id) {
+    await fetch(`/api/admin/usuarios/${id}/reset-senha`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ method: "direct", uid, newPassword: novaSenha }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ novaSenha }),
     });
-    const data = await res.json();
-    alert(data.message || data.error);
-  };
+    alert("Senha redefinida com sucesso!");
+    setNovaSenha("");
+  }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Gerenciar Senhas</h2>
-
-      <div>
-        <h3 className="font-medium">Enviar email de redefinição</h3>
-        <input
-          placeholder="Email do usuário"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 rounded w-80 mr-2"
-        />
-        <button className="bg-emerald-600 text-white px-4 py-2 rounded" onClick={enviarEmailReset}>
-          Enviar
-        </button>
-      </div>
-
-      <div>
-        <h3 className="font-medium">Redefinir diretamente (superadmin)</h3>
-        <input
-          placeholder="UID do usuário"
-          value={uid}
-          onChange={(e) => setUid(e.target.value)}
-          className="border p-2 rounded w-80 mr-2"
-        />
-        <input
-          placeholder="Nova senha"
-          value={novaSenha}
-          onChange={(e) => setNovaSenha(e.target.value)}
-          className="border p-2 rounded w-80 mr-2"
-        />
-        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={resetDireto}>
-          Atualizar
-        </button>
-      </div>
+    <div className="bg-white dark:bg-neutral-800 rounded-xl shadow p-6">
+      <h2 className="text-xl font-bold mb-4">Redefinir Senhas</h2>
+      {usuarios.map((u) => (
+        <div
+          key={u.id}
+          className="flex items-center justify-between border-b py-2 border-gray-200 dark:border-gray-700"
+        >
+          <span>{u.nome} ({u.email})</span>
+          <div className="flex gap-2">
+            <input
+              type="password"
+              placeholder="Nova senha"
+              value={novaSenha}
+              onChange={(e) => setNovaSenha(e.target.value)}
+              className="border rounded p-1 text-sm"
+            />
+            <button
+              onClick={() => redefinirSenha(u.id)}
+              className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+            >
+              Redefinir
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

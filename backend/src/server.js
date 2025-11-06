@@ -45,7 +45,7 @@ const __dirname = path.dirname(__filename);
 app.use("/auth", authRoutes);
 app.use("/me", meRoutes);
 app.use("/items", itemsRouter);
-app.use("/api/admin", adminRoutes);
+app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 

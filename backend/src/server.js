@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,36 +14,28 @@ import dashboardRouter from "./routes/dashboard.js";
 dotenv.config();
 
 const app = express();
+app.use(express.json());
 
-// ✅ Middleware CORS compatível com Render
+// ✅ CORS configurado corretamente (localhost + Vercel)
 const allowedOrigins = [
-  "http://localhost:5173",
+  "http://localhost:5173", // ambiente local
   "https://iflow.vercel.app",
-  "https://iflowapp.com.br",
-  "https://www.iflowapp.com.br",
+  "https://www.iflowapp.com.br" // produção
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
-
-  // ✅ responde automaticamente aos preflights OPTIONS
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
-
-// ✅ Middleware para JSON
-app.use(express.json());
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn("❌ CORS bloqueado para origem:", origin);
+        callback(new Error("Não permitido pelo CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 // ✅ __dirname e __filename
 const __filename = fileURLToPath(import.meta.url);
@@ -56,16 +49,17 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 
-// ✅ Servir o frontend em produção
+// ✅ Servir frontend (em produção)
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
-  // fallback para SPA
+  // ⚡ Compatível com Express 5 (sem pathToRegexpError)
   app.use((req, res, next) => {
     if (
       req.method === "GET" &&
       !req.path.startsWith("/auth") &&
+      !req.path.startsWith("/api") &&
       !req.path.startsWith("/items") &&
       !req.path.startsWith("/admin") &&
       !req.path.startsWith("/dashboard") &&

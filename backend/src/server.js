@@ -1,3 +1,5 @@
+// ✅ backend/src/server.js
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -16,11 +18,12 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// ✅ CORS configurado corretamente (localhost + Vercel)
+// ✅ CORS configurado corretamente (localhost + produção)
 const allowedOrigins = [
   "http://localhost:5173", // ambiente local
-  "https://iflow.vercel.app",
-  "https://www.iflowapp.com.br" // produção
+  "https://iflow.vercel.app", // Vercel
+  "https://www.iflowapp.com.br", // domínio próprio
+  "https://iflowapp.com.br", // sem www
 ];
 
 app.use(
@@ -41,7 +44,7 @@ app.use(
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Rotas principais
+// ✅ Rotas principais da API
 app.use("/auth", authRoutes);
 app.use("/me", meRoutes);
 app.use("/items", itemsRouter);
@@ -49,29 +52,15 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 
-// ✅ Servir frontend (em produção)
+// ✅ Produção: Render serve apenas a API (frontend está no Vercel)
 if (process.env.NODE_ENV === "production") {
-  const frontendPath = path.join(__dirname, "../frontend/dist");
-  app.use(express.static(frontendPath));
-
-  // ⚡ Compatível com Express 5 (sem pathToRegexpError)
-  app.use((req, res, next) => {
-    if (
-      req.method === "GET" &&
-      !req.path.startsWith("/auth") &&
-      !req.path.startsWith("/api") &&
-      !req.path.startsWith("/items") &&
-      !req.path.startsWith("/admin") &&
-      !req.path.startsWith("/dashboard") &&
-      !req.path.startsWith("/itemValidation") &&
-      !req.path.startsWith("/me")
-    ) {
-      res.sendFile(path.join(frontendPath, "index.html"));
-    } else {
-      next();
-    }
-  });
+  console.log("🌐 Modo produção: servindo apenas a API (frontend hospedado separadamente)");
 }
+
+// ✅ Endpoint básico de verificação
+app.get("/", (req, res) => {
+  res.json({ message: "🚀 API iFlow rodando com sucesso!" });
+});
 
 // ✅ Porta
 const PORT = process.env.PORT || 5000;

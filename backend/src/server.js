@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -12,33 +11,32 @@ import itemValidationRoutes from "./routes/itemValidation.js";
 import dashboardRouter from "./routes/dashboard.js";
 
 dotenv.config();
-
 const app = express();
 
+// ✅ CORS manual — resolve erro 500 no preflight (Render, etc)
 const allowedOrigins = [
-  "http://localhost:5173", // desenvolvimento local
-  "https://iflow.vercel.app", // preview
-  "https://www.iflowapp.com.br", // domínio principal
-  "https://iflowapp.com.br", // versão sem www
+  "http://localhost:5173",
+  "https://iflow.vercel.app",
+  "https://iflowapp.com.br",
+  "https://www.iflowapp.com.br",
 ];
 
-app.use(
-  cors({
-    // ✅ CORS configurado corretamente (localhost + Vercel)
-    origin: function (origin, callback) {
-      // Permite chamadas internas (sem header Origin) e origens na lista
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn("❌ CORS bloqueado para origem:", origin);
-        callback(new Error("Não permitido pelo CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  // 👇 Se for preflight (OPTIONS), responde direto e encerra
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 app.use(express.json());
 
@@ -59,12 +57,10 @@ if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
-  // ⚡ Compatível com Express 5 (sem pathToRegexpError)
   app.use((req, res, next) => {
     if (
       req.method === "GET" &&
       !req.path.startsWith("/auth") &&
-      !req.path.startsWith("/api") &&
       !req.path.startsWith("/items") &&
       !req.path.startsWith("/admin") &&
       !req.path.startsWith("/dashboard") &&

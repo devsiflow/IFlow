@@ -29,7 +29,7 @@ export default function Login() {
       if (error) return setError(error.message);
 
       const API_URL = import.meta.env.VITE_API_URL;
-      const profileRes = await fetch(`${API_URL}/auth/me`, {
+      const profileRes = await fetch(`${API_URL}/me`, {
         headers: { Authorization: `Bearer ${data.session.access_token}` },
       });
       const profile = await profileRes.json();

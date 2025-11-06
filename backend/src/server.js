@@ -11,9 +11,10 @@ import itemValidationRoutes from "./routes/itemValidation.js";
 import dashboardRouter from "./routes/dashboard.js";
 
 dotenv.config();
+
 const app = express();
 
-// ✅ CORS manual — resolve erro 500 no preflight (Render, etc)
+// ✅ Middleware CORS compatível com Render
 const allowedOrigins = [
   "http://localhost:5173",
   "https://iflow.vercel.app",
@@ -23,14 +24,16 @@ const allowedOrigins = [
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+
   if (allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
   }
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.header("Access-Control-Allow-Credentials", "true");
 
-  // 👇 Se for preflight (OPTIONS), responde direto e encerra
+  // ✅ responde automaticamente aos preflights OPTIONS
   if (req.method === "OPTIONS") {
     return res.sendStatus(204);
   }
@@ -38,6 +41,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// ✅ Middleware para JSON
 app.use(express.json());
 
 // ✅ __dirname e __filename
@@ -52,11 +56,12 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 
-// ✅ Servir frontend (em produção)
+// ✅ Servir o frontend em produção
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
+  // fallback para SPA
   app.use((req, res, next) => {
     if (
       req.method === "GET" &&

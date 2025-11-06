@@ -14,18 +14,17 @@ import dashboardRouter from "./routes/dashboard.js";
 dotenv.config();
 
 const app = express();
-app.use(express.json());
 
-// ✅ CORS configurado corretamente (localhost + Vercel)
 const allowedOrigins = [
-  "http://localhost:5173",              // desenvolvimento local
-  "https://iflow.vercel.app",           // preview
-  "https://www.iflowapp.com.br",        // domínio principal
-  "https://iflowapp.com.br",            // versão sem www
+  "http://localhost:5173", // desenvolvimento local
+  "https://iflow.vercel.app", // preview
+  "https://www.iflowapp.com.br", // domínio principal
+  "https://iflowapp.com.br", // versão sem www
 ];
 
 app.use(
   cors({
+    // ✅ CORS configurado corretamente (localhost + Vercel)
     origin: function (origin, callback) {
       // Permite chamadas internas (sem header Origin) e origens na lista
       if (!origin || allowedOrigins.includes(origin)) {
@@ -40,6 +39,8 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+app.use(express.json());
 
 // ✅ __dirname e __filename
 const __filename = fileURLToPath(import.meta.url);

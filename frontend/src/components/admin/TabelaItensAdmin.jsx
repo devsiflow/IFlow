@@ -1,6 +1,6 @@
-// components/admin/TabelaItensAdmin.jsx
 import { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { supabase } from "../../lib/supabaseClient";
 
 export default function TabelaItensAdmin() {
   const [itens, setItens] = useState([]);
@@ -11,12 +11,26 @@ export default function TabelaItensAdmin() {
     carregarItens();
   }, []);
 
+  // ✅ Carrega os itens com token Supabase e backend do Render
   async function carregarItens() {
     try {
-      const response = await fetch("/items?pageSize=100");
+      const { data: sessionRes } = await supabase.auth.getSession();
+      const token = sessionRes?.session?.access_token;
+
+      if (!token) {
+        console.warn("❌ Nenhum token encontrado (usuário não logado).");
+        return;
+      }
+
+      const response = await fetch("https://iflow-zdbx.onrender.com/items?pageSize=100", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("📡 Resposta /items:", response.status);
       if (!response.ok) throw new Error("Erro ao carregar itens");
-      
+
       const data = await response.json();
+      console.log("📦 Itens recebidos:", data);
       setItens(data.items || []);
     } catch (err) {
       console.error("Erro ao carregar itens:", err);
@@ -25,19 +39,23 @@ export default function TabelaItensAdmin() {
     }
   }
 
+  // ✅ Salva alterações de item
   async function salvarEdicao() {
     try {
-      const response = await fetch(`/items/${editando.id}`, {
+      const { data: sessionRes } = await supabase.auth.getSession();
+      const token = sessionRes?.session?.access_token;
+
+      const response = await fetch(`https://iflow-zdbx.onrender.com/items/${editando.id}`, {
         method: "PUT",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(editando),
       });
 
       if (!response.ok) throw new Error("Erro ao atualizar item");
-      
+
       setEditando(null);
       carregarItens();
     } catch (err) {
@@ -46,19 +64,21 @@ export default function TabelaItensAdmin() {
     }
   }
 
+  // ✅ Deleta item
   async function deletarItem(id) {
     if (!confirm("Tem certeza que deseja excluir este item?")) return;
-    
+
     try {
-      const response = await fetch(`/items/${id}`, {
+      const { data: sessionRes } = await supabase.auth.getSession();
+      const token = sessionRes?.session?.access_token;
+
+      const response = await fetch(`https://iflow-zdbx.onrender.com/items/${id}`, {
         method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Erro ao excluir item");
-      
+
       setItens(itens.filter((i) => i.id !== id));
       alert("Item excluído com sucesso!");
     } catch (err) {
@@ -87,25 +107,29 @@ export default function TabelaItensAdmin() {
             <tr key={item.id} className="border-b border-gray-200 dark:border-gray-700">
               <td className="p-2">{item.id}</td>
               <td className="p-2">{item.title}</td>
-              <td className="p-2">{item.category?.name || 'N/A'}</td>
+              <td className="p-2">{item.category?.name || "N/A"}</td>
               <td className="p-2">
-                <span className={`px-2 py-1 rounded text-xs ${
-                  item.status === 'encontrado' ? 'bg-green-100 text-green-800' :
-                  item.status === 'perdido' ? 'bg-red-100 text-red-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
+                <span
+                  className={`px-2 py-1 rounded text-xs ${
+                    item.status === "encontrado"
+                      ? "bg-green-100 text-green-800"
+                      : item.status === "perdido"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
                   {item.status}
                 </span>
               </td>
-              <td className="p-2">{item.user?.name || 'N/A'}</td>
+              <td className="p-2">{item.user?.name || "N/A"}</td>
               <td className="p-2 flex justify-center gap-2">
-                <button 
+                <button
                   onClick={() => setEditando(item)}
                   className="p-1 text-blue-600 hover:text-blue-800"
                 >
                   <Pencil size={18} />
                 </button>
-                <button 
+                <button
                   onClick={() => deletarItem(item.id)}
                   className="p-1 text-red-600 hover:text-red-800"
                 >
@@ -137,14 +161,14 @@ export default function TabelaItensAdmin() {
               <option value="devolvido">Devolvido</option>
             </select>
             <div className="flex gap-2">
-              <button 
-                onClick={salvarEdicao} 
+              <button
+                onClick={salvarEdicao}
                 className="bg-green-600 text-white px-4 py-2 rounded"
               >
                 Salvar
               </button>
-              <button 
-                onClick={() => setEditando(null)} 
+              <button
+                onClick={() => setEditando(null)}
                 className="bg-gray-600 text-white px-4 py-2 rounded"
               >
                 Cancelar

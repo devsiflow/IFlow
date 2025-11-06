@@ -86,4 +86,34 @@ router.delete("/usuarios/:id", authenticateToken, onlyAdmin, async (req, res) =>
   }
 });
 
+
+
+// ==========================
+// 🔍 Itens por usuário (para admins)
+// ==========================
+router.get("/items", authenticateToken, onlyAdmin, async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId é obrigatório" });
+    }
+
+    const itens = await prisma.item.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        category: true,
+      },
+    });
+
+    res.json(itens);
+  } catch (error) {
+    console.error("❌ Erro ao buscar itens do usuário:", error);
+    res.status(500).json({ error: "Erro ao buscar itens do usuário" });
+  }
+});
+
+
+
 export default router;

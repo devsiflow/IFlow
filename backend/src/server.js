@@ -18,14 +18,16 @@ app.use(express.json());
 
 // ✅ CORS configurado corretamente (localhost + Vercel)
 const allowedOrigins = [
-  "http://localhost:5173", // ambiente local
-  "https://iflow.vercel.app",
-  "https://www.iflowapp.com.br" // produção
+  "http://localhost:5173",              // desenvolvimento local
+  "https://iflow.vercel.app",           // preview
+  "https://www.iflowapp.com.br",        // domínio principal
+  "https://iflowapp.com.br",            // versão sem www
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Permite chamadas internas (sem header Origin) e origens na lista
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -34,6 +36,8 @@ app.use(
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

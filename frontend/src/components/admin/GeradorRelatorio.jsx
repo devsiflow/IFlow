@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
-import { supabase } from "../../lib/supabaseClient";
 import { PieChart, Pie, Tooltip, Cell, Legend } from "recharts";
 
 export default function GeradorRelatorio() {
@@ -13,14 +12,14 @@ export default function GeradorRelatorio() {
   }, [periodo]);
 
   async function buscarDados() {
-    const { data } = await supabase
-      .from("solicitacoes")
-      .select("*")
-      .gte("data_solicitacao", `${periodo}-01`)
-      .lte("data_solicitacao", `${periodo}-31`);
-
-    setDados(data || []);
-    gerarGrafico(data || []);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com"}/dashboard/solicitacoes?periodo=${periodo}`);
+      const data = await response.json();
+      setDados(data || []);
+      gerarGrafico(data || []);
+    } catch (err) {
+      console.error("Erro ao buscar dados:", err);
+    }
   }
 
   function gerarGrafico(data) {
@@ -63,17 +62,9 @@ export default function GeradorRelatorio() {
       </div>
 
       <PieChart width={350} height={300}>
-        <Pie
-          data={grafico}
-          dataKey="value"
-          nameKey="name"
-          cx="50%"
-          cy="50%"
-          outerRadius={100}
-          label
-        >
-          {grafico.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={["#f87171", "#60a5fa", "#34d399", "#fbbf24"][index]} />
+        <Pie data={grafico} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+          {grafico.map((_, i) => (
+            <Cell key={i} fill={["#f87171", "#60a5fa", "#34d399", "#fbbf24"][i]} />
           ))}
         </Pie>
         <Tooltip />

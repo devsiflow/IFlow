@@ -1,5 +1,3 @@
-// ✅ backend/src/server.js
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -18,33 +16,36 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// ✅ CORS configurado corretamente (localhost + produção)
-const allowedOrigins = [
-  "http://localhost:5173", // ambiente local
-  "https://iflow.vercel.app", // Vercel
-  "https://www.iflowapp.com.br", // domínio próprio
-  "https://iflowapp.com.br", // sem www
-];
+// 🧩 Lista de origens permitidas (ou variável de ambiente FRONTEND_ORIGINS)
+const allowedOriginsEnv =
+  process.env.FRONTEND_ORIGINS ||
+  "http://localhost:5173,https://iflow.vercel.app,https://iflowapp.com.br";
 
+const allowedOrigins = allowedOriginsEnv
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+// ✅ Configuração robusta de CORS
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn("❌ CORS bloqueado para origem:", origin);
-        callback(new Error("Não permitido pelo CORS"));
-      }
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      console.warn("🚫 CORS bloqueado:", origin);
+      return callback(new Error("Origem não permitida"));
     },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
-// ✅ __dirname e __filename
+// __dirname para ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Rotas principais da API
+// Rotas principais
 app.use("/auth", authRoutes);
 app.use("/me", meRoutes);
 app.use("/items", itemsRouter);
@@ -52,16 +53,35 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 
-// ✅ Produção: Render serve apenas a API (frontend está no Vercel)
+// Servir frontend buildado (em produção)
 if (process.env.NODE_ENV === "production") {
-  console.log("🌐 Modo produção: servindo apenas a API (frontend hospedado separadamente)");
+  const frontendPath = path.join(__dirname, "../frontend/dist");
+  app.use(express.static(frontendPath));
+
+  app.get("*", (req, res, next) => {
+    const url = req.path || "";
+    const prefixes = [
+      "/auth",
+      "/me",
+      "/items",
+      "/admin",
+      "/dashboard",
+      "/itemValidation",
+    ];
+    const isApi = prefixes.some((p) => url.startsWith(p));
+    if (!isApi) {
+      return res.sendFile(path.join(frontendPath, "index.html"), (err) => {
+        if (err) {
+          console.error("Erro ao servir index.html:", err);
+          next();
+        }
+      });
+    } else next();
+  });
 }
 
-// ✅ Endpoint básico de verificação
-app.get("/", (req, res) => {
-  res.json({ message: "🚀 API iFlow rodando com sucesso!" });
-});
-
-// ✅ Porta
+// Porta
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+
+export default app;

@@ -1,55 +1,88 @@
+// src/routes/admin.js
 import express from "express";
 import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// GET - rota principal admin
-router.get("/", authenticateToken, async (req, res) => {
-  if (!req.user.isAdmin && !req.user.isSuperAdmin) {
-    return res.status(403).json({ error: "Acesso negado" });
-  }
+// Middleware para permitir apenas admins/superadmins
+function onlyAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: "Não autenticado" });
+  if (!req.user.isAdmin && !req.user.isSuperAdmin)
+    return res.status(403).json({ error: "Acesso restrito a administradores" });
+  next();
+}
 
-  res.json({ message: "Bem-vindo à área administrativa!" });
-});
-
-// PUT - promover usuário a admin (apenas SuperAdmin)
-router.put("/promote/:id", authenticateToken, async (req, res) => {
-  if (!req.user.isSuperAdmin) {
-    return res.status(403).json({ error: "Acesso negado. Apenas SuperAdmin pode promover" });
-  }
-
+// GET /admin/usuarios
+router.get("/usuarios", authenticateToken, onlyAdmin, async (req, res) => {
   try {
-    const { id } = req.params; // id é string uuid do Profile
-    const updated = await prisma.profile.update({
-      where: { id },
-      data: { isAdmin: true },
+    const profiles = await prisma.profile.findMany({
+      select: {
+        id: true,
+        name: true,
+        matricula: true,
+        profilePic: true,
+        isAdmin: true,
+        isSuperAdmin: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
     });
 
-    res.json({ message: "Usuário promovido a admin", profile: updated });
+    const mapped = profiles.map((p) => ({
+      id: p.id,
+      name: p.name,
+      matricula: p.matricula,
+      role: p.isSuperAdmin ? "superadmin" : p.isAdmin ? "admin" : "user",
+      profilePic: p.profilePic,
+      isAdmin: p.isAdmin,
+      isSuperAdmin: p.isSuperAdmin,
+    }));
+
+    res.json(mapped);
   } catch (err) {
-    console.error("Erro promote:", err);
-    res.status(500).json({ error: "Erro ao promover admin" });
+    console.error("❌ Erro GET /admin/usuarios:", err);
+    res.status(500).json({ error: "Erro ao listar usuários" });
   }
 });
 
-// PUT - remover permissão de admin (apenas SuperAdmin)
-router.put("/demote/:id", authenticateToken, async (req, res) => {
-  if (!req.user.isSuperAdmin) {
-    return res.status(403).json({ error: "Acesso negado. Apenas SuperAdmin pode demitir" });
-  }
-
+// PUT /admin/usuarios/:id
+router.put("/usuarios/:id", authenticateToken, onlyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const { name, isAdmin, isSuperAdmin } = req.body;
+
     const updated = await prisma.profile.update({
       where: { id },
-      data: { isAdmin: false },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(typeof isAdmin === "boolean" && { isAdmin }),
+        ...(typeof isSuperAdmin === "boolean" && { isSuperAdmin }),
+      },
+      select: {
+        id: true,
+        name: true,
+        isAdmin: true,
+        isSuperAdmin: true,
+      },
     });
 
-    res.json({ message: "Usuário removido do grupo admin", profile: updated });
+    res.json(updated);
   } catch (err) {
-    console.error("Erro demote:", err);
-    res.status(500).json({ error: "Erro ao demitir admin" });
+    console.error("❌ Erro PUT /admin/usuarios/:id:", err);
+    res.status(500).json({ error: "Erro ao atualizar usuário" });
+  }
+});
+
+// DELETE /admin/usuarios/:id
+router.delete("/usuarios/:id", authenticateToken, onlyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.profile.delete({ where: { id } });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erro DELETE /admin/usuarios/:id:", err);
+    res.status(500).json({ error: "Erro ao remover usuário" });
   }
 });
 

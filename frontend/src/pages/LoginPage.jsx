@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft,  } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import logo from "../assets/logo.jpg";
 import { supabase } from "../lib/supabaseClient";
 
@@ -8,6 +8,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
@@ -34,8 +35,10 @@ export default function Login() {
       const profile = await profileRes.json();
 
       localStorage.setItem("token", data.session.access_token);
+      localStorage.setItem("token", data.token);
+
       localStorage.setItem("user", JSON.stringify(profile));
-      navigate("/home");
+      navigate("/admin");
     } catch (err) {
       console.error(err);
       setError("Erro de conexão com o servidor");
@@ -61,7 +64,9 @@ export default function Login() {
 
       {/* Formulário */}
       <div className="w-full max-w-md space-y-6 mt-20">
-        <h1 className="text-3xl font-semibold text-gray-900 text-center">Fazer login</h1>
+        <h1 className="text-3xl font-semibold text-gray-900 text-center">
+          Fazer login
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -72,14 +77,29 @@ export default function Login() {
             className="w-full px-4 py-2 border rounded-md"
             required
           />
-          <input
-            type="password"
-            placeholder="Senha"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            className="w-full px-4 py-2 border rounded-md"
-            required
-          />
+
+          {/* Campo de senha com ícone de visualização */}
+          <div className="relative">
+            <input
+              type={showSenha ? "text" : "password"}
+              placeholder="Senha"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              className="w-full px-4 py-2 border rounded-md pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowSenha(!showSenha)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
+            >
+              {showSenha ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
+            </button>
+          </div>
 
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 

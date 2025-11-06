@@ -1,73 +1,116 @@
 import { useEffect, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
 
 export default function TabelaUsuariosAdmin() {
   const [usuarios, setUsuarios] = useState([]);
-  const [editando, setEditando] = useState(null);
+  const [edit, setEdit] = useState(null);
+  const token = localStorage.getItem("token");
+
+  const loadUsuarios = async () => {
+    const res = await fetch("/api/admin/usuarios", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    setUsuarios(data.usuarios || []);
+  };
 
   useEffect(() => {
-    fetch("/api/admin/usuarios").then((r) => r.json()).then(setUsuarios);
+    loadUsuarios();
   }, []);
 
-  async function salvarEdicao() {
-    await fetch(`/api/admin/usuarios/${editando.id}`, {
+  const salvar = async () => {
+    const res = await fetch(`/api/admin/usuarios/${edit.id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editando),
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify(edit),
     });
-    setEditando(null);
-    const atualizados = await fetch("/api/admin/usuarios").then((r) => r.json());
-    setUsuarios(atualizados);
-  }
+    if (res.ok) {
+      setEdit(null);
+      loadUsuarios();
+    }
+  };
 
-  async function deletarUsuario(id) {
-    await fetch(`/api/admin/usuarios/${id}`, { method: "DELETE" });
-    setUsuarios(usuarios.filter((u) => u.id !== id));
-  }
+  const remover = async (id) => {
+    if (!confirm("Deseja remover o usuário?")) return;
+    await fetch(`/api/admin/usuarios/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    loadUsuarios();
+  };
 
   return (
-    <div className="overflow-x-auto bg-white dark:bg-neutral-800 rounded-xl shadow p-4">
-      <table className="w-full text-left border-collapse">
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold mb-4">Gerenciar Usuários</h2>
+      <table className="min-w-full bg-white dark:bg-gray-800 border">
         <thead>
-          <tr className="border-b border-gray-300 dark:border-gray-700">
-            <th>Nome</th>
-            <th>Email</th>
-            <th>Função</th>
-            <th className="text-center">Ações</th>
+          <tr className="bg-gray-100 dark:bg-gray-700">
+            <th className="p-2">Nome</th>
+            <th className="p-2">Matrícula</th>
+            <th className="p-2">Admin</th>
+            <th className="p-2">SuperAdmin</th>
+            <th className="p-2">Ações</th>
           </tr>
         </thead>
         <tbody>
           {usuarios.map((u) => (
-            <tr key={u.id} className="border-b border-gray-200 dark:border-gray-700">
-              <td>{u.nome}</td>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
-              <td className="flex justify-center gap-2">
-                <button onClick={() => setEditando(u)}>
-                  <Pencil size={18} />
-                </button>
-                <button onClick={() => deletarUsuario(u.id)}>
-                  <Trash2 size={18} />
-                </button>
+            <tr key={u.id} className="border-b">
+              <td className="p-2">
+                {edit?.id === u.id ? (
+                  <input
+                    className="bg-transparent border p-1"
+                    value={edit.name}
+                    onChange={(e) => setEdit({ ...edit, name: e.target.value })}
+                  />
+                ) : (
+                  u.name
+                )}
+              </td>
+              <td className="p-2">
+                {edit?.id === u.id ? (
+                  <input
+                    className="bg-transparent border p-1"
+                    value={edit.matricula}
+                    onChange={(e) => setEdit({ ...edit, matricula: e.target.value })}
+                  />
+                ) : (
+                  u.matricula
+                )}
+              </td>
+              <td className="p-2">
+                {edit?.id === u.id ? (
+                  <input
+                    type="checkbox"
+                    checked={edit.isAdmin}
+                    onChange={(e) => setEdit({ ...edit, isAdmin: e.target.checked })}
+                  />
+                ) : u.isAdmin ? "✅" : "❌"}
+              </td>
+              <td className="p-2">
+                {edit?.id === u.id ? (
+                  <input
+                    type="checkbox"
+                    checked={edit.isSuperAdmin}
+                    onChange={(e) => setEdit({ ...edit, isSuperAdmin: e.target.checked })}
+                  />
+                ) : u.isSuperAdmin ? "✅" : "❌"}
+              </td>
+              <td className="p-2 space-x-2">
+                {edit?.id === u.id ? (
+                  <>
+                    <button className="text-green-600" onClick={salvar}>💾</button>
+                    <button onClick={() => setEdit(null)}>❌</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => setEdit(u)}>✏️</button>
+                    <button onClick={() => remover(u.id)}>🗑️</button>
+                  </>
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      {editando && (
-        <div className="mt-4 p-4 border-t border-gray-300 dark:border-gray-700">
-          <h3 className="font-semibold mb-2">Editar Usuário</h3>
-          <input
-            className="border rounded p-2 w-full mb-2"
-            value={editando.nome}
-            onChange={(e) => setEditando({ ...editando, nome: e.target.value })}
-          />
-          <button onClick={salvarEdicao} className="bg-green-600 text-white px-4 py-2 rounded">
-            Salvar
-          </button>
-        </div>
-      )}
     </div>
   );
 }

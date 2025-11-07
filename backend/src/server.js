@@ -54,12 +54,12 @@ const __dirname = path.dirname(__filename);
 // ==========================
 // Rotas principais
 // ==========================
-app.use("/auth", authRoutes);
-app.use("/me", meRoutes);
-app.use("/items", itemsRouter);
-app.use("/admin", adminRoutes);
-app.use("/itemValidation", itemValidationRoutes);
-app.use("/dashboard", dashboardRouter);
+// app.use("/auth", authRoutes);
+// app.use("/me", meRoutes);
+// app.use("/items", itemsRouter);
+// app.use("/admin", adminRoutes);
+// app.use("/itemValidation", itemValidationRoutes);
+// app.use("/dashboard", dashboardRouter);
 
 // ==========================
 // Servir frontend buildado (produção)

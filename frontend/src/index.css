@@ -18,8 +18,8 @@
 };
 
 /* Remove scrol horizontal */
-html {
-    overflow-x: hidden;
+html, body, #root{
+    overflow-x: hidden !important;
 };
 
 .menuhome {

@@ -52,7 +52,7 @@ router.get("/", async (req, res) => {
     const validations = await prisma.itemValidation.findMany({
       include: {
         item: true,
-        user: true,
+        profile: true, // ✅ nome certo do relacionamento
       },
       orderBy: { createdAt: "desc" },
     });
@@ -63,6 +63,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Erro ao listar validações." });
   }
 });
+
 
 
 export default router;

@@ -111,7 +111,7 @@ export default function TabelaItensAdmin() {
               <td className="p-2">
                 <span
                   className={`px-2 py-1 rounded text-xs ${
-                    item.status === "encontrado"
+                    item.status === "solicitado"
                       ? "bg-green-100 text-green-800"
                       : item.status === "perdido"
                       ? "bg-red-100 text-red-800"
@@ -157,7 +157,7 @@ export default function TabelaItensAdmin() {
               onChange={(e) => setEditando({ ...editando, status: e.target.value })}
             >
               <option value="perdido">Perdido</option>
-              <option value="encontrado">Encontrado</option>
+              <option value="solicitado">Solicitado</option>
               <option value="devolvido">Devolvido</option>
             </select>
             <div className="flex gap-2">

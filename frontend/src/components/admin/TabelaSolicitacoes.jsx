@@ -17,7 +17,8 @@ export default function TabelaSolicitacoes({ solicitacoes, updateStatus, deleteS
             <th className="p-2">ID</th>
             <th>Item</th>
             <th>Aluno</th>
-            <th>Status</th>
+            <th>Descrição</th>
+            <th>Local da Perda</th>
             <th>Data</th>
             <th>Tag</th>
             <th>Ações</th>
@@ -25,13 +26,17 @@ export default function TabelaSolicitacoes({ solicitacoes, updateStatus, deleteS
         </thead>
         <tbody>
           {solicitacoes.map((s) => (
-            <tr key={s.id} className="border-b border-gray-300 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-700">
+            <tr
+              key={s.id}
+              className="border-b border-gray-300 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-700"
+            >
               <td className="p-2">{s.id}</td>
-              <td>{s.item_id}</td>
-              <td>{s.aluno_id}</td>
-              <td>{s.status}</td>
-              <td>{new Date(s.data_solicitacao).toLocaleDateString()}</td>
-              <td className="font-semibold">{calcularTag(s.data_solicitacao)}</td>
+              <td>{s.item?.nome || s.itemId}</td>
+              <td>{s.user?.nome || s.userId}</td>
+              <td>{s.descricao}</td>
+              <td>{s.localPerda}</td>
+              <td>{new Date(s.createdAt).toLocaleDateString()}</td>
+              <td className="font-semibold">{calcularTag(s.createdAt)}</td>
               <td className="flex gap-2 p-2">
                 <button
                   className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"

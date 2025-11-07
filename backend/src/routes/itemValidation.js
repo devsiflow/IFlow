@@ -46,4 +46,23 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
+// GET - listar todas as validações (para o admin)
+router.get("/", async (req, res) => {
+  try {
+    const validations = await prisma.itemValidation.findMany({
+      include: {
+        item: true,
+        user: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.status(200).json(validations);
+  } catch (error) {
+    console.error("Erro ao listar validações:", error);
+    res.status(500).json({ error: "Erro ao listar validações." });
+  }
+});
+
+
 export default router;

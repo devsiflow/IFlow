@@ -15,7 +15,7 @@ export default function TabelaUsuariosAdmin() {
 
   async function carregarUsuarios() {
     try {
-      const res = await fetch(`${API_URL}/admin/usuarios`, {
+      const res = await fetch(`${API_URL}/admin/usuarios`, { 
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

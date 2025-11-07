@@ -16,22 +16,26 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// 🧩 Lista de origens permitidas (ou variável de ambiente FRONTEND_ORIGINS)
-const allowedOriginsEnv =
-  process.env.FRONTEND_ORIGINS ||
-  "http://localhost:5173,https://iflow.vercel.app,https://iflowapp.com.br";
-
+// ==========================
+// 🧩 Configuração CORS robusta
+// ==========================
+const allowedOriginsEnv = process.env.FRONTEND_ORIGINS || "";
 const allowedOrigins = allowedOriginsEnv
   .split(",")
   .map((s) => s.trim())
-  .filter(Boolean);
+  .filter((s) => /^https?:\/\//.test(s)); // só URLs válidas
 
-// ✅ Configuração robusta de CORS
+console.log("FRONTEND_ORIGINS:", process.env.FRONTEND_ORIGINS);
+console.log("allowedOrigins:", allowedOrigins);
+
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Permite requests sem origem (Postman, curl, SSR)
       if (!origin) return callback(null, true);
+
       if (allowedOrigins.includes(origin)) return callback(null, true);
+
       console.warn("🚫 CORS bloqueado:", origin);
       return callback(new Error("Origem não permitida"));
     },
@@ -41,11 +45,15 @@ app.use(
   })
 );
 
+// ==========================
 // __dirname para ESM
+// ==========================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// ==========================
 // Rotas principais
+// ==========================
 app.use("/auth", authRoutes);
 app.use("/me", meRoutes);
 app.use("/items", itemsRouter);
@@ -53,14 +61,16 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 
-// Servir frontend buildado (em produção)
+// ==========================
+// Servir frontend buildado (produção)
+// ==========================
 if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
   app.get("*", (req, res, next) => {
     const url = req.path || "";
-    const prefixes = [
+    const apiPrefixes = [
       "/auth",
       "/me",
       "/items",
@@ -68,7 +78,8 @@ if (process.env.NODE_ENV === "production") {
       "/dashboard",
       "/itemValidation",
     ];
-    const isApi = prefixes.some((p) => url.startsWith(p));
+    const isApi = apiPrefixes.some((p) => url.startsWith(p));
+
     if (!isApi) {
       return res.sendFile(path.join(frontendPath, "index.html"), (err) => {
         if (err) {
@@ -80,7 +91,9 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+// ==========================
 // Porta
+// ==========================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
 

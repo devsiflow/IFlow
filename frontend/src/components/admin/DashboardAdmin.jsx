@@ -14,7 +14,7 @@ import {
   Tooltip,
 } from "recharts";
 
-const COLORS = ["#16A34A", "#22C55E", "#84CC16", "#EF4444", "#60A5FA"];
+const COLORS = ["#16A34A", "#EF4444", "#84CC16", "#22C55E", "#60A5FA"];
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function DashboardAdmin() {
@@ -26,7 +26,7 @@ export default function DashboardAdmin() {
     totalItens: 0,
     devolvidos: 0,
     perdidos: 0,
-    pendentesSolicitacoes: 0,
+    pendentesSolicitacoes:0,
   });
 
   const [dadosPizza, setDadosPizza] = useState([]);
@@ -83,7 +83,8 @@ export default function DashboardAdmin() {
       if (data.itensPorStatus) {
         setDadosPizza(
           data.itensPorStatus.map(item => ({
-            name: item.status,
+            name: item.status === "devolvido" ? "Devolvidos/Encontrados" : 
+                  item.status === "perdido" ? "Perdidos" : "Solicitações Pendentes",
             value: item._count.status,
           }))
         );
@@ -125,7 +126,7 @@ export default function DashboardAdmin() {
     setDadosPizza([
       { name: "Devolvidos/Encontrados", value: devolvidos },
       { name: "Perdidos", value: perdidos },
-      { name: "Outros", value: Math.max(0, itensData.length - devolvidos - perdidos) },
+      { name: "Solicitações Pendentes", value: Math.max(0, itensData.length - devolvidos - perdidos) },
     ]);
   }
 
@@ -228,6 +229,20 @@ function ResumoCard({ title, value, color = "bg-gray-600" }) {
 }
 
 function GraficoPizza({ dados }) {
+  // Cores específicas para cada categoria
+  const getColorPorCategoria = (nome) => {
+    switch (nome) {
+      case "Devolvidos/Encontrados":
+        return "#16A34A"; // Verde
+      case "Perdidos":
+        return "#EF4444"; // Vermelho
+      case "Solicitações Pendentes":
+        return "#EAB308"; // Amarelo
+      default:
+        return "#60A5FA"; // Azul padrão
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
       <h3 className="font-semibold mb-2">Distribuição de Status</h3>
@@ -242,7 +257,7 @@ function GraficoPizza({ dados }) {
               label={({ name, value }) => `${name}: ${value}`}
             >
               {dados.map((entry, idx) => (
-                <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+                <Cell key={`cell-${idx}`} fill={getColorPorCategoria(entry.name)} />
               ))}
             </Pie>
             <ReTooltip />

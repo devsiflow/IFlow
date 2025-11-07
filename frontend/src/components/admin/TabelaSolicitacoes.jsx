@@ -1,6 +1,12 @@
-export default function TabelaSolicitacoes({ solicitacoes, updateStatus, deleteSolicitacao }) {
+export default function TabelaSolicitacoes({
+  solicitacoes,
+  updateStatus,
+  deleteSolicitacao,
+}) {
   function calcularTag(dataSolicitacao) {
-    const dias = Math.floor((new Date() - new Date(dataSolicitacao)) / (1000 * 60 * 60 * 24));
+    const dias = Math.floor(
+      (new Date() - new Date(dataSolicitacao)) / (1000 * 60 * 60 * 24)
+    );
     if (dias >= 90) return "Mais de 90 dias";
     if (dias >= 60) return "Mais de 60 dias";
     if (dias >= 45) return "Mais de 45 dias";
@@ -8,6 +14,13 @@ export default function TabelaSolicitacoes({ solicitacoes, updateStatus, deleteS
     if (dias >= 15) return "Mais de 15 dias";
     return "Recente";
   }
+
+  if (!solicitacoes.length)
+    return (
+      <div className="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow text-center text-gray-600 dark:text-gray-300">
+        Nenhuma solicitação encontrada.
+      </div>
+    );
 
   return (
     <div className="overflow-x-auto bg-white dark:bg-neutral-800 rounded-lg shadow-lg">

@@ -61,35 +61,7 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 
-// // ==========================
-// // Servir frontend buildado (produção)
-// // ==========================
-// if (process.env.NODE_ENV === "production") {
-//   const frontendPath = path.join(__dirname, "../frontend/dist");
-//   app.use(express.static(frontendPath));
 
-//   app.use((req, res, next) => {
-//     const url = req.path || "";
-//     const apiPrefixes = [
-//       "/auth",
-//       "/me", 
-//       "/items",
-//       "/admin",
-//       "/dashboard",
-//       "/itemValidation",
-//     ];
-//     const isApi = apiPrefixes.some((p) => url.startsWith(p));
-
-//     if (!isApi) {
-//       return res.sendFile(path.join(frontendPath, "index.html"), (err) => {
-//         if (err) {
-//           console.error("Erro ao servir index.html:", err);
-//           next();
-//         }
-//       });
-//     } else next();
-//   });
-// }
 
 // ==========================
 // Porta

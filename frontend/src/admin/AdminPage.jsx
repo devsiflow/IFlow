@@ -15,7 +15,6 @@ import TabelaSolicitacoes from "../components/admin/TabelaSolicitacoes";
 import TabelaUsuariosAdmin from "../components/admin/TabelaUsuariosAdmin";
 import TabelaItensAdmin from "../components/admin/TabelaItensAdmin";
 import GeradorRelatorio from "../components/admin/GeradorRelatorio";
-import GerenciarSenhasAdmin from "../components/admin/GerenciarSenhasAdmin";
 import DashboardAdmin from "../components/admin/DashboardAdmin";
 import LogoLoader from "../components/LogoLoader";
 
@@ -136,9 +135,7 @@ export default function AdminPage() {
         return <TabelaItensAdmin />;
       case "relatorios":
         return <GeradorRelatorio />;
-      case "senhas":
-        return <GerenciarSenhasAdmin />;
-      default:
+         default:
         return <div>Selecione uma opção do menu</div>;
     }
   };
@@ -233,7 +230,7 @@ export default function AdminPage() {
 
         {/* Conteúdo */}
         <main
-          className={`flex-1 transition-all duration-300 ${
+          className={`flex-1 transition-all duration-300 ${ 
             menuAberto ? "md:ml-64" : "md:ml-20"
           } p-6`}
         >

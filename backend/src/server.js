@@ -54,12 +54,12 @@ const __dirname = path.dirname(__filename);
 // ==========================
 // Rotas principais
 // ==========================
-// app.use("/auth", authRoutes);
-// app.use("/me", meRoutes);
-// app.use("/items", itemsRouter);
-// app.use("/admin", adminRoutes);
-// app.use("/itemValidation", itemValidationRoutes);
-// app.use("/dashboard", dashboardRouter);
+app.use("/auth", authRoutes);
+app.use("/me", meRoutes);
+app.use("/items", itemsRouter);
+app.use("/admin", adminRoutes);
+app.use("/itemValidation", itemValidationRoutes);
+app.use("/dashboard", dashboardRouter);
 
 // ==========================
 // Servir frontend buildado (produção)
@@ -68,7 +68,7 @@ if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
-  app.get("*", (req, res, next) => {
+  app.use((req, res, next) => {
     const url = req.path || "";
     const apiPrefixes = [
       "/auth",

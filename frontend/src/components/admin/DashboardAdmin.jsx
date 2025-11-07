@@ -26,7 +26,7 @@ export default function DashboardAdmin() {
     totalItens: 0,
     devolvidos: 0,
     perdidos: 0,
-    pendentesSolicitacoes:0,
+    pendentesSolicitacoes: 0,
   });
 
   const [dadosPizza, setDadosPizza] = useState([]);
@@ -40,25 +40,28 @@ export default function DashboardAdmin() {
   async function carregarDados() {
     setLoading(true);
     try {
-      const [itensResponse, dashboardResponse] = await Promise.all([
+      const [itensResponse, solicitacoesResponse, dashboardResponse] = await Promise.all([
         fetch(`${API_URL}/items?pageSize=1000`, { credentials: "include" }),
+        fetch(`${API_URL}/solicitacoes`, { credentials: "include" }), // Buscar solicitações
         fetch(`${API_URL}/dashboard`, { credentials: "include" }),
       ]);
 
-      if (!itensResponse.ok || !dashboardResponse.ok) {
-        console.warn("⚠️ Erro na resposta das APIs:", itensResponse.status, dashboardResponse.status);
+      if (!itensResponse.ok || !solicitacoesResponse.ok || !dashboardResponse.ok) {
+        console.warn("⚠️ Erro na resposta das APIs:", itensResponse.status, solicitacoesResponse.status, dashboardResponse.status);
       }
 
       const itensData = await itensResponse.json().catch(() => ({ items: [] }));
+      const solicitacoesData = await solicitacoesResponse.json().catch(() => ([]));
       const dashboardData = await dashboardResponse.json().catch(() => ({}));
 
       const items = itensData.items || [];
-      const solicitacoesData = [];
+      const solicitacoesArray = Array.isArray(solicitacoesData) ? solicitacoesData : 
+                              solicitacoesData.solicitacoes || solicitacoesData.items || [];
 
       setItens(items);
-      setSolicitacoes(solicitacoesData);
-      processarTotais(items, solicitacoesData);
-      gerarDadosGrafico(items, solicitacoesData, dashboardData);
+      setSolicitacoes(solicitacoesArray);
+      processarTotais(items, solicitacoesArray);
+      gerarDadosGrafico(items, solicitacoesArray, dashboardData);
     } catch (err) {
       console.error("❌ Erro ao carregar dashboard:", err);
       carregarDadosFallback();
@@ -69,29 +72,50 @@ export default function DashboardAdmin() {
 
   async function carregarDadosFallback() {
     try {
-      const response = await fetch(`${API_URL}/dashboard`, { credentials: "include" });
-      if (!response.ok) throw new Error("Falha ao buscar dados do dashboard");
-      const data = await response.json();
+      const [dashboardResponse, solicitacoesResponse] = await Promise.all([
+        fetch(`${API_URL}/dashboard`, { credentials: "include" }),
+        fetch(`${API_URL}/solicitacoes`, { credentials: "include" }),
+      ]);
+
+      const dashboardData = await dashboardResponse.json().catch(() => ({}));
+      const solicitacoesData = await solicitacoesResponse.json().catch(() => ([]));
+
+      const solicitacoesArray = Array.isArray(solicitacoesData) ? solicitacoesData : 
+                              solicitacoesData.solicitacoes || solicitacoesData.items || [];
+
+      const pendentesSolic = solicitacoesArray.filter(s =>
+        (s.status || "").toLowerCase().includes("pend")
+      ).length;
 
       setTotais({
-        totalItens: data.totalItens || 0,
-        devolvidos: data.itensPorStatus?.find(i => i.status === "devolvido")?._count?.status || 0,
-        perdidos: data.itensPorStatus?.find(i => i.status === "perdido")?._count?.status || 0,
-        pendentesSolicitacoes: 0,
+        totalItens: dashboardData.totalItens || 0,
+        devolvidos: dashboardData.itensPorStatus?.find(i => i.status === "devolvido")?._count?.status || 0,
+        perdidos: dashboardData.itensPorStatus?.find(i => i.status === "perdido")?._count?.status || 0,
+        pendentesSolicitacoes: pendentesSolic,
       });
 
-      if (data.itensPorStatus) {
-        setDadosPizza(
-          data.itensPorStatus.map(item => ({
-            name: item.status === "devolvido" ? "Devolvidos/Encontrados" : 
-                  item.status === "perdido" ? "Perdidos" : "Solicitações Pendentes",
-            value: item._count.status,
-          }))
-        );
+      // Gerar dados do gráfico de pizza incluindo solicitações pendentes
+      const dadosPizzaArray = [];
+      
+      if (dashboardData.itensPorStatus) {
+        dashboardData.itensPorStatus.forEach(item => {
+          if (item.status === "devolvido") {
+            dadosPizzaArray.push({ name: "Devolvidos/Encontrados", value: item._count.status });
+          } else if (item.status === "perdido") {
+            dadosPizzaArray.push({ name: "Perdidos", value: item._count.status });
+          }
+        });
       }
 
-      if (data.itensPorMes) {
-        const linhaData = Object.entries(data.itensPorMes).map(([mes, quantidade]) => ({
+      // Adicionar solicitações pendentes ao gráfico de pizza
+      if (pendentesSolic > 0) {
+        dadosPizzaArray.push({ name: "Solicitações Pendentes", value: pendentesSolic });
+      }
+
+      setDadosPizza(dadosPizzaArray);
+
+      if (dashboardData.itensPorMes) {
+        const linhaData = Object.entries(dashboardData.itensPorMes).map(([mes, quantidade]) => ({
           mes,
           itens: quantidade,
           solicitacoes: 0,
@@ -123,11 +147,18 @@ export default function DashboardAdmin() {
       pendentesSolicitacoes: pendentesSolic,
     });
 
-    setDadosPizza([
+    // Criar dados do gráfico de pizza incluindo solicitações pendentes
+    const dadosPizzaArray = [
       { name: "Devolvidos/Encontrados", value: devolvidos },
       { name: "Perdidos", value: perdidos },
-      { name: "Solicitações Pendentes", value: Math.max(0, itensData.length - devolvidos - perdidos) },
-    ]);
+    ];
+
+    // Adicionar solicitações pendentes apenas se houver alguma
+    if (pendentesSolic > 0) {
+      dadosPizzaArray.push({ name: "Solicitações Pendentes", value: pendentesSolic });
+    }
+
+    setDadosPizza(dadosPizzaArray);
   }
 
   function gerarDadosGrafico(itensData, solicData, dashboardData) {
@@ -135,7 +166,7 @@ export default function DashboardAdmin() {
       const arr = Object.entries(dashboardData.itensPorMes).map(([mes, quantidade]) => ({
         mes,
         itens: quantidade,
-        solicitacoes: 0,
+        solicitacoes: 1,
       }));
       setDadosLinha(arr);
       return;

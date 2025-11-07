@@ -30,190 +30,192 @@ export default function DashboardAdmin() {
   });
 
   const [dadosPizza, setDadosPizza] = useState([]);
-  const [dadosLinha, setDadosLinha] = useState([]); // [{mes, itens, solicitacoes}...]
+  const [dadosLinha, setDadosLinha] = useState([]);
 
   useEffect(() => {
     carregarDados();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function carregarDados() {
     setLoading(true);
     try {
-      const [itensResponse, dashboardResponse] = await Promise.all([
-        fetch(`${API_URL}/items?pageSize=1000`, { credentials: "include" }),
-        fetch(`${API_URL}/dashboard`, { credentials: "include" }),
+      console.log("🔄 Iniciando carregamento de dados...");
+      
+      const [itensResponse, solicitacoesResponse] = await Promise.all([
+        fetch(`${API_URL}/items`, { credentials: "include" }),
+        fetch(`${API_URL}/itemValidation`, { credentials: "include" }),
       ]);
 
-      if (!itensResponse.ok || !dashboardResponse.ok) {
-        console.warn("⚠️ Erro na resposta das APIs:", itensResponse.status, dashboardResponse.status);
-      }
+      console.log("📦 Respostas recebidas:", {
+        itens: itensResponse.status,
+        solicitacoes: solicitacoesResponse.status
+      });
 
-      const itensData = await itensResponse.json().catch(() => ({ items: [] }));
-      const dashboardData = await dashboardResponse.json().catch(() => ({}));
+      const itensData = await itensResponse.json();
+      const solicitacoesData = await solicitacoesResponse.json();
 
-      const items = itensData.items || [];
-      const solicitacoesData = [];
+      console.log("📊 Dados recebidos:", {
+        itens: itensData.length,
+        solicitacoes: solicitacoesData.length
+      });
+
+      const items = Array.isArray(itensData) ? itensData : (itensData.items || []);
+      const solic = Array.isArray(solicitacoesData) ? solicitacoesData : [];
 
       setItens(items);
-      setSolicitacoes(solicitacoesData);
-      processarTotais(items, solicitacoesData);
-      gerarDadosGrafico(items, solicitacoesData, dashboardData);
+      setSolicitacoes(solic);
+      
+      processarTotais(items, solic);
+      gerarDadosGrafico(items, solic);
+      
     } catch (err) {
       console.error("❌ Erro ao carregar dashboard:", err);
-      carregarDadosFallback();
     } finally {
       setLoading(false);
     }
   }
 
-  async function carregarDadosFallback() {
-    try {
-      const response = await fetch(`${API_URL}/dashboard`, { credentials: "include" });
-      if (!response.ok) throw new Error("Falha ao buscar dados do dashboard");
-      const data = await response.json();
-
-      setTotais({
-        totalItens: data.totalItens || 0,
-        devolvidos: data.itensPorStatus?.find(i => i.status === "devolvido")?._count?.status || 0,
-        perdidos: data.itensPorStatus?.find(i => i.status === "perdido")?._count?.status || 0,
-        pendentesSolicitacoes: 0,
-      });
-
-      if (data.itensPorStatus) {
-        setDadosPizza(
-          data.itensPorStatus.map(item => ({
-            name: item.status === "devolvido" ? "Devolvidos/Encontrados" : 
-                  item.status === "perdido" ? "Perdidos" : "Solicitações Pendentes",
-            value: item._count.status,
-          }))
-        );
-      }
-
-      if (data.itensPorMes) {
-        const linhaData = Object.entries(data.itensPorMes).map(([mes, quantidade]) => ({
-          mes,
-          itens: quantidade,
-          solicitacoes: 0,
-        }));
-        setDadosLinha(linhaData);
-      }
-    } catch (err) {
-      console.error("Erro no fallback:", err);
-    }
-  }
-
   function processarTotais(itensData, solicData) {
+    console.log("📈 Processando totais...", {
+      totalItens: itensData.length,
+      totalSolicitacoes: solicData.length
+    });
+
     let devolvidos = 0;
     let perdidos = 0;
+    
+    // Contar itens por status
     for (const it of itensData) {
-      const st = it.status ? String(it.status).toLowerCase() : "";
-      if (st.includes("devol") || st.includes("encontrado")) devolvidos++;
-      else if (st.includes("perd")) perdidos++;
+      const status = (it.status || "").toLowerCase();
+      if (status.includes("devolvido") || status.includes("encontrado")) {
+        devolvidos++;
+      } else if (status.includes("perdido")) {
+        perdidos++;
+      }
     }
 
-    const pendentesSolic = solicData.filter(s =>
-      (s.status || "").toLowerCase().includes("pend")
-    ).length;
-
-    setTotais({
+    const novosTotais = {
       totalItens: itensData.length,
       devolvidos,
       perdidos,
-      pendentesSolicitacoes: pendentesSolic,
-    });
-
-    setDadosPizza([
-      { name: "Devolvidos/Encontrados", value: devolvidos },
-      { name: "Perdidos", value: perdidos },
-      { name: "Solicitações Pendentes", value: Math.max(0, itensData.length - devolvidos - perdidos) },
-    ]);
-  }
-
-  function gerarDadosGrafico(itensData, solicData, dashboardData) {
-    if (dashboardData.itensPorMes) {
-      const arr = Object.entries(dashboardData.itensPorMes).map(([mes, quantidade]) => ({
-        mes,
-        itens: quantidade,
-        solicitacoes: 0,
-      }));
-      setDadosLinha(arr);
-      return;
-    }
-
-    const map = {};
-    const mkkey = (date) => {
-      if (!date) return null;
-      const d = new Date(date);
-      if (isNaN(d)) return null;
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      pendentesSolicitacoes: solicData.length,
     };
 
-    for (const it of itensData) {
-      const key = mkkey(it.createdAt);
-      if (!key) continue;
-      if (!map[key]) map[key] = { mes: key, itens: 0, solicitacoes: 0 };
-      map[key].itens++;
-    }
+    console.log("🎯 Totais calculados:", novosTotais);
+    setTotais(novosTotais);
 
-    for (const s of solicData) {
-      const key = mkkey(s.createdAt);
-      if (!key) continue;
-      if (!map[key]) map[key] = { mes: key, itens: 0, solicitacoes: 0 };
-      map[key].solicitacoes++;
-    }
+    // Gerar dados para gráfico de pizza
+    const pizzaData = [
+      { name: "Devolvidos/Encontrados", value: devolvidos },
+      { name: "Perdidos", value: perdidos },
+      { name: "Solicitações Pendentes", value: solicData.length },
+    ].filter(item => item.value > 0);
 
-    const arr = Object.keys(map)
-      .sort()
-      .map(k => {
-        const [y, m] = k.split("-");
-        const mesLabel = new Date(y, m - 1).toLocaleString("pt-BR", { month: "short", year: "numeric" });
-        return { mes: mesLabel, ...map[k] };
-      });
-
-    setDadosLinha(arr.length ? arr : gerarPlaceholder());
+    console.log("🍕 Dados pizza:", pizzaData);
+    setDadosPizza(pizzaData);
   }
 
-  function gerarPlaceholder() {
-    const placeholder = [];
-    const today = new Date();
+  function gerarDadosGrafico(itensData, solicData) {
+    console.log("📊 Gerando dados para gráficos...");
+    
+    const dadosPorMes = {};
+    const meses = [];
+    
+    // Criar array dos últimos 6 meses
+    const hoje = new Date();
     for (let i = 5; i >= 0; i--) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      placeholder.push({
-        mes: d.toLocaleString("pt-BR", { month: "short", year: "numeric" }),
-        itens: 0,
-        solicitacoes: 0,
+      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const mesAno = data.toLocaleDateString("pt-BR", {
+        month: "short",
+        year: "numeric"
       });
+      meses.push(mesAno);
+      dadosPorMes[mesAno] = { 
+        mes: mesAno, 
+        itens: 0, 
+        itensPerdidos: 0,
+        itensDevolvidos: 0,
+        solicitacoes: 0 
+      };
     }
-    return placeholder;
+
+    console.log("📅 Meses base:", meses);
+
+    // Contar itens por mês e por status
+    itensData.forEach(item => {
+      if (item.createdAt) {
+        const dataItem = new Date(item.createdAt);
+        const mesAno = dataItem.toLocaleDateString("pt-BR", {
+          month: "short",
+          year: "numeric"
+        });
+        
+        if (dadosPorMes[mesAno]) {
+          dadosPorMes[mesAno].itens++;
+          
+          const status = (item.status || "").toLowerCase();
+          if (status.includes("devolvido") || status.includes("encontrado")) {
+            dadosPorMes[mesAno].itensDevolvidos++;
+          } else if (status.includes("perdido")) {
+            dadosPorMes[mesAno].itensPerdidos++;
+          }
+        }
+      }
+    });
+
+    // Contar solicitações por mês
+    solicData.forEach(solic => {
+      if (solic.createdAt) {
+        const dataSolic = new Date(solic.createdAt);
+        const mesAno = dataSolic.toLocaleDateString("pt-BR", {
+          month: "short",
+          year: "numeric"
+        });
+        
+        if (dadosPorMes[mesAno]) {
+          dadosPorMes[mesAno].solicitacoes++;
+        }
+      }
+    });
+
+    const linhaData = meses.map(mes => dadosPorMes[mes]);
+    
+    console.log("📈 Dados linha:", linhaData);
+    setDadosLinha(linhaData);
   }
 
   return (
     <div className="p-6 bg-gray-50 dark:bg-neutral-900 min-h-[60vh]">
       <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <ResumoCard title="Total de Itens" value={totais.totalItens} color="bg-green-600" />
-        <ResumoCard title="Devolvidos/Encontrados" value={totais.devolvidos} color="bg-green-500" />
-        <ResumoCard title="Perdidos" value={totais.perdidos} color="bg-red-500" />
-        <ResumoCard title="Solicitações Pendentes" value={totais.pendentesSolicitacoes} color="bg-yellow-500" />
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <ResumoCard title="Total de Itens" value={totais.totalItens} color="bg-green-600" />
+            <ResumoCard title="Devolvidos/Encontrados" value={totais.devolvidos} color="bg-green-500" />
+            <ResumoCard title="Perdidos" value={totais.perdidos} color="bg-red-500" />
+            <ResumoCard title="Solicitações Pendentes" value={totais.pendentesSolicitacoes} color="bg-yellow-500" />
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GraficoPizza dados={dadosPizza} />
-        <GraficoLinha dados={dadosLinha} />
-      </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <GraficoPizza dados={dadosPizza} />
+            <GraficoLinha dados={dadosLinha} />
+          </div>
 
-      {loading && <p className="text-sm text-gray-500 mt-4">Carregando dados...</p>}
-
-      <div className="mt-6 text-center">
-        <button
-          onClick={carregarDados}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          Atualizar Dados
-        </button>
-      </div>
+          <div className="mt-6 text-center">
+            <button
+              onClick={carregarDados}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Atualizar Dados
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -223,7 +225,7 @@ function ResumoCard({ title, value, color = "bg-gray-600" }) {
   return (
     <div className={`p-4 rounded-2xl shadow flex flex-col justify-between ${color} text-white`}>
       <div className="text-sm font-medium">{title}</div>
-      <div className="text-3xl font-bold mt-2">{typeof value === "number" ? value : String(value)}</div>
+      <div className="text-3xl font-bold mt-2">{value}</div>
     </div>
   );
 }
@@ -242,6 +244,17 @@ function GraficoPizza({ dados }) {
         return "#60A5FA"; // Azul padrão
     }
   };
+
+  if (!dados || dados.length === 0) {
+    return (
+      <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
+        <h3 className="font-semibold mb-2">Distribuição de Status</h3>
+        <div className="flex items-center justify-center h-80">
+          <p className="text-gray-500">Nenhum dado disponível</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
@@ -270,6 +283,25 @@ function GraficoPizza({ dados }) {
 }
 
 function GraficoLinha({ dados }) {
+  // Cores consistentes com os cards e gráfico de pizza
+  const coresLinhas = {
+    itens: "#3B82F6",        // Azul - Total de Itens
+    itensDevolvidos: "#16A34A", // Verde - Devolvidos/Encontrados
+    itensPerdidos: "#EF4444",   // Vermelho - Perdidos
+    solicitacoes: "#EAB308", // Amarelo - Solicitações Pendentes
+  };
+
+  if (!dados || dados.length === 0) {
+    return (
+      <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
+        <h3 className="font-semibold mb-2">Itens e Solicitações por Mês</h3>
+        <div className="flex items-center justify-center h-80">
+          <p className="text-gray-500">Nenhum dado disponível</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
       <h3 className="font-semibold mb-2">Itens e Solicitações por Mês</h3>
@@ -280,8 +312,38 @@ function GraficoLinha({ dados }) {
             <XAxis dataKey="mes" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="itens" stroke="#16A34A" strokeWidth={2} dot={{ r: 4 }} name="Itens" />
-            <Line type="monotone" dataKey="solicitacoes" stroke="#22C55E" strokeWidth={2} dot={{ r: 4 }} name="Solicitações" />
+            <Line 
+              type="monotone" 
+              dataKey="itens" 
+              stroke={coresLinhas.itens} // Azul
+              strokeWidth={2} 
+              dot={{ r: 4 }} 
+              name="Total de Itens" 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="itensDevolvidos" 
+              stroke={coresLinhas.itensDevolvidos} // Verde
+              strokeWidth={2} 
+              dot={{ r: 4 }} 
+              name="Itens Devolvidos" 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="itensPerdidos" 
+              stroke={coresLinhas.itensPerdidos} // Vermelho
+              strokeWidth={2} 
+              dot={{ r: 4 }} 
+              name="Itens Perdidos" 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="solicitacoes" 
+              stroke={coresLinhas.solicitacoes} // Amarelo
+              strokeWidth={2} 
+              dot={{ r: 4 }} 
+              name="Solicitações" 
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>

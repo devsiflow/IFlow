@@ -68,7 +68,7 @@ if (process.env.NODE_ENV === "production") {
   const frontendPath = path.join(__dirname, "../frontend/dist");
   app.use(express.static(frontendPath));
 
-  app.use((req, res, next) => {
+  app.get("/*", (req, res, next) => {
     const url = req.path || "";
     const apiPrefixes = [
       "/auth",

@@ -39,7 +39,7 @@ function ValidarItem() {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
 
-      const response = await fetch(`${API_URL}/validacao`, {
+      const response = await fetch(`${API_URL}/itemValidation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

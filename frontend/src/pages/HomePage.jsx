@@ -7,7 +7,7 @@ import HowItWorks from "../components/sections/HowItWorks";
 import ObjectiveSection from "../components/sections/ObjectiveSection";
 import Footer from "../components/sections/Footer";
 
-import videoBackground from "../assets/videoBackground.mp4";
+// import videoBackground from "../assets/videoBackground.mp4";
 
 function HomePage() {
   return (
@@ -28,8 +28,8 @@ function HomePage() {
           className="absolute top-0 left-0 w-full h-full object-cover z-[-1]"
         >
           <source
-          src={videoBackground}
-            // src={"https://www.pexels.com/download/video/3288315/"}
+          // src={videoBackground}
+          src={"https://www.pexels.com/download/video/3288315/"}
             type="video/mp4"
           />
           Seu navegador não suporta vídeos HTML5.

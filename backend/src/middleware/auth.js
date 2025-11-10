@@ -5,13 +5,16 @@ import prisma from "../lib/prismaClient.js";
 export async function authenticateToken(req, res, next) {
   try {
     const authHeader = req.headers["authorization"] || "";
-    const token = authHeader.split(" ")[1];
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
 
     if (!token) {
+      console.warn("🚫 Nenhum token fornecido em Authorization header");
       return res.status(401).json({ error: "Token não fornecido" });
     }
 
-    // Verifica o token via Supabase (admin)
+    // Verifica o token via Supabase Admin API
     const { data, error } = await supabaseAdmin.auth.getUser(token);
 
     if (error || !data?.user) {
@@ -22,7 +25,7 @@ export async function authenticateToken(req, res, next) {
     const supUser = data.user;
     const userId = supUser.id;
 
-    // Busca o perfil local no Prisma
+    // Busca o perfil local no Prisma (opcional)
     const profile = await prisma.profile.findUnique({
       where: { id: userId },
       select: {
@@ -37,7 +40,7 @@ export async function authenticateToken(req, res, next) {
 
     req.user = {
       id: userId,
-      email: supUser.email,
+      email: supUser.email ?? null,
       name: profile?.name ?? null,
       matricula: profile?.matricula ?? null,
       profilePic: profile?.profilePic ?? null,
@@ -45,9 +48,10 @@ export async function authenticateToken(req, res, next) {
       isSuperAdmin: !!profile?.isSuperAdmin,
     };
 
+    console.log(`✅ Usuário autenticado: ${req.user.email || req.user.id}`);
     next();
   } catch (err) {
-    console.error("🔥 authenticateToken error:", err);
+    console.error("🔥 Erro em authenticateToken:", err);
     res.status(500).json({ error: "Erro interno de autenticação" });
   }
 }

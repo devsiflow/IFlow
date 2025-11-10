@@ -8,17 +8,15 @@ datasource db {
 }
 
 model Profile {
-  id           String           @id // UUID do Supabase Auth
+  id           String           @id
   name         String
-  matricula    String            @unique
+  matricula    String           @unique
   profilePic   String?
-  createdAt    DateTime          @default(now())
-  isAdmin      Boolean           @default(false)
-  isSuperAdmin Boolean           @default(false)
-
-  // Relações
+  createdAt    DateTime         @default(now())
+  isAdmin      Boolean          @default(false)
+  isSuperAdmin Boolean          @default(false)
   items        Item[]
-  validations  ItemValidation[]  @relation("ProfileValidations")
+  validations  ItemValidation[] @relation("ProfileValidations")
 }
 
 model Category {
@@ -36,11 +34,10 @@ model Item {
   createdAt   DateTime         @default(now())
   userId      String
   categoryId  Int?
-
-  user        Profile           @relation(fields: [userId], references: [id])
-  category    Category?         @relation(fields: [categoryId], references: [id])
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  user        Profile          @relation(fields: [userId], references: [id])
   images      ItemImage[]
-  validations ItemValidation[]  @relation("ItemValidations")
+  validations ItemValidation[] @relation("ItemValidations")
 }
 
 model ItemImage {
@@ -51,7 +48,7 @@ model ItemImage {
 }
 
 model ItemValidation {
-  id              Int       @id @default(autoincrement())
+  id              Int      @id @default(autoincrement())
   userId          String?
   itemId          Int
   descricao       String
@@ -59,9 +56,17 @@ model ItemValidation {
   detalhesUnicos  String
   conteudoInterno String
   momentoPerda    String
-  createdAt       DateTime  @default(now())
+  createdAt       DateTime @default(now())
+  item            Item     @relation("ItemValidations", fields: [itemId], references: [id])
+  profile         Profile? @relation("ProfileValidations", fields: [userId], references: [id])
+}
 
-  // Relações
-  profile Profile? @relation("ProfileValidations", fields: [userId], references: [id])
-  item    Item     @relation("ItemValidations", fields: [itemId], references: [id])
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model solicitacoes {
+  id               Int       @id @default(autoincrement())
+  item_id          Int?
+  aluno_id         String?   @db.Uuid
+  status           String?   @default("pendente") @db.VarChar(50)
+  observacoes      String?
+  data_solicitacao DateTime? @default(now()) @db.Timestamp(6)
 }

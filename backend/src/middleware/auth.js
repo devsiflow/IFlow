@@ -2,6 +2,10 @@
 import supabaseAdmin from "../lib/supabaseAdmin.js";
 import prisma from "../lib/prismaClient.js";
 
+/**
+ * Middleware que valida o access_token do Supabase passado no header:
+ * Authorization: Bearer <access_token>
+ */
 export async function authenticateToken(req, res, next) {
   try {
     const authHeader = req.headers["authorization"] || "";
@@ -14,32 +18,28 @@ export async function authenticateToken(req, res, next) {
       return res.status(401).json({ error: "Token não fornecido" });
     }
 
-    // Verifica o token via Supabase Admin API
+    // Valida token usando o client admin do Supabase
+    // (supabaseAdmin deve ser criado com SUPABASE_SERVICE_ROLE_KEY)
     const { data, error } = await supabaseAdmin.auth.getUser(token);
-
-    if (error || !data?.user) {
-      console.error("❌ Erro Supabase:", error?.message || "Usuário inválido");
+    if (error) {
+      console.warn("🚫 Falha ao buscar usuário no Supabase:", error.message);
       return res.status(401).json({ error: "Token inválido ou expirado" });
     }
 
-    const supUser = data.user;
-    const userId = supUser.id;
+    const supUser = data?.user;
+    if (!supUser || !supUser.id) {
+      console.warn("🚫 supabase retornou usuário inválido:", supUser);
+      return res.status(401).json({ error: "Usuário inválido" });
+    }
 
-    // Busca o perfil local no Prisma (opcional)
+    // Busca o profile no banco (Prisma)
     const profile = await prisma.profile.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        matricula: true,
-        profilePic: true,
-        isAdmin: true,
-        isSuperAdmin: true,
-      },
+      where: { id: supUser.id },
     });
 
+    // Monta req.user com informações úteis
     req.user = {
-      id: userId,
+      id: supUser.id,
       email: supUser.email ?? null,
       name: profile?.name ?? null,
       matricula: profile?.matricula ?? null,
@@ -49,9 +49,11 @@ export async function authenticateToken(req, res, next) {
     };
 
     console.log(`✅ Usuário autenticado: ${req.user.email || req.user.id}`);
-    next();
+    return next();
   } catch (err) {
-    console.error("🔥 Erro em authenticateToken:", err);
-    res.status(500).json({ error: "Erro interno de autenticação" });
+    // LOG detalhado pra debugging (não retorna stack pro cliente)
+    console.error("🔥 Erro em authenticateToken:", err?.message ?? err);
+    return res.status(500).json({ error: "Erro interno de autenticação" });
   }
 }
+export default authenticateToken;

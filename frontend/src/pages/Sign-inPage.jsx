@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import logo from "../assets/logo.jpg";
@@ -10,17 +10,35 @@ export default function Cadastro() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [campusId, setCampusId] = useState("");
+  const [campusList, setCampusList] = useState([]);
   const [showSenha, setShowSenha] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // 🔹 Busca os campus ao carregar
+  useEffect(() => {
+    const fetchCampus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/campus`);
+        const data = await res.json();
+        setCampusList(data);
+      } catch (err) {
+        console.error("Erro ao carregar campus:", err);
+      }
+    };
+    fetchCampus();
+  }, [API_URL]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
 
-    if (!matricula || !nome || !email || !senha) {
+    if (!matricula || !nome || !email || !senha || !campusId) {
       setError("Todos os campos são obrigatórios");
       return;
     }
@@ -51,8 +69,7 @@ export default function Cadastro() {
         data: { name: nome, matricula },
       });
 
-      // 2️⃣ Criar perfil no backend (Prisma)
-      const API_URL = import.meta.env.VITE_API_URL;
+      // 2️⃣ Criar perfil no backend
       const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -60,6 +77,7 @@ export default function Cadastro() {
           id: userId,
           name: nome,
           matricula,
+          campusId: Number(campusId),
           profilePic: null,
         }),
       });
@@ -80,7 +98,6 @@ export default function Cadastro() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4 relative">
-      {/* Botão de voltar fixo */}
       <button
         onClick={() => navigate(-1)}
         className="fixed top-4 left-4 z-50 p-2 rounded hover:bg-gray-200 transition group"
@@ -88,14 +105,12 @@ export default function Cadastro() {
         <ArrowLeft className="w-6 h-6 text-gray-700" />
       </button>
 
-      {/* Logo fixa no topo */}
       <img
         src={logo}
         alt="Logo"
         className="fixed top-4 left-1/2 transform -translate-x-1/2 h-12 w-auto z-40 object-contain"
       />
 
-      {/* Formulário */}
       <div className="w-full max-w-md space-y-6 mt-20">
         <h1 className="text-3xl font-semibold text-gray-900 text-center">
           Criar conta
@@ -141,8 +156,24 @@ export default function Cadastro() {
               required
               disabled={loading}
             />
-            
-            {/* Campo de senha com ícone de visualização */}
+
+            {/* 🔹 Select de Campus */}
+            <select
+              value={campusId}
+              onChange={(e) => setCampusId(e.target.value)}
+              className="w-full px-4 py-2 border rounded-md bg-white"
+              required
+              disabled={loading}
+            >
+              <option value="">Selecione seu campus</option>
+              {campusList.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+
+            {/* Campo de senha */}
             <div className="relative">
               <input
                 type={showSenha ? "text" : "password"}

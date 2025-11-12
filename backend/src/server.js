@@ -10,6 +10,7 @@ import itemsRouter from "./routes/item.js";
 import adminRoutes from "./routes/admin.js";
 import itemValidationRoutes from "./routes/itemValidation.js";
 import dashboardRouter from "./routes/dashboard.js";
+import campusRouter from "./routes/campus.js"; // 👈 nova rota
 
 dotenv.config();
 
@@ -17,13 +18,13 @@ const app = express();
 app.use(express.json());
 
 // ==========================
-// 🧩 Configuração CORS robusta
+// 🧩 Configuração CORS
 // ==========================
 const allowedOriginsEnv = process.env.FRONTEND_ORIGINS || "";
 const allowedOrigins = allowedOriginsEnv
   .split(",")
   .map((s) => s.trim())
-  .filter((s) => /^https?:\/\//.test(s)); // só URLs válidas
+  .filter((s) => /^https?:\/\//.test(s));
 
 console.log("FRONTEND_ORIGINS:", process.env.FRONTEND_ORIGINS);
 console.log("allowedOrigins:", allowedOrigins);
@@ -31,11 +32,8 @@ console.log("allowedOrigins:", allowedOrigins);
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permite requests sem origem (Postman, curl, SSR)
       if (!origin) return callback(null, true);
-
       if (allowedOrigins.includes(origin)) return callback(null, true);
-
       console.warn("🚫 CORS bloqueado:", origin);
       return callback(new Error("Origem não permitida"));
     },
@@ -60,8 +58,7 @@ app.use("/items", itemsRouter);
 app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
-
-
+app.use("/campus", campusRouter); // 👈 nova rota campus
 
 // ==========================
 // Porta

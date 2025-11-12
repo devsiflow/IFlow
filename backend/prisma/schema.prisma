@@ -15,6 +15,8 @@ model Profile {
   createdAt    DateTime         @default(now())
   isAdmin      Boolean          @default(false)
   isSuperAdmin Boolean          @default(false)
+  campusId     Int?
+  campus       Campus?          @relation(fields: [campusId], references: [id])
   items        Item[]
   validations  ItemValidation[] @relation("ProfileValidations")
 }
@@ -34,7 +36,9 @@ model Item {
   createdAt   DateTime         @default(now())
   userId      String
   categoryId  Int?
+  campusId    Int?
   category    Category?        @relation(fields: [categoryId], references: [id])
+  campus      Campus?          @relation(fields: [campusId], references: [id])
   user        Profile          @relation(fields: [userId], references: [id])
   images      ItemImage[]
   validations ItemValidation[] @relation("ItemValidations")
@@ -69,4 +73,12 @@ model solicitacoes {
   status           String?   @default("pendente") @db.VarChar(50)
   observacoes      String?
   data_solicitacao DateTime? @default(now()) @db.Timestamp(6)
+}
+
+
+model Campus {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  profiles  Profile[]
+  items     Item[]
 }

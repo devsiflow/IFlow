@@ -1,59 +1,54 @@
-// src/middleware/auth.js
-import supabaseAdmin from "../lib/supabaseAdmin.js";
+// routes/auth.js
+import express from "express";
 import prisma from "../lib/prismaClient.js";
 
-/**
- * Middleware que valida o access_token do Supabase passado no header:
- * Authorization: Bearer <access_token>
- */
-export async function authenticateToken(req, res, next) {
+const router = express.Router();
+
+// Criar apenas o Profile no Prisma
+router.post("/register", async (req, res) => {
+  const { id, name, matricula, campusId } = req.body; // id vindo do frontend (Supabase)
+
+  if (!id || !name || !matricula || !campusId)
+    return res.status(400).json({ error: "Campos obrigatórios faltando" });
+
   try {
-    const authHeader = req.headers["authorization"] || "";
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : null;
-
-    if (!token) {
-      console.warn("🚫 Nenhum token fornecido em Authorization header");
-      return res.status(401).json({ error: "Token não fornecido" });
-    }
-
-    // Valida token usando o client admin do Supabase
-    // (supabaseAdmin deve ser criado com SUPABASE_SERVICE_ROLE_KEY)
-    const { data, error } = await supabaseAdmin.auth.getUser(token);
-    if (error) {
-      console.warn("🚫 Falha ao buscar usuário no Supabase:", error.message);
-      return res.status(401).json({ error: "Token inválido ou expirado" });
-    }
-
-    const supUser = data?.user;
-    if (!supUser || !supUser.id) {
-      console.warn("🚫 supabase retornou usuário inválido:", supUser);
-      return res.status(401).json({ error: "Usuário inválido" });
-    }
-
-    // Busca o profile no banco (Prisma)
-    const profile = await prisma.profile.findUnique({
-      where: { id: supUser.id },
+    // Verificar se o campus existe
+    const campus = await prisma.campus.findUnique({
+      where: { id: parseInt(campusId) }
     });
 
-    // Monta req.user com informações úteis
-    req.user = {
-      id: supUser.id,
-      email: supUser.email ?? null,
-      name: profile?.name ?? null,
-      matricula: profile?.matricula ?? null,
-      profilePic: profile?.profilePic ?? null,
-      isAdmin: !!profile?.isAdmin,
-      isSuperAdmin: !!profile?.isSuperAdmin,
-    };
+    if (!campus) {
+      return res.status(400).json({ error: "Campus não encontrado" });
+    }
 
-    console.log(`✅ Usuário autenticado: ${req.user.email || req.user.id}`);
-    return next();
+    const profile = await prisma.profile.create({
+      data: {
+        id,
+        name,
+        matricula,
+        campusId: parseInt(campusId),
+        profilePic: null,
+      },
+    });
+
+    res.json({ message: "Profile criado!", profile });
   } catch (err) {
-    // LOG detalhado pra debugging (não retorna stack pro cliente)
-    console.error("🔥 Erro em authenticateToken:", err?.message ?? err);
-    return res.status(500).json({ error: "Erro interno de autenticação" });
+    console.error(err);
+    res.status(500).json({ error: "Erro ao criar profile" });
   }
-}
-export default authenticateToken;
+});
+
+// Rota para listar campus (usada no frontend no cadastro)
+router.get("/campuses", async (req, res) => {
+  try {
+    const campuses = await prisma.campus.findMany({
+      orderBy: { name: "asc" }
+    });
+    res.json(campuses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao listar campus" });
+  }
+});
+
+export default router;

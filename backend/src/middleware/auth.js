@@ -1,12 +1,6 @@
 import jwt from "jsonwebtoken";
 
-/**
- * Middleware para autenticação via token JWT
- * Verifica o token enviado no header "Authorization"
- * e adiciona o usuário decodificado em req.user
- */
 export function authenticateToken(req, res, next) {
-  // Pega o token do header "Authorization: Bearer <token>"
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
@@ -15,13 +9,16 @@ export function authenticateToken(req, res, next) {
   }
 
   try {
-    // Verifica o token usando a chave secreta
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // ✔ Usa o segredo do Supabase
+    const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
 
-    // Armazena os dados do usuário no request
-    req.user = decoded;
+    // ✔ O ID do usuário fica em `sub`
+    req.user = {
+      id: decoded.sub,
+      email: decoded.email,
+      role: decoded.role,
+    };
 
-    // Continua para a próxima função/rota
     next();
   } catch (err) {
     console.error("Erro ao verificar token:", err);
@@ -29,10 +26,6 @@ export function authenticateToken(req, res, next) {
   }
 }
 
-/**
- * Middleware opcional para permitir apenas administradores
- * (caso queira proteger rotas específicas no futuro)
- */
 export function onlyAdmin(req, res, next) {
   if (!req.user) {
     return res.status(401).json({ error: "Usuário não autenticado" });

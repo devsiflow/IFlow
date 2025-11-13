@@ -1,54 +1,46 @@
-// routes/auth.js
-import express from "express";
-import prisma from "../lib/prismaClient.js";
+import jwt from "jsonwebtoken";
 
-const router = express.Router();
+/**
+ * Middleware para autenticação via token JWT
+ * Verifica o token enviado no header "Authorization"
+ * e adiciona o usuário decodificado em req.user
+ */
+export function authenticateToken(req, res, next) {
+  // Pega o token do header "Authorization: Bearer <token>"
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-// Criar apenas o Profile no Prisma
-router.post("/register", async (req, res) => {
-  const { id, name, matricula, campusId } = req.body; // id vindo do frontend (Supabase)
-
-  if (!id || !name || !matricula || !campusId)
-    return res.status(400).json({ error: "Campos obrigatórios faltando" });
+  if (!token) {
+    return res.status(401).json({ error: "Token não fornecido" });
+  }
 
   try {
-    // Verificar se o campus existe
-    const campus = await prisma.campus.findUnique({
-      where: { id: parseInt(campusId) }
-    });
+    // Verifica o token usando a chave secreta
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!campus) {
-      return res.status(400).json({ error: "Campus não encontrado" });
-    }
+    // Armazena os dados do usuário no request
+    req.user = decoded;
 
-    const profile = await prisma.profile.create({
-      data: {
-        id,
-        name,
-        matricula,
-        campusId: parseInt(campusId),
-        profilePic: null,
-      },
-    });
-
-    res.json({ message: "Profile criado!", profile });
+    // Continua para a próxima função/rota
+    next();
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao criar profile" });
+    console.error("Erro ao verificar token:", err);
+    return res.status(403).json({ error: "Token inválido ou expirado" });
   }
-});
+}
 
-// Rota para listar campus (usada no frontend no cadastro)
-router.get("/campuses", async (req, res) => {
-  try {
-    const campuses = await prisma.campus.findMany({
-      orderBy: { name: "asc" }
-    });
-    res.json(campuses);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao listar campus" });
+/**
+ * Middleware opcional para permitir apenas administradores
+ * (caso queira proteger rotas específicas no futuro)
+ */
+export function onlyAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ error: "Usuário não autenticado" });
   }
-});
 
-export default router;
+  if (!req.user.isAdmin && !req.user.isSuperAdmin) {
+    return res.status(403).json({ error: "Acesso negado: apenas administradores" });
+  }
+
+  next();
+}

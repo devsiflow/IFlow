@@ -66,7 +66,7 @@ export default function Cadastro() {
 
       // Atualiza user_metadata (nome e matrícula)
       await supabase.auth.updateUser({
-        data: { name: nome, matricula },
+        data: { nome: nome, matricula },
       });
 
       // 2️⃣ Criar perfil no backend
@@ -75,7 +75,7 @@ export default function Cadastro() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: userId,
-          name: nome,
+          nome: nome,
           matricula,
           campusId: Number(campusId),
           profilePic: null,

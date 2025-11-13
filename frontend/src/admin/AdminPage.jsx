@@ -14,7 +14,7 @@ import {
 import TabelaSolicitacoes from "../components/admin/TabelaSolicitacoes";
 import TabelaUsuariosAdmin from "../components/admin/TabelaUsuariosAdmin";
 import TabelaItensAdmin from "../components/admin/TabelaItensAdmin";
-import GeradorRelatorio from "../components/admin/GeradorRelatorio";
+// import GeradorRelatorio from "../components/admin/GeradorRelatorio";
 import DashboardAdmin from "../components/admin/DashboardAdmin";
 import LogoLoader from "../components/LogoLoader";
 

@@ -25,7 +25,9 @@ export default function Cadastro() {
       try {
         const res = await fetch(`${API_URL}/campus`);
         const data = await res.json();
-        setCampusList(data);
+        console.log("📡 Campus retornados:", data);
+
+        setCampusList(data); // ✅ Corrigido
       } catch (err) {
         console.error("Erro ao carregar campus:", err);
       }

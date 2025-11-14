@@ -7,7 +7,15 @@ const router = express.Router();
 /* LISTAR ITENS (público) */
 router.get("/", async (req, res) => {
   try {
-    const { status, category, q, page = 1, pageSize = 20, user } = req.query;
+    const {
+      status,
+      category,
+      q,
+      page = 1,
+      pageSize = 20,
+      user,
+      campusId,
+    } = req.query;
     const where = {};
 
     if (status && status !== "Todos") where.status = status;
@@ -17,19 +25,29 @@ router.get("/", async (req, res) => {
     if (q) {
       where.OR = [
         { title: { contains: q, mode: "insensitive" } },
-        { description: { contains: q, mode: "insensitive" } }
+        { description: { contains: q, mode: "insensitive" } },
       ];
     }
     if (user) {
       where.userId = user;
     }
+    if (campusId) {
+      const cid = Number(campusId);
+      console.log("campusId convertido para número:", cid); // Log para verificar a conversão
+      if (!Number.isNaN(cid)) where.campusId = cid;
+      else console.log("campusId não é um número válido");
+    }
 
     const items = await prisma.item.findMany({
       where,
-      include: { images: true, category: true, user: { select: { id: true, name: true, profilePic: true } } },
+      include: {
+        images: true,
+        category: true,
+        user: { select: { id: true, name: true, profilePic: true } },
+      },
       orderBy: { createdAt: "desc" },
       skip: (Number(page) - 1) * Number(pageSize),
-      take: Number(pageSize)
+      take: Number(pageSize),
     });
 
     const total = await prisma.item.count({ where });
@@ -48,14 +66,14 @@ router.get("/meus-itens", authenticateToken, async (req, res) => {
 
     const items = await prisma.item.findMany({
       where: { userId }, // Filtra apenas os itens do usuário logado
-      include: { 
-        images: true, 
-        category: true, 
-        user: { select: { id: true, name: true, profilePic: true } } 
+      include: {
+        images: true,
+        category: true,
+        user: { select: { id: true, name: true, profilePic: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (Number(page) - 1) * Number(pageSize),
-      take: Number(pageSize)
+      take: Number(pageSize),
     });
 
     const total = await prisma.item.count({ where: { userId } });
@@ -72,7 +90,11 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
     const item = await prisma.item.findUnique({
       where: { id: Number(id) },
-      include: { images: true, category: true, user: { select: { id: true, name: true, profilePic: true } } }
+      include: {
+        images: true,
+        category: true,
+        user: { select: { id: true, name: true, profilePic: true } },
+      },
     });
     if (!item) return res.status(404).json({ error: "Item não encontrado" });
     res.json(item);
@@ -85,19 +107,33 @@ router.get("/:id", async (req, res) => {
 /* CRIAR ITEM (autenticado) */
 router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { title, description, imageUrls = [], status = "perdido", location, categoryName } = req.body;
+    const {
+      title,
+      description,
+      imageUrls = [],
+      status = "perdido",
+      location,
+      categoryName,
+    } = req.body;
     const userId = req.user.id;
 
     // Validação mais robusta
     if (!title || !description || !location || !categoryName) {
-      return res.status(400).json({ error: "Preencha title, description, location e categoryName" });
+      return res.status(400).json({
+        error: "Preencha title, description, location e categoryName",
+      });
     }
 
     // encontrar/ criar categoria
     let category = null;
     if (categoryName) {
-      category = await prisma.category.findFirst({ where: { name: categoryName } });
-      if (!category) category = await prisma.category.create({ data: { name: categoryName } });
+      category = await prisma.category.findFirst({
+        where: { name: categoryName },
+      });
+      if (!category)
+        category = await prisma.category.create({
+          data: { name: categoryName },
+        });
     }
 
     const newItem = await prisma.item.create({
@@ -108,9 +144,13 @@ router.post("/", authenticateToken, async (req, res) => {
         location,
         userId,
         categoryId: category ? category.id : null,
-        images: { create: imageUrls.map((url) => ({ url })) }
+        images: { create: imageUrls.map((url) => ({ url })) },
       },
-      include: { images: true, category: true, user: { select: { id: true, name: true, profilePic: true } } }
+      include: {
+        images: true,
+        category: true,
+        user: { select: { id: true, name: true, profilePic: true } },
+      },
     });
 
     res.status(201).json(newItem);
@@ -127,17 +167,31 @@ router.put("/:id", authenticateToken, async (req, res) => {
     const { title, description, status, location, categoryName } = req.body;
     const requester = req.user;
 
-    const existing = await prisma.item.findUnique({ where: { id: Number(id) } });
-    if (!existing) return res.status(404).json({ error: "Item não encontrado" });
+    const existing = await prisma.item.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!existing)
+      return res.status(404).json({ error: "Item não encontrado" });
 
-    if (existing.userId !== requester.id && !requester.isAdmin && !requester.isSuperAdmin) {
-      return res.status(403).json({ error: "Sem permissão para editar este item" });
+    if (
+      existing.userId !== requester.id &&
+      !requester.isAdmin &&
+      !requester.isSuperAdmin
+    ) {
+      return res
+        .status(403)
+        .json({ error: "Sem permissão para editar este item" });
     }
 
     let category = null;
     if (categoryName) {
-      category = await prisma.category.findFirst({ where: { name: categoryName } });
-      if (!category) category = await prisma.category.create({ data: { name: categoryName } });
+      category = await prisma.category.findFirst({
+        where: { name: categoryName },
+      });
+      if (!category)
+        category = await prisma.category.create({
+          data: { name: categoryName },
+        });
     }
 
     const updated = await prisma.item.update({
@@ -147,9 +201,13 @@ router.put("/:id", authenticateToken, async (req, res) => {
         description: description ?? existing.description,
         status: status ?? existing.status,
         location: location ?? existing.location,
-        categoryId: category ? category.id : existing.categoryId
+        categoryId: category ? category.id : existing.categoryId,
       },
-      include: { images: true, category: true, user: { select: { id: true, name: true, profilePic: true } } }
+      include: {
+        images: true,
+        category: true,
+        user: { select: { id: true, name: true, profilePic: true } },
+      },
     });
 
     res.json(updated);
@@ -165,11 +223,20 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     const { id } = req.params;
     const requester = req.user;
 
-    const existing = await prisma.item.findUnique({ where: { id: Number(id) } });
-    if (!existing) return res.status(404).json({ error: "Item não encontrado" });
+    const existing = await prisma.item.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!existing)
+      return res.status(404).json({ error: "Item não encontrado" });
 
-    if (existing.userId !== requester.id && !requester.isAdmin && !requester.isSuperAdmin) {
-      return res.status(403).json({ error: "Sem permissão para excluir este item" });
+    if (
+      existing.userId !== requester.id &&
+      !requester.isAdmin &&
+      !requester.isSuperAdmin
+    ) {
+      return res
+        .status(403)
+        .json({ error: "Sem permissão para excluir este item" });
     }
 
     await prisma.itemImage.deleteMany({ where: { itemId: Number(id) } });

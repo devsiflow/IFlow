@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useItens } from "../hooks/useItens";
+import { useAuth } from "../hooks/useAuth"; // Adicionando o useAuth para pegar o usuário logado
 import MenuCatalogo from "../components/MenuCatalogo";
 import { Search } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
@@ -7,14 +8,15 @@ import ItemCard from "../components/ItemCard";
 
 function Catalogo() {
   const { itens, loading, error } = useItens();
+  const { user } = useAuth(); // Pegando o usuário logado
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [localFilter, setLocalFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
-  if (loading) return <LogoLoader />;
-  if (error)
-    return <div className="p-6 text-center text-red-500">Erro: {error}</div>;
+  // Filtrar os itens com base no campus do usuário
+  const campusId = user?.campusId;
+  console.log("campusId do usuário:", campusId); // Log para verificar o campusId
 
   const filteredItems = itens.filter((item) => {
     const nameMatch = (item.title ?? "")
@@ -28,16 +30,19 @@ function Catalogo() {
     const dateMatch =
       !dateFilter ||
       new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
-    return nameMatch && statusMatch && localMatch && dateMatch;
+    const campusMatch = item.campusId === campusId; // Verifica se o item corresponde ao campus do usuário logado
+    return nameMatch && statusMatch && localMatch && dateMatch && campusMatch;
   });
+
+  if (loading) return <LogoLoader />;
+  if (error)
+    return <div className="p-6 text-center text-red-500">Erro: {error}</div>;
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
       <MenuCatalogo />
 
       <div className="pt-32 px-6 max-w-7xl mx-auto">
-      
-
         {/* Filtros */}
         <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">

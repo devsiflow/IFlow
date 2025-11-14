@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import prisma from "../lib/prismaClient.js";
 
-export function authenticateToken(req, res, next) {
+export async function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
@@ -9,14 +10,20 @@ export function authenticateToken(req, res, next) {
   }
 
   try {
-    // ✔ Usa o segredo do Supabase
     const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
 
-    // ✔ O ID do usuário fica em `sub`
+    // Busca o profile no banco para obter isAdmin / isSuperAdmin
+    const profile = await prisma.profile.findUnique({
+      where: { id: decoded.sub },
+      select: { id: true, email: true, isAdmin: true, isSuperAdmin: true },
+    });
+
     req.user = {
       id: decoded.sub,
-      email: decoded.email,
-      role: decoded.role,
+      email: decoded.email || profile?.email || null,
+      role: decoded.role || null,
+      isAdmin: profile?.isAdmin ?? false,
+      isSuperAdmin: profile?.isSuperAdmin ?? false,
     };
 
     next();
@@ -31,8 +38,17 @@ export function onlyAdmin(req, res, next) {
     return res.status(401).json({ error: "Usuário não autenticado" });
   }
 
-  if (!req.user.isAdmin && !req.user.isSuperAdmin) {
-    return res.status(403).json({ error: "Acesso negado: apenas administradores" });
+  // Permite se flags do profile indicarem admin, ou se role do token for 'admin'/'superadmin'
+  const isAdminFlag =
+    req.user.isAdmin === true || req.user.isSuperAdmin === true;
+  const roleAllow =
+    req.user.role &&
+    ["admin", "superadmin"].includes(String(req.user.role).toLowerCase());
+
+  if (!isAdminFlag && !roleAllow) {
+    return res
+      .status(403)
+      .json({ error: "Acesso negado: apenas administradores" });
   }
 
   next();

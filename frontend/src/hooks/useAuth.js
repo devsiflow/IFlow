@@ -15,6 +15,15 @@ export function useAuth() {
     if (session) {
       setUser(session.user);
       setToken(session.access_token);
+
+      // Buscar o campusId do perfil do usuário no banco
+      try {
+        const response = await fetch(`/api/user/${session.user.id}`);
+        const userData = await response.json();
+        setUser(prevUser => ({ ...prevUser, campusId: userData.campusId }));
+      } catch (error) {
+        console.error("Erro ao buscar dados do usuário:", error);
+      }
     } else {
       setUser(null);
       setToken(null);

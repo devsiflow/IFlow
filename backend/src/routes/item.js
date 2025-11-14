@@ -4,7 +4,7 @@ import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-/* LISTAR ITENS (público) */
+/* LISTAR ITENS (público) COM FILTRO POR CAMPUS */
 router.get("/", async (req, res) => {
   try {
     const {
@@ -16,8 +16,21 @@ router.get("/", async (req, res) => {
       user,
       campusId,
     } = req.query;
+    
     const where = {};
 
+    // Filtro por campusId - CORREÇÃO IMPORTANTE
+    if (campusId && campusId !== "undefined" && campusId !== "null") {
+      const cid = Number(campusId);
+      console.log("🎯 Filtrando por campusId:", cid);
+      if (!Number.isNaN(cid)) {
+        where.campusId = cid;
+      } else {
+        console.log("⚠️ campusId não é um número válido:", campusId);
+      }
+    }
+
+    // Outros filtros mantidos
     if (status && status !== "Todos") where.status = status;
     if (category && category !== "Todos") {
       where.category = { is: { name: category } };
@@ -31,19 +44,16 @@ router.get("/", async (req, res) => {
     if (user) {
       where.userId = user;
     }
-    if (campusId) {
-      const cid = Number(campusId);
-      console.log("campusId convertido para número:", cid); // Log para verificar a conversão
-      if (!Number.isNaN(cid)) where.campusId = cid;
-      else console.log("campusId não é um número válido");
-    }
+
+    console.log("🔍 Query where clause:", where);
 
     const items = await prisma.item.findMany({
       where,
       include: {
         images: true,
         category: true,
-        user: { select: { id: true, name: true, profilePic: true } },
+        campus: true, // Inclui dados do campus
+        user: { select: { id: true, name: true, profilePic: true, campusId: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (Number(page) - 1) * Number(pageSize),
@@ -51,9 +61,11 @@ router.get("/", async (req, res) => {
     });
 
     const total = await prisma.item.count({ where });
+    
+    console.log(`✅ Retornando ${items.length} itens de ${total} total`);
     res.json({ items, total });
   } catch (err) {
-    console.error("Erro listando items:", err);
+    console.error("❌ Erro listando items:", err);
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
@@ -65,11 +77,12 @@ router.get("/meus-itens", authenticateToken, async (req, res) => {
     const { page = 1, pageSize = 20 } = req.query;
 
     const items = await prisma.item.findMany({
-      where: { userId }, // Filtra apenas os itens do usuário logado
+      where: { userId },
       include: {
         images: true,
         category: true,
-        user: { select: { id: true, name: true, profilePic: true } },
+        campus: true,
+        user: { select: { id: true, name: true, profilePic: true, campusId: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (Number(page) - 1) * Number(pageSize),
@@ -93,7 +106,8 @@ router.get("/:id", async (req, res) => {
       include: {
         images: true,
         category: true,
-        user: { select: { id: true, name: true, profilePic: true } },
+        campus: true,
+        user: { select: { id: true, name: true, profilePic: true, campusId: true } },
       },
     });
     if (!item) return res.status(404).json({ error: "Item não encontrado" });
@@ -104,7 +118,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-/* CRIAR ITEM (autenticado) */
+/* CRIAR ITEM (autenticado) - ATUALIZADO PARA INCLUIR CAMPUS */
 router.post("/", authenticateToken, async (req, res) => {
   try {
     const {
@@ -123,6 +137,12 @@ router.post("/", authenticateToken, async (req, res) => {
         error: "Preencha title, description, location e categoryName",
       });
     }
+
+    // Buscar perfil do usuário para obter campusId
+    const userProfile = await prisma.profile.findUnique({
+      where: { id: userId },
+      select: { campusId: true }
+    });
 
     // encontrar/ criar categoria
     let category = null;
@@ -143,13 +163,15 @@ router.post("/", authenticateToken, async (req, res) => {
         status,
         location,
         userId,
+        campusId: userProfile?.campusId || null, // Inclui campusId do usuário
         categoryId: category ? category.id : null,
         images: { create: imageUrls.map((url) => ({ url })) },
       },
       include: {
         images: true,
         category: true,
-        user: { select: { id: true, name: true, profilePic: true } },
+        campus: true,
+        user: { select: { id: true, name: true, profilePic: true, campusId: true } },
       },
     });
 
@@ -160,6 +182,7 @@ router.post("/", authenticateToken, async (req, res) => {
   }
 });
 
+// ... (restante do código mantido igual)
 /* ATUALIZAR ITEM (owner ou admin/superadmin) */
 router.put("/:id", authenticateToken, async (req, res) => {
   try {
@@ -206,7 +229,8 @@ router.put("/:id", authenticateToken, async (req, res) => {
       include: {
         images: true,
         category: true,
-        user: { select: { id: true, name: true, profilePic: true } },
+        campus: true,
+        user: { select: { id: true, name: true, profilePic: true, campusId: true } },
       },
     });
 

@@ -5,92 +5,123 @@ import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
+// campos selecionados em várias respostas
+const PROFILE_SELECT = {
+  id: true,
+  name: true,
+  matricula: true,
+  profilePic: true,
+  isAdmin: true,
+  isSuperAdmin: true,
+  createdAt: true,
+};
+
+function isNonEmptyString(v) {
+  return typeof v === "string" && v.trim().length > 0;
+}
+
+function isValidProfilePic(url) {
+  if (url === null) return true;
+  if (!isNonEmptyString(url)) return false;
+  // aceita URLs simples (http/https) ou data URLs (base64). Ajuste se necessário.
+  return /^(https?:\/\/|data:)/i.test(url) && url.length <= 2000;
+}
+
 // GET /me → retorna perfil com campos de admin
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req?.user?.id;
+    if (!userId) return res.status(401).json({ error: "Usuário não autenticado" });
 
     const profile = await prisma.profile.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        matricula: true,
-        profilePic: true,
-        isAdmin: true,
-        isSuperAdmin: true,
-        createdAt: true,
-      },
+      select: PROFILE_SELECT,
     });
 
     if (!profile) {
-      // mesmo que o usuário esteja autenticado no Supabase, pode não existir profile no Prisma
       return res.status(404).json({ error: "Perfil não encontrado" });
     }
 
-    // Mesclar email vindo do req.user (supabase) — caso queira expor
     const result = {
       ...profile,
       email: req.user.email ?? null,
     };
 
-    res.json(result);
+    return res.json(result);
   } catch (err) {
     console.error("Erro no GET /me:", err);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    return res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
 
 // PUT /me → cria ou atualiza perfil
 router.put("/", authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { name, matricula, profilePic } = req.body;
+    const userId = req?.user?.id;
+    if (!userId) return res.status(401).json({ error: "Usuário não autenticado" });
 
+    const { name, matricula, profilePic } = req.body ?? {};
+
+    // validações básicas
+    if (name !== undefined && !(typeof name === "string" && name.length <= 200)) {
+      return res.status(400).json({ error: "Nome inválido (máx 200 caracteres)" });
+    }
+
+    if (matricula !== undefined && !(typeof matricula === "string" && matricula.length <= 100)) {
+      return res.status(400).json({ error: "Matrícula inválida (máx 100 caracteres)" });
+    }
+
+    if (req.body.hasOwnProperty("profilePic") && !isValidProfilePic(profilePic)) {
+      return res.status(400).json({ error: "profilePic inválido" });
+    }
+
+    // buscar perfil existente
     let profile = await prisma.profile.findUnique({ where: { id: userId } });
 
     if (!profile) {
+      // criar novo perfil
+      const createData = {
+        id: userId,
+        name: isNonEmptyString(name) ? name : "Não informado",
+        matricula: isNonEmptyString(matricula) ? matricula : String(userId),
+        profilePic: req.body.hasOwnProperty("profilePic") ? profilePic : null,
+      };
+
       profile = await prisma.profile.create({
-        data: {
-          id: userId,
-          name: name || "Não informado",
-          matricula: matricula || "Não informado",
-          profilePic: profilePic || null,
-        },
-        select: {
-          id: true,
-          name: true,
-          matricula: true,
-          profilePic: true,
-          isAdmin: true,
-          isSuperAdmin: true,
-          createdAt: true,
-        },
+        data: createData,
+        select: PROFILE_SELECT,
       });
-    } else {
-      profile = await prisma.profile.update({
-        where: { id: userId },
-        data: {
-          ...(name && { name }),
-          ...(matricula && { matricula }),
-          ...(profilePic && { profilePic }),
-        },
-        select: {
-          id: true,
-          name: true,
-          matricula: true,
-          profilePic: true,
-          isAdmin: true,
-          isSuperAdmin: true,
-          createdAt: true,
-        },
-      });
+
+      return res.status(201).json(profile);
     }
 
-    res.json(profile);
+    // atualizar somente propriedades presentes no body
+    const updateData = {};
+    if (req.body.hasOwnProperty("name")) updateData.name = name;
+    if (req.body.hasOwnProperty("matricula")) updateData.matricula = matricula;
+    if (req.body.hasOwnProperty("profilePic")) updateData.profilePic = profilePic;
+
+    // se nenhum campo para atualizar, retorna o perfil atual
+    if (Object.keys(updateData).length === 0) {
+      return res.json(profile);
+    }
+
+    profile = await prisma.profile.update({
+      where: { id: userId },
+      data: updateData,
+      select: PROFILE_SELECT,
+    });
+
+    return res.json(profile);
   } catch (err) {
     console.error("Erro no PUT /me:", err);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    // Prisma unique constraint error (duplicate matricula)
+    if (err && err.code === "P2002") {
+      return res
+        .status(409)
+        .json({ error: "Conflito de valor único (matrícula já existe)", details: err.meta });
+    }
+    return res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
 

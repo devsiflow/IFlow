@@ -3,54 +3,51 @@ import prisma from "../lib/prismaClient.js";
 import supabaseAdmin from "../lib/supabaseAdmin.js";
 
 /**
- * Middleware de autenticação que aceita:
- * 1) Tokens assinados pelo SUPABASE_JWT_SECRET (jwt.verify)
- * 2) Tokens de acesso do Supabase (verificados via supabaseAdmin.auth.getUser)
+ * Autenticação compatível com:
+ *  - JWT do Supabase
+ *  - Access Token padrão (supabase.auth)
  *
- * Ao final, anexa req.user com: { id, email, role, isAdmin, isSuperAdmin, ... }
+ * E GARANTE:
+ *  - Cria usuário no Prisma caso não exista
+ *  - Não quebra quando o ID é UUID (Supabase)
  */
 
 export async function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token) {
-    return res.status(401).json({ error: "Token não fornecido" });
-  }
+  if (!token) return res.status(401).json({ error: "Token não fornecido" });
 
-  let supaUser = null;
   let decoded = null;
+  let supaUser = null;
 
-  // 1) Tenta verificar com o SUPABASE_JWT_SECRET (caso exista)
+  // Tenta verificar pelo JWT_SECRET (antigo)
   if (process.env.SUPABASE_JWT_SECRET) {
     try {
       decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
-    } catch (err) {
+    } catch (e) {
       decoded = null;
     }
   }
 
-  // 2) Se não conseguiu com o JWT_SECRET, tenta o Supabase Admin
+  // Caso não decodifique → tenta login normal do Supabase
   if (!decoded) {
     try {
-      const result = await supabaseAdmin.auth.getUser(token).catch((e) => ({ error: e }));
+      const result = await supabaseAdmin.auth.getUser(token);
 
-      if (result && result.data && result.data.user) {
+      if (result?.data?.user) {
         supaUser = result.data.user;
 
         decoded = {
           sub: supaUser.id,
           email: supaUser.email,
         };
-      } else if (result && result.error) {
-        console.warn("Supabase auth.getUser error:", result.error);
       }
     } catch (err) {
-      console.warn("Erro verificando token no Supabase Admin:", err?.message || err);
+      console.log("Erro supabaseAdmin:", err);
     }
   }
 
-  // Se ainda não conseguiu decodificar o token
   if (!decoded) {
     return res.status(403).json({ error: "Token inválido ou expirado" });
   }
@@ -59,74 +56,48 @@ export async function authenticateToken(req, res, next) {
     const userId =
       decoded.sub || decoded.id || decoded.user_id || decoded.uid;
 
-    if (!userId) {
-      return res.status(403).json({ error: "Token sem identificador de usuário (sub)" });
-    }
+    if (!userId)
+      return res.status(403).json({ error: "Token sem ID (sub) inválido" });
 
+    // 🔥 CORREÇÃO: busca por Supabase ID (UUID)
     let profile = await prisma.profile.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        matricula: true,
-        profilePic: true,
-        isAdmin: true,
-        isSuperAdmin: true,
-        role: true,
-      },
     });
 
-    // Caso o usuário exista no Supabase mas não exista no banco local → cria automaticamente
+    // 🔥 CORREÇÃO IMPORTANTE:
+    // Se não existir, cria SEM FORÇAR ID PRISMA
     if (!profile && supaUser) {
       profile = await prisma.profile.create({
         data: {
-          id: userId,
+          id: userId, // agora UUID é aceito no schema
+          email: supaUser.email,
           name:
             supaUser.user_metadata?.full_name ||
             supaUser.user_metadata?.name ||
-            supaUser.email ||
-            "Usuário Supabase",
-          email: supaUser.email,
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          matricula: true,
-          profilePic: true,
-          isAdmin: true,
-          isSuperAdmin: true,
-          role: true,
+            supaUser.email,
         },
       });
     }
 
-    // Se ainda assim não houver profile
+    // Se mesmo assim não existir
     if (!profile) {
-      req.user = {
-        id: userId,
-        email: decoded.email || null,
-        isAdmin: false,
-        isSuperAdmin: false,
-        role: null,
-      };
-      return next();
+      return res.status(404).json({
+        error: "Usuário não encontrado e não pôde ser criado",
+      });
     }
 
     req.user = profile;
 
     next();
   } catch (err) {
-    console.error("Erro no authenticateToken:", err);
+    console.error("🔥 ERRO authenticateToken:", err);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
 
 export async function requireAdmin(req, res, next) {
-  if (!req.user) {
+  if (!req.user)
     return res.status(401).json({ error: "Usuário não autenticado" });
-  }
 
   const isAdminFlag =
     req.user.isAdmin === true || req.user.isSuperAdmin === true;
@@ -135,11 +106,10 @@ export async function requireAdmin(req, res, next) {
     req.user.role &&
     ["admin", "superadmin"].includes(req.user.role.toLowerCase());
 
-  if (!isAdminFlag && !roleAllow) {
+  if (!isAdminFlag && !roleAllow)
     return res
       .status(403)
-      .json({ error: "Acesso negado: apenas administradores" });
-  }
+      .json({ error: "Apenas administradores podem acessar" });
 
   next();
 }

@@ -5,6 +5,7 @@ import { authenticateToken } from "../middleware/auth.js";
 const router = express.Router();
 
 /* LISTAR ITENS (público) COM FILTRO POR CAMPUS */
+// routes/item.js - APENAS A PARTE DO GET PRINCIPAL CORRIGIDA
 router.get("/", async (req, res) => {
   try {
     const {
@@ -33,7 +34,9 @@ router.get("/", async (req, res) => {
     // Outros filtros mantidos
     if (status && status !== "Todos") where.status = status;
     if (category && category !== "Todos") {
-      where.category = { is: { name: category } };
+      where.category = { 
+        name: category // 🔥 CORREÇÃO: simplificado
+      };
     }
     if (q) {
       where.OR = [
@@ -45,15 +48,22 @@ router.get("/", async (req, res) => {
       where.userId = user;
     }
 
-    console.log("🔍 Query where clause:", where);
+    console.log("🔍 Query where clause:", JSON.stringify(where, null, 2));
 
     const items = await prisma.item.findMany({
       where,
       include: {
         images: true,
         category: true,
-        campus: true, // Inclui dados do campus
-        user: { select: { id: true, name: true, profilePic: true, campusId: true } },
+        campus: true,
+        user: { 
+          select: { 
+            id: true, 
+            name: true, 
+            profilePic: true, 
+            campusId: true 
+          } 
+        },
       },
       orderBy: { createdAt: "desc" },
       skip: (Number(page) - 1) * Number(pageSize),

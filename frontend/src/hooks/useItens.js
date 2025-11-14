@@ -27,7 +27,9 @@ export function useItens() {
         const res = await fetch(url);
         
         if (!res.ok) {
-          throw new Error(`Erro ao buscar itens: ${res.status}`);
+          const errorText = await res.text();
+          console.error("❌ Erro na resposta:", res.status, errorText);
+          throw new Error(`Erro ao buscar itens: ${res.status} - ${errorText}`);
         }
 
         const data = await res.json();
@@ -65,8 +67,13 @@ export function useItens() {
       }
     }
 
-    fetchItens();
-  }, [user?.campusId]); // Recarrega quando o campusId mudar
+    // Só busca itens se o usuário estiver carregado (mesmo que campusId seja null)
+    if (user !== undefined) {
+      fetchItens();
+    } else {
+      setLoading(false);
+    }
+  }, [user?.campusId, user]); // Recarrega quando o campusId ou usuário mudar
 
   return { itens, loading, error };
 }

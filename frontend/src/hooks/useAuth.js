@@ -10,38 +10,93 @@ export function useAuth() {
   // Função para atualizar usuário e token
   const updateSession = useCallback(async () => {
     setLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
 
-    if (session) {
-      setUser(session.user);
-      setToken(session.access_token);
+      if (session) {
+        setUser(session.user);
+        setToken(session.access_token);
 
-      // Buscar o campusId do perfil do usuário no banco
-      try {
-        const response = await fetch(`/api/user/${session.user.id}`);
-        const userData = await response.json();
-        setUser(prevUser => ({ ...prevUser, campusId: userData.campusId }));
-      } catch (error) {
-        console.error("Erro ao buscar dados do usuário:", error);
+        // 🔥 CORREÇÃO: Buscar dados completos do usuário via rota /me
+        try {
+          const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+          const response = await fetch(`${API_URL}/me`, {
+            headers: { 
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            console.log("✅ Dados do usuário carregados:", userData);
+            
+            // Atualiza o usuário com campusId e outros dados
+            setUser(prevUser => ({
+              ...prevUser,
+              ...userData,
+              campusId: userData.campusId || null
+            }));
+          } else {
+            console.warn("⚠️ Não foi possível carregar dados completos do usuário");
+          }
+        } catch (error) {
+          console.error("❌ Erro ao buscar dados do usuário:", error);
+        }
+      } else {
+        setUser(null);
+        setToken(null);
       }
-    } else {
+    } catch (error) {
+      console.error("❌ Erro na sessão:", error);
       setUser(null);
       setToken(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
     // Atualiza no load inicial
     updateSession();
 
-    // Atualiza se a sessão mudar
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      updateSession();
+    // Escuta mudanças na autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔄 Evento de auth:", event);
+      if (session) {
+        setUser(session.user);
+        setToken(session.access_token);
+        
+        // Busca dados completos após login
+        try {
+          const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+          const response = await fetch(`${API_URL}/me`, {
+            headers: { 
+              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            setUser(prevUser => ({
+              ...prevUser,
+              ...userData,
+              campusId: userData.campusId || null
+            }));
+          }
+        } catch (error) {
+          console.error("❌ Erro ao buscar dados após login:", error);
+        }
+      } else {
+        setUser(null);
+        setToken(null);
+      }
+      setLoading(false);
     });
 
     return () => {
-      listener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, [updateSession]);
 

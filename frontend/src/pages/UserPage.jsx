@@ -517,8 +517,8 @@ export default function UserPage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className={`max-w-4xl mx-auto mb-6 p-4 rounded-xl font-medium text-center text-white shadow-2xl backdrop-blur-sm ${messageType === "success"
-              ? "bg-gradient-to-r from-green-500 to-emerald-600 border border-green-400"
-              : "bg-gradient-to-r from-red-500 to-rose-600 border border-red-400"
+            ? "bg-gradient-to-r from-green-500 to-emerald-600 border border-green-400"
+            : "bg-gradient-to-r from-red-500 to-rose-600 border border-red-400"
             }`}
         >
           {message}
@@ -661,8 +661,8 @@ export default function UserPage() {
                 }
               }}
               className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition-all duration-300 ${previewUrl
-                  ? "cursor-default opacity-100 border-cyan-400 bg-cyan-50/50 dark:bg-cyan-900/20"
-                  : "cursor-pointer hover:bg-cyan-50 dark:hover:bg-cyan-900/10"
+                ? "cursor-default opacity-100 border-cyan-400 bg-cyan-50/50 dark:bg-cyan-900/20"
+                : "cursor-pointer hover:bg-cyan-50 dark:hover:bg-cyan-900/10"
                 } ${isDragging
                   ? "border-cyan-400 bg-cyan-50 dark:bg-cyan-900/20"
                   : "border-gray-300 dark:border-gray-600"
@@ -731,10 +731,13 @@ export default function UserPage() {
         transition={{ duration: 0.6, delay: 0.2 }}
         className="max-w-4xl mx-auto mt-12 relative z-10"
       >
-      <div className="flex items-center gap-4">
-        <Package />
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-6" >Meus Itens</h2>
-      </div>
+        
+        <div className="flex items-center gap-2">
+          <Package className="w-6 h-6" />
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+            Meus Itens
+          </h2>
+        </div>
 
         {items.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -758,8 +761,8 @@ export default function UserPage() {
                 </p>
                 <span
                   className={`inline-block mt-2 px-3 py-1 text-xs font-medium rounded-xl ${item.status === "Perdido"
-                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-2xl"
-                      : "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg hover:shadow-2xl"
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-2xl"
+                    : "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg hover:shadow-2xl"
                     }`}
                 >
                   {item.status}

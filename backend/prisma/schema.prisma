@@ -7,6 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/* ============================
+      MODEL PROFILE (USUÁRIOS)
+   ============================ */
 model Profile {
   id           String           @id
   name         String
@@ -15,18 +18,32 @@ model Profile {
   createdAt    DateTime         @default(now())
   isAdmin      Boolean          @default(false)
   isSuperAdmin Boolean          @default(false)
+
   campusId     Int?
-  campus       Campus?          @relation(fields: [campusId], references: [id])
+  campus       Campus?    @relation(fields: [campusId], references: [id])
+
   items        Item[]
   validations  ItemValidation[] @relation("ProfileValidations")
+
+  solicitacoes Solicitação[]    @relation("SolicitacaoAluno")
+
+  @@map("profile")
 }
 
+/* ============================
+         MODEL CATEGORY
+   ============================ */
 model Category {
   id    Int    @id @default(autoincrement())
   name  String @unique
   items Item[]
+
+  @@map("category")
 }
 
+/* ============================
+             ITEM
+   ============================ */
 model Item {
   id          Int              @id @default(autoincrement())
   title       String
@@ -34,23 +51,38 @@ model Item {
   status      String           @default("perdido")
   location    String
   createdAt   DateTime         @default(now())
+
   userId      String
   categoryId  Int?
   campusId    Int?
+
   category    Category?        @relation(fields: [categoryId], references: [id])
   campus      Campus?          @relation(fields: [campusId], references: [id])
   user        Profile          @relation(fields: [userId], references: [id])
+
   images      ItemImage[]
   validations ItemValidation[] @relation("ItemValidations")
+
+  solicitacoes Solicitação[]   @relation("SolicitacaoItem")
+
+  @@map("item")
 }
 
+/* ============================
+            IMAGENS DO ITEM
+   ============================ */
 model ItemImage {
   id     Int    @id @default(autoincrement())
   url    String
   itemId Int
   item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@map("item_image")
 }
 
+/* ============================
+         VALIDAÇÕES DO ITEM
+   ============================ */
 model ItemValidation {
   id              Int      @id @default(autoincrement())
   userId          String?
@@ -61,24 +93,40 @@ model ItemValidation {
   conteudoInterno String
   momentoPerda    String
   createdAt       DateTime @default(now())
+
   item            Item     @relation("ItemValidations", fields: [itemId], references: [id])
   profile         Profile? @relation("ProfileValidations", fields: [userId], references: [id])
+
+  @@map("item_validation")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model solicitacoes {
+/* ============================
+          SOLICITAÇÕES
+   ============================ */
+model Solicitação {
   id               Int       @id @default(autoincrement())
-  item_id          Int?
-  aluno_id         String?   @db.Uuid
-  status           String?   @default("pendente") @db.VarChar(50)
+
+  item_id          Int
+  aluno_id         String    @db.Uuid
+
+  status           String    @default("pendente") @db.VarChar(50)
   observacoes      String?
-  data_solicitacao DateTime? @default(now()) @db.Timestamp(6)
+  data_solicitacao DateTime  @default(now()) @db.Timestamp(6)
+
+  item   Item     @relation("SolicitacaoItem", fields: [item_id], references: [id])
+  aluno  Profile  @relation("SolicitacaoAluno", fields: [aluno_id], references: [id])
+
+  @@map("solicitacoes")
 }
 
-
+/* ============================
+             CAMPUS
+   ============================ */
 model Campus {
   id        Int       @id @default(autoincrement())
   nome      String
   profiles  Profile[]
   items     Item[]
+
+  @@map("campus")
 }

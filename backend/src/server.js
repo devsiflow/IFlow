@@ -10,7 +10,8 @@ import itemsRouter from "./routes/item.js";
 import adminRoutes from "./routes/admin.js";
 import itemValidationRoutes from "./routes/itemValidation.js";
 import dashboardRouter from "./routes/dashboard.js";
-import campusRouter from "./routes/campus.js";// 👈 nova rota
+import campusRouter from "./routes/campus.js";
+import solicitacoesRoutes from "./routes/solicitacoes.js";
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use("/admin", adminRoutes);
 app.use("/itemValidation", itemValidationRoutes);
 app.use("/dashboard", dashboardRouter);
 app.use("/campus", campusRouter);
+app.use("/solicitacoes", solicitacoesRoutes);
 
 // ==========================
 // Porta

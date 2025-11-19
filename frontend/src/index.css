@@ -33,4 +33,22 @@ html, body, #root{
   100% { transform: translateX(200px) translateY(200px) rotate(45deg); opacity: 0; }
 }
 
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoom {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-fade {
+  animation: fade 0.25s ease-out;
+}
+
+.animate-zoom {
+  animation: zoom 0.25s ease-out;
+}
+
 

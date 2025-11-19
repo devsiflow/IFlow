@@ -3,10 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "aos/dist/aos.css";
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import Cadastro from "./pages/Sign-inPage.jsx";
 import Login from "./pages/LoginPage.jsx";
@@ -17,15 +14,17 @@ import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
 import UserPage from "./pages/UserPage.jsx";
 import ItemPage from "./pages/ItemPage.jsx";
 import AdminPage from "./admin/AdminPage.jsx";
+import SolicitacaoDetalhes from "./components/admin/SolicitacaoDetalhes.jsx"; // ✅ IMPORT CORRETA
+
 import { ThemeProvider } from "./context/ThemeContext.jsx";
-import AdminFloatingButton from "./components/AdminFloatingButton.jsx"; // ✅
+import AdminFloatingButton from "./components/AdminFloatingButton.jsx";
 
 // eslint-disable-next-line react-refresh/only-export-components
 function LayoutWrapper({ children }) {
   return (
     <>
       {children}
-      <AdminFloatingButton /> {/* ✅ global, dentro do Router */}
+      <AdminFloatingButton />
     </>
   );
 }
@@ -95,7 +94,20 @@ const router = createBrowserRouter([
       </LayoutWrapper>
     ),
   },
-  { path: "/admin", element: <AdminPage /> }, // ❌ sem botão aqui
+
+  // ================================
+  //     ROTAS DO ADMIN
+  // ================================
+  {
+    path: "/admin",
+    element: <AdminPage />,
+  },
+
+  {
+    path: "/admin/solicitacao/:id",
+    element: <SolicitacaoDetalhes />, // ✅ PÁGINA DE DETALHE
+  },
+
   { path: "/login", element: <Login /> },
   { path: "/cadastro", element: <Cadastro /> },
 ]);

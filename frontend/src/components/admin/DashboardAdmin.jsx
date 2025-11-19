@@ -22,6 +22,8 @@ export default function DashboardAdmin() {
   const [itens, setItens] = useState([]);
   const [solicitacoes, setSolicitacoes] = useState([]);
 
+  const [graficoAberto, setGraficoAberto] = useState(null); // <--- ADICIONADO
+
   const [totais, setTotais] = useState({
     totalItens: 0,
     devolvidos: 0,
@@ -84,7 +86,6 @@ export default function DashboardAdmin() {
     let devolvidos = 0;
     let perdidos = 0;
     
-    // Contar itens por status
     for (const it of itensData) {
       const status = (it.status || "").toLowerCase();
       if (status.includes("devolvido") || status.includes("encontrado")) {
@@ -104,7 +105,6 @@ export default function DashboardAdmin() {
     console.log("🎯 Totais calculados:", novosTotais);
     setTotais(novosTotais);
 
-    // Gerar dados para gráfico de pizza
     const pizzaData = [
       { name: "Devolvidos/Encontrados", value: devolvidos },
       { name: "Perdidos", value: perdidos },
@@ -121,7 +121,6 @@ export default function DashboardAdmin() {
     const dadosPorMes = {};
     const meses = [];
     
-    // Criar array dos últimos 6 meses
     const hoje = new Date();
     for (let i = 5; i >= 0; i--) {
       const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
@@ -141,7 +140,6 @@ export default function DashboardAdmin() {
 
     console.log("📅 Meses base:", meses);
 
-    // Contar itens por mês e por status
     itensData.forEach(item => {
       if (item.createdAt) {
         const dataItem = new Date(item.createdAt);
@@ -163,7 +161,6 @@ export default function DashboardAdmin() {
       }
     });
 
-    // Contar solicitações por mês
     solicData.forEach(solic => {
       if (solic.createdAt) {
         const dataSolic = new Date(solic.createdAt);
@@ -202,8 +199,16 @@ export default function DashboardAdmin() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <GraficoPizza dados={dadosPizza} />
-            <GraficoLinha dados={dadosLinha} />
+
+            {/* APENAS ADICIONADO O onClick */}
+            <div onClick={() => setGraficoAberto("pizza")} className="cursor-pointer hover:scale-[1.02] transition-transform">
+              <GraficoPizza dados={dadosPizza} />
+            </div>
+
+            <div onClick={() => setGraficoAberto("linha")} className="cursor-pointer hover:scale-[1.02] transition-transform">
+              <GraficoLinha dados={dadosLinha} />
+            </div>
+
           </div>
 
           <div className="mt-6 text-center">
@@ -215,6 +220,35 @@ export default function DashboardAdmin() {
             </button>
           </div>
         </>
+      )}
+
+      {/* ====================== MODAL ADICIONADO ====================== */}
+      {graficoAberto && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999] animate-fade"
+          onClick={() => setGraficoAberto(null)}
+        >
+          <div
+            className="bg-white dark:bg-neutral-800 rounded-2xl p-6 w-[90%] max-w-4xl shadow-xl relative animate-zoom"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setGraficoAberto(null)}
+              className="absolute top-2 right-3 text-2xl text-gray-600 hover:text-black"
+            >
+              ×
+            </button>
+
+            <h3 className="text-xl font-semibold mb-4 text-center">
+              {graficoAberto === "pizza" ? "Distribuição de Status" : "Itens e Solicitações por Mês"}
+            </h3>
+
+            <div className="w-full h-[450px]">
+              {graficoAberto === "pizza" && <GraficoPizza dados={dadosPizza} />}
+              {graficoAberto === "linha" && <GraficoLinha dados={dadosLinha} />}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -231,17 +265,16 @@ function ResumoCard({ title, value, color = "bg-gray-600" }) {
 }
 
 function GraficoPizza({ dados }) {
-  // Cores específicas para cada categoria
   const getColorPorCategoria = (nome) => {
     switch (nome) {
       case "Devolvidos/Encontrados":
-        return "#16A34A"; // Verde
+        return "#16A34A";
       case "Perdidos":
-        return "#EF4444"; // Vermelho
+        return "#EF4444";
       case "Solicitações Pendentes":
-        return "#EAB308"; // Amarelo
+        return "#EAB308";
       default:
-        return "#60A5FA"; // Azul padrão
+        return "#60A5FA";
     }
   };
 
@@ -257,7 +290,7 @@ function GraficoPizza({ dados }) {
   }
 
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
+    <div className="bg:white dark:bg-neutral-800 rounded-2xl shadow p-4 bg-white">
       <h3 className="font-semibold mb-2">Distribuição de Status</h3>
       <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer>
@@ -283,12 +316,11 @@ function GraficoPizza({ dados }) {
 }
 
 function GraficoLinha({ dados }) {
-  // Cores consistentes com os cards e gráfico de pizza
   const coresLinhas = {
-    itens: "#3B82F6",        // Azul - Total de Itens
-    itensDevolvidos: "#16A34A", // Verde - Devolvidos/Encontrados
-    itensPerdidos: "#EF4444",   // Vermelho - Perdidos
-    solicitacoes: "#EAB308", // Amarelo - Solicitações Pendentes
+    itens: "#3B82F6",
+    itensDevolvidos: "#16A34A",
+    itensPerdidos: "#EF4444",
+    solicitacoes: "#EAB308",
   };
 
   if (!dados || dados.length === 0) {
@@ -312,38 +344,10 @@ function GraficoLinha({ dados }) {
             <XAxis dataKey="mes" />
             <YAxis />
             <Tooltip />
-            <Line 
-              type="monotone" 
-              dataKey="itens" 
-              stroke={coresLinhas.itens} // Azul
-              strokeWidth={2} 
-              dot={{ r: 4 }} 
-              name="Total de Itens" 
-            />
-            <Line 
-              type="monotone" 
-              dataKey="itensDevolvidos" 
-              stroke={coresLinhas.itensDevolvidos} // Verde
-              strokeWidth={2} 
-              dot={{ r: 4 }} 
-              name="Itens Devolvidos" 
-            />
-            <Line 
-              type="monotone" 
-              dataKey="itensPerdidos" 
-              stroke={coresLinhas.itensPerdidos} // Vermelho
-              strokeWidth={2} 
-              dot={{ r: 4 }} 
-              name="Itens Perdidos" 
-            />
-            <Line 
-              type="monotone" 
-              dataKey="solicitacoes" 
-              stroke={coresLinhas.solicitacoes} // Amarelo
-              strokeWidth={2} 
-              dot={{ r: 4 }} 
-              name="Solicitações" 
-            />
+            <Line type="monotone" dataKey="itens" stroke={coresLinhas.itens} strokeWidth={2} dot={{ r: 4 }} name="Total de Itens" />
+            <Line type="monotone" dataKey="itensDevolvidos" stroke={coresLinhas.itensDevolvidos} strokeWidth={2} dot={{ r: 4 }} name="Itens Devolvidos" />
+            <Line type="monotone" dataKey="itensPerdidos" stroke={coresLinhas.itensPerdidos} strokeWidth={2} dot={{ r: 4 }} name="Itens Perdidos" />
+            <Line type="monotone" dataKey="solicitacoes" stroke={coresLinhas.solicitacoes} strokeWidth={2} dot={{ r: 4 }} name="Solicitações" />
           </LineChart>
         </ResponsiveContainer>
       </div>

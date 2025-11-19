@@ -96,7 +96,7 @@ model Solicitacao {
   item   Item     @relation("SolicitacaoItem", fields: [item_id], references: [id])
   aluno  Profile  @relation("SolicitacaoAluno", fields: [aluno_id], references: [id])
 
-  @@map("ItemValidation") // 👈 usa a tabela EXISTENTE
+  @@map("solicitacoes")
 }
 
 

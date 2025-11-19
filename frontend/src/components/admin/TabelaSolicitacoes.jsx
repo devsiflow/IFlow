@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-/* NOME DO ALUNO */
+/* ------------------------
+   RESOLVER NOME DO ALUNO
+------------------------- */
 function nomeAluno(s) {
   if (!s) return "Aluno não informado";
 
@@ -23,7 +25,9 @@ function nomeAluno(s) {
   return "Aluno não informado";
 }
 
-/* FORMATAR DATA */
+/* ------------------------
+   FORMATAR DATA
+------------------------- */
 function formatarData(input) {
   if (!input && input !== 0) return "Data não informada";
 
@@ -52,9 +56,9 @@ function formatarData(input) {
   return d.toLocaleDateString("pt-BR");
 }
 
-/* ===========================
-   CARROSSEL DE IMAGENS
-=========================== */
+/* ------------------------
+   CARROSSEL IMAGENS
+------------------------- */
 function CarrosselImagens({ imagens = [], nome }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -83,7 +87,7 @@ function CarrosselImagens({ imagens = [], nome }) {
   return (
     <div className="relative w-48 h-48 overflow-hidden rounded-lg group">
       {imagens.map((img, index) => {
-        const src = typeof img === "string" ? img : img?.url ? img.url : "";
+        const src = typeof img === "string" ? img : img?.url ?? "";
 
         const final = `${
           import.meta.env.VITE_API_URL || "http://localhost:5000"
@@ -124,9 +128,9 @@ function CarrosselImagens({ imagens = [], nome }) {
   );
 }
 
-/* ===========================
+/* ------------------------
    TABELA DE SOLICITAÇÕES
-=========================== */
+------------------------- */
 export default function TabelaSolicitacoes({
   solicitacoes = [],
   updateStatus = () => {},
@@ -156,19 +160,20 @@ export default function TabelaSolicitacoes({
   return (
     <div className="overflow-x-auto bg-white dark:bg-neutral-800 rounded-lg shadow-lg">
       <table className="w-full text-sm border-collapse">
+        {/* CABEÇALHO */}
         <thead className="bg-gray-200 dark:bg-neutral-700">
           <tr className="text-left">
             <th className="p-3 w-10"></th>
             <th className="p-3 w-16">ID</th>
             <th className="p-3">Item</th>
             <th className="p-3">Aluno</th>
-            <th className="p-3 w-64">Observações</th>
             <th className="p-3 w-32">Data</th>
             <th className="p-3 w-32">Tag</th>
             <th className="p-3 w-48 text-center">Ações</th>
           </tr>
         </thead>
 
+        {/* LINHAS */}
         <tbody>
           {solicitacoes.map((s) => {
             const isOpen = expandedRow === s.id;
@@ -177,9 +182,7 @@ export default function TabelaSolicitacoes({
 
             return (
               <>
-                {/* ===========================
-                    LINHA PRINCIPAL
-                ============================ */}
+                {/* LINHA PRINCIPAL */}
                 <tr
                   key={s.id}
                   className="border-b hover:bg-gray-100 dark:hover:bg-neutral-700"
@@ -198,10 +201,6 @@ export default function TabelaSolicitacoes({
                   </td>
 
                   <td className="p-3">{nomeAluno(s)}</td>
-
-                  <td className="p-3 truncate max-w-[260px]">
-                    {s.observacoes}
-                  </td>
 
                   <td className="p-3">{formatarData(dataRaw)}</td>
 
@@ -233,20 +232,27 @@ export default function TabelaSolicitacoes({
                   </td>
                 </tr>
 
-                {/* ===========================
-                    LINHA EXPANDIDA (DETALHES)
-                ============================ */}
+                {/* LINHA EXPANDIDA */}
                 {isOpen && (
                   <tr className="bg-gray-50 dark:bg-neutral-900 border-b">
-                    <td colSpan={8} className="p-4">
+                    <td colSpan={7} className="p-4">
                       <div className="flex flex-col md:flex-row gap-6 items-start">
-                        {/* Imagem */}
-                        <CarrosselImagens
-                          imagens={s.item?.images}
-                          nome={s.item?.title}
-                        />
+                        {/* IMAGEM DO ITEM - GARANTIDA */}
+                        <div>
+                          <CarrosselImagens
+                            imagens={
+                              Array.isArray(s.item?.images) &&
+                              s.item.images.length > 0
+                                ? s.item.images.map((img) =>
+                                    typeof img === "string" ? img : img?.url
+                                  )
+                                : ["/sem-imagem.png"] // fallback
+                            }
+                            nome={s.item?.title}
+                          />
+                        </div>
 
-                        {/* Info */}
+                        {/* INFORMAÇÕES */}
                         <div className="flex-1 space-y-2">
                           <h3 className="font-semibold text-lg mb-2">
                             {s.item?.title}
@@ -257,18 +263,29 @@ export default function TabelaSolicitacoes({
                             {nomeAluno(s)}
                           </p>
 
-                          <p>
-                            <span className="font-medium">Observações: </span>
-                            {s.observacoes}
+                          {/* STATUS DO ITEM COM BADGE */}
+                          <p className="flex items-center gap-2">
+                            <span className="font-medium">Status do Item:</span>
+
+                            <span
+                              className={`
+                                px-2 py-1 rounded text-white text-xs font-semibold
+                                ${
+                                  s.item?.status === "encontrado"
+                                    ? "bg-green-600"
+                                    : s.item?.status === "perdido"
+                                    ? "bg-red-600"
+                                    : s.item?.status === "reclamado"
+                                    ? "bg-blue-600"
+                                    : "bg-green-600"
+                                }
+                              `}>
+                              {s.item?.status ?? "Não informado"}
+                            </span>
                           </p>
 
                           <p>
-                            <span className="font-medium">Status: </span>
-                            {s.status}
-                          </p>
-
-                          <p>
-                            <span className="font-medium">Data: </span>
+                            <span className="font-medium">Data:</span>{" "}
                             {formatarData(dataRaw)}
                           </p>
                         </div>

@@ -7,9 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/* ============================
-      MODEL PROFILE (USUÁRIOS)
-   ============================ */
 model Profile {
   id           String           @id
   name         String
@@ -25,14 +22,11 @@ model Profile {
   items        Item[]
   validations  ItemValidation[] @relation("ProfileValidations")
 
-  solicitacoes Solicitação[]    @relation("SolicitacaoAluno")
+  solicitacoes Solicitacao[]    @relation("SolicitacaoAluno")
 
   @@map("profile")
 }
 
-/* ============================
-         MODEL CATEGORY
-   ============================ */
 model Category {
   id    Int    @id @default(autoincrement())
   name  String @unique
@@ -41,9 +35,6 @@ model Category {
   @@map("category")
 }
 
-/* ============================
-             ITEM
-   ============================ */
 model Item {
   id          Int              @id @default(autoincrement())
   title       String
@@ -63,14 +54,11 @@ model Item {
   images      ItemImage[]
   validations ItemValidation[] @relation("ItemValidations")
 
-  solicitacoes Solicitação[]   @relation("SolicitacaoItem")
+  solicitacoes Solicitacao[]   @relation("SolicitacaoItem")
 
   @@map("item")
 }
 
-/* ============================
-            IMAGENS DO ITEM
-   ============================ */
 model ItemImage {
   id     Int    @id @default(autoincrement())
   url    String
@@ -80,9 +68,6 @@ model ItemImage {
   @@map("item_image")
 }
 
-/* ============================
-         VALIDAÇÕES DO ITEM
-   ============================ */
 model ItemValidation {
   id              Int      @id @default(autoincrement())
   userId          String?
@@ -100,28 +85,21 @@ model ItemValidation {
   @@map("item_validation")
 }
 
-/* ============================
-          SOLICITAÇÕES
-   ============================ */
-model Solicitação {
+model Solicitacao {
   id               Int       @id @default(autoincrement())
-
   item_id          Int
-  aluno_id         String    @db.Uuid
-
-  status           String    @default("pendente") @db.VarChar(50)
+  aluno_id         String
+  status           String    @default("pendente")
   observacoes      String?
-  data_solicitacao DateTime  @default(now()) @db.Timestamp(6)
+  data_solicitacao DateTime  @default(now())
 
   item   Item     @relation("SolicitacaoItem", fields: [item_id], references: [id])
   aluno  Profile  @relation("SolicitacaoAluno", fields: [aluno_id], references: [id])
 
-  @@map("solicitacoes")
+  @@map("ItemValidation") // 👈 usa a tabela EXISTENTE
 }
 
-/* ============================
-             CAMPUS
-   ============================ */
+
 model Campus {
   id        Int       @id @default(autoincrement())
   nome      String

@@ -1,30 +1,39 @@
-// src/routes/solicitacoes.js
+// backend/src/routes/solicitacoes.js
 import express from "express";
-import prisma from "../lib/prismaClient.js"; // ajuste o caminho se necessário
+import prisma from "../lib/prismaClient.js";
+import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// GET /solicitacoes
-// Retorna lista de solicitações com item e aluno (profile) embutidos
+/* ===============================
+      GET /solicitacoes
+   =============================== */
 router.get("/", async (req, res) => {
   try {
     const solicitacoes = await prisma.solicitacoes.findMany({
+      orderBy: { id: "desc" },
       include: {
         item: {
           include: {
             images: true,
           },
         },
-        aluno: true,
+        aluno: {
+          select: {
+            id: true,
+            name: true,
+            profilePic: true,
+          },
+        },
       },
-      orderBy: { id: "desc" },
     });
 
-    // Normaliza o formato da data para garantir string ISO (evita problemas no frontend)
+    // Normalizar datas para frontend
     const normalized = solicitacoes.map((s) => ({
       ...s,
-      // data_solicitacao pode ser null — mantemos null ou ISO string
-      data_solicitacao: s.data_solicitacao ? s.data_solicitacao.toISOString() : null,
+      data_solicitacao: s.data_solicitacao
+        ? s.data_solicitacao.toISOString()
+        : null,
     }));
 
     res.json(normalized);
@@ -34,34 +43,42 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST /solicitacoes
-// Cria solicitação; se data_solicitacao não for enviada, o DB aplicará default(now())
-router.post("/", async (req, res) => {
+/* ===============================
+      POST /solicitacoes
+   =============================== */
+router.post("/", authenticateToken, async (req, res) => {
   try {
-    const { item_id, aluno_id, observacoes, data_solicitacao } = req.body;
+    const { item_id, observacoes } = req.body;
 
-    const data = {
-      item_id,
-      aluno_id,
-      observacoes,
-      // apenas setamos data_solicitacao se vier válida; caso contrário DB usará default
-      ...(data_solicitacao ? { data_solicitacao: new Date(data_solicitacao) } : {}),
-    };
+    const aluno_id = req.user.id; // usuário logado
 
-    const created = await prisma.solicitacoes.create({ data });
-
-    res.status(201).json({
-      ...created,
-      data_solicitacao: created.data_solicitacao ? created.data_solicitacao.toISOString() : null,
+    const created = await prisma.solicitacoes.create({
+      data: {
+        item_id: Number(item_id),
+        observacoes,
+        aluno_id,
+      },
+      include: {
+        item: { include: { images: true } },
+        aluno: { select: { id: true, name: true, profilePic: true } },
+      },
     });
+
+    created.data_solicitacao = created.data_solicitacao
+      ? created.data_solicitacao.toISOString()
+      : null;
+
+    res.status(201).json(created);
   } catch (err) {
     console.error("Erro ao criar solicitação:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
 
-// PUT /solicitacoes/:id/status  (atualizar status)
-router.put("/:id/status", async (req, res) => {
+/* ===============================
+    PUT /solicitacoes/:id/status
+   =============================== */
+router.put("/:id/status", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -69,24 +86,43 @@ router.put("/:id/status", async (req, res) => {
     const updated = await prisma.solicitacoes.update({
       where: { id: Number(id) },
       data: { status },
+      include: {
+        item: { include: { images: true } },
+        aluno: { select: { id: true, name: true, profilePic: true } },
+      },
     });
 
-    res.json({
-      ...updated,
-      data_solicitacao: updated.data_solicitacao ? updated.data_solicitacao.toISOString() : null,
-    });
+    updated.data_solicitacao = updated.data_solicitacao
+      ? updated.data_solicitacao.toISOString()
+      : null;
+
+    res.json(updated);
   } catch (err) {
     console.error("Erro ao atualizar status:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
 
-// DELETE /solicitacoes/:id
+/* ===============================
+      DELETE /solicitacoes/:id
+   =============================== */
 router.delete("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
-    await prisma.solicitacoes.delete({ where: { id: Number(id) } });
-    res.json({ message: "Solicitação removida" });
+    const id = Number(req.params.id);
+
+    const existing = await prisma.solicitacoes.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: "Solicitação não encontrada" });
+    }
+
+    await prisma.solicitacoes.delete({
+      where: { id },
+    });
+
+    res.json({ message: "Solicitação excluída com sucesso" });
   } catch (err) {
     console.error("Erro ao deletar solicitação:", err);
     res.status(500).json({ error: "Erro interno do servidor" });

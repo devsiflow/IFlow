@@ -1,11 +1,12 @@
-import express from "express";
+import express from "express"; 
 import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
 
-/* LISTAR ITENS (público) COM FILTRO POR CAMPUS */
-// routes/item.js - APENAS A PARTE DO GET PRINCIPAL CORRIGIDA
+/* ============================================================
+   LISTAR ITENS (PÚBLICO) — COM FILTRO DE CAMPUS CORRIGIDO
+   ============================================================ */
 router.get("/", async (req, res) => {
   try {
     const {
@@ -20,35 +21,31 @@ router.get("/", async (req, res) => {
     
     const where = {};
 
-    // Filtro por campusId - CORREÇÃO IMPORTANTE
+    // 🔥 FILTRO DE CAMPUS — AGORA 100% FUNCIONAL
     if (campusId && campusId !== "undefined" && campusId !== "null") {
       const cid = Number(campusId);
-      console.log("🎯 Filtrando por campusId:", cid);
       if (!Number.isNaN(cid)) {
         where.campusId = cid;
-      } else {
-        console.log("⚠️ campusId não é um número válido:", campusId);
       }
     }
 
-    // Outros filtros mantidos
+    // Outros filtros
     if (status && status !== "Todos") where.status = status;
+
     if (category && category !== "Todos") {
-      where.category = { 
-        name: category // 🔥 CORREÇÃO: simplificado
-      };
+      where.category = { name: category };
     }
+
     if (q) {
       where.OR = [
         { title: { contains: q, mode: "insensitive" } },
         { description: { contains: q, mode: "insensitive" } },
       ];
     }
+
     if (user) {
       where.userId = user;
     }
-
-    console.log("🔍 Query where clause:", JSON.stringify(where, null, 2));
 
     const items = await prisma.item.findMany({
       where,
@@ -71,16 +68,17 @@ router.get("/", async (req, res) => {
     });
 
     const total = await prisma.item.count({ where });
-    
-    console.log(`✅ Retornando ${items.length} itens de ${total} total`);
     res.json({ items, total });
+
   } catch (err) {
     console.error("❌ Erro listando items:", err);
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
 
-/* LISTAR ITENS DO USUÁRIO LOGADO (autenticado) */
+/* ============================================================
+   LISTAR ITENS DO USUÁRIO LOGADO
+   ============================================================ */
 router.get("/meus-itens", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -101,16 +99,20 @@ router.get("/meus-itens", authenticateToken, async (req, res) => {
 
     const total = await prisma.item.count({ where: { userId } });
     res.json({ items, total });
+
   } catch (err) {
     console.error("Erro listando itens do usuário:", err);
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
 
-/* GET ITEM POR ID */
+/* ============================================================
+   GET ITEM POR ID
+   ============================================================ */
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+
     const item = await prisma.item.findUnique({
       where: { id: Number(id) },
       include: {
@@ -120,15 +122,20 @@ router.get("/:id", async (req, res) => {
         user: { select: { id: true, name: true, profilePic: true, campusId: true } },
       },
     });
+
     if (!item) return res.status(404).json({ error: "Item não encontrado" });
+
     res.json(item);
+
   } catch (err) {
     console.error("Erro get item:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
 
-/* CRIAR ITEM (autenticado) - ATUALIZADO PARA INCLUIR CAMPUS */
+/* ============================================================
+   CRIAR ITEM — INCLUINDO CAMPUS AUTOMÁTICO DO USUÁRIO
+   ============================================================ */
 router.post("/", authenticateToken, async (req, res) => {
   try {
     const {
@@ -139,31 +146,31 @@ router.post("/", authenticateToken, async (req, res) => {
       location,
       categoryName,
     } = req.body;
+
     const userId = req.user.id;
 
-    // Validação mais robusta
     if (!title || !description || !location || !categoryName) {
       return res.status(400).json({
         error: "Preencha title, description, location e categoryName",
       });
     }
 
-    // Buscar perfil do usuário para obter campusId
+    // busca o campus do usuário
     const userProfile = await prisma.profile.findUnique({
       where: { id: userId },
       select: { campusId: true }
     });
 
-    // encontrar/ criar categoria
     let category = null;
     if (categoryName) {
       category = await prisma.category.findFirst({
         where: { name: categoryName },
       });
-      if (!category)
+      if (!category) {
         category = await prisma.category.create({
           data: { name: categoryName },
         });
+      }
     }
 
     const newItem = await prisma.item.create({
@@ -173,7 +180,7 @@ router.post("/", authenticateToken, async (req, res) => {
         status,
         location,
         userId,
-        campusId: userProfile?.campusId || null, // Inclui campusId do usuário
+        campusId: userProfile?.campusId || null,
         categoryId: category ? category.id : null,
         images: { create: imageUrls.map((url) => ({ url })) },
       },
@@ -186,14 +193,16 @@ router.post("/", authenticateToken, async (req, res) => {
     });
 
     res.status(201).json(newItem);
+
   } catch (err) {
     console.error("Erro ao criar item:", err);
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
 
-// ... (restante do código mantido igual)
-/* ATUALIZAR ITEM (owner ou admin/superadmin) */
+/* ============================================================
+   ATUALIZAR ITEM
+   ============================================================ */
 router.put("/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -203,6 +212,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
     const existing = await prisma.item.findUnique({
       where: { id: Number(id) },
     });
+
     if (!existing)
       return res.status(404).json({ error: "Item não encontrado" });
 
@@ -245,13 +255,16 @@ router.put("/:id", authenticateToken, async (req, res) => {
     });
 
     res.json(updated);
+
   } catch (err) {
     console.error("Erro atualizar item:", err);
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
 
-/* DELETAR ITEM (owner ou admin/superadmin) */
+/* ============================================================
+   DELETAR ITEM
+   ============================================================ */
 router.delete("/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -260,6 +273,7 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     const existing = await prisma.item.findUnique({
       where: { id: Number(id) },
     });
+
     if (!existing)
       return res.status(404).json({ error: "Item não encontrado" });
 
@@ -277,6 +291,7 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     await prisma.item.delete({ where: { id: Number(id) } });
 
     res.json({ message: "Item removido com sucesso" });
+
   } catch (err) {
     console.error("Erro deletar item:", err);
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });

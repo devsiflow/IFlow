@@ -7,9 +7,10 @@ import supabaseAdmin from "../lib/supabaseAdmin.js";
  *  - JWT do Supabase
  *  - Access Token padrão (supabase.auth)
  *
- * E GARANTE:
- *  - Cria usuário no Prisma caso não exista
- *  - Não quebra quando o ID é UUID (Supabase)
+ * Garante:
+ *  - Usuário com UUID (Supabase) funciona
+ *  - Profile é criado automaticamente
+ *  - CampusId SEMPRE vem no req.user
  */
 
 export async function authenticateToken(req, res, next) {
@@ -21,23 +22,22 @@ export async function authenticateToken(req, res, next) {
   let decoded = null;
   let supaUser = null;
 
-  // Tenta verificar pelo JWT_SECRET (antigo)
+  // Tenta verificar com JWT_SECRET
   if (process.env.SUPABASE_JWT_SECRET) {
     try {
       decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
-    } catch (e) {
+    } catch {
       decoded = null;
     }
   }
 
-  // Caso não decodifique → tenta login normal do Supabase
+  // Se não conseguiu decodificar → tenta via Supabase
   if (!decoded) {
     try {
       const result = await supabaseAdmin.auth.getUser(token);
 
       if (result?.data?.user) {
         supaUser = result.data.user;
-
         decoded = {
           sub: supaUser.id,
           email: supaUser.email,
@@ -53,33 +53,33 @@ export async function authenticateToken(req, res, next) {
   }
 
   try {
-    const userId =
-      decoded.sub || decoded.id || decoded.user_id || decoded.uid;
+    const userId = decoded.sub || decoded.id;
 
     if (!userId)
       return res.status(403).json({ error: "Token sem ID (sub) inválido" });
 
-    // 🔥 CORREÇÃO: busca por Supabase ID (UUID)
+    // Busca o profile
     let profile = await prisma.profile.findUnique({
       where: { id: userId },
+      include: { campus: true },
     });
 
-    // 🔥 CORREÇÃO IMPORTANTE:
-    // Se não existir, cria SEM FORÇAR ID PRISMA
+    // Se não existir → cria
     if (!profile && supaUser) {
       profile = await prisma.profile.create({
         data: {
-          id: userId, // agora UUID é aceito no schema
+          id: userId,
           email: supaUser.email,
           name:
             supaUser.user_metadata?.full_name ||
             supaUser.user_metadata?.name ||
             supaUser.email,
+          campusId: supaUser.user_metadata?.campusId || null,
         },
+        include: { campus: true },
       });
     }
 
-    // Se mesmo assim não existir
     if (!profile) {
       return res.status(404).json({
         error: "Usuário não encontrado e não pôde ser criado",
@@ -87,7 +87,6 @@ export async function authenticateToken(req, res, next) {
     }
 
     req.user = profile;
-
     next();
   } catch (err) {
     console.error("🔥 ERRO authenticateToken:", err);

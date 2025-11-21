@@ -9,36 +9,41 @@ import ItemCard from "../components/ItemCard";
 function Catalogo() {
   const { itens, loading, error } = useItens();
   const { user, loading: authLoading } = useAuth();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [localFilter, setLocalFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
 
   const campusId = user?.campusId;
-  console.log("👤 Usuário:", user?.name, "CampusId:", campusId, "Auth loading:", authLoading);
+
+  console.log("👤 Usuário:", user?.name, "CampusId:", campusId);
   console.log("📦 Total de itens carregados:", itens.length);
 
-  // Filtra os itens - REMOVIDO filtro por campus aqui pois já é feito no hook
-  const filteredItems = itens.filter((item) => {
-    const nameMatch = (item.title ?? "")
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+  // 🔥 FILTRO POR CAMPUS GARANTIDO AQUI
+  const itensDoCampus = itens.filter(
+    (item) => !campusId || item.campusId === campusId
+  );
+
+  console.log("🎓 Itens do campus:", itensDoCampus.length);
+
+  // Outros filtros
+  const filteredItems = itensDoCampus.filter((item) => {
+    const nameMatch =
+      (item.title ?? "").toLowerCase().includes(searchTerm.toLowerCase());
     const statusMatch =
       statusFilter === "Todos" || item.status === statusFilter;
-    const localMatch = (item.location ?? "")
-      .toLowerCase()
-      .includes(localFilter.toLowerCase());
+    const localMatch =
+      (item.location ?? "").toLowerCase().includes(localFilter.toLowerCase());
     const dateMatch =
       !dateFilter ||
       new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
-    
+
     return nameMatch && statusMatch && localMatch && dateMatch;
   });
 
-  console.log("🎯 Itens após filtros:", filteredItems.length);
-
   if (authLoading) return <LogoLoader />;
-  
+
   if (error)
     return (
       <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900">
@@ -46,13 +51,6 @@ function Catalogo() {
         <div className="pt-32 px-6 text-center text-red-500">
           <h2 className="text-xl font-bold mb-4">Erro ao carregar itens</h2>
           <p>{error}</p>
-          <p className="text-sm mt-2">CampusId do usuário: {user?.campusId || "Não definido"}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-          >
-            Tentar novamente
-          </button>
         </div>
       </div>
     );
@@ -62,17 +60,15 @@ function Catalogo() {
       <MenuCatalogo />
 
       <div className="pt-32 px-6 max-w-7xl mx-auto">
-        {/* Informação do campus */}
         {campusId && (
           <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
             <p className="text-blue-800 dark:text-blue-200 text-sm">
-              🎯 Mostrando itens do seu campus
-              {itens[0]?.campus?.nome && ` - ${itens[0].campus.nome}`}
+              🎯 Mostrando itens somente do seu campus
             </p>
           </div>
         )}
 
-        {!campusId && user && (
+        {!campusId && (
           <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
             <p className="text-yellow-800 dark:text-yellow-200 text-sm">
               ⚠️ Seu perfil não tem campus definido. Mostrando todos os itens.
@@ -119,9 +115,6 @@ function Catalogo() {
           />
         </div>
 
-        {/* Loading */}
-        {loading && <LogoLoader />}
-
         {/* Itens */}
         {!loading && filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -132,10 +125,7 @@ function Catalogo() {
         ) : (
           !loading && (
             <div className="text-center text-neutral-500 mt-16 text-sm">
-              {itens.length === 0 
-                ? `Nenhum item encontrado${campusId ? ' no seu campus' : ''}.`
-                : "Nenhum item corresponde aos filtros aplicados."
-              }
+              Nenhum item encontrado.
             </div>
           )
         )}

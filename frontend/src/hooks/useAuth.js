@@ -9,53 +9,60 @@ export function useAuth() {
 
   // Função para atualizar usuário e token
   const updateSession = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
+  setLoading(true);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
 
-      if (session) {
-        setUser(session.user);
-        setToken(session.access_token);
+    if (session) {
+      // 🔥 PRIMEIRO: Buscar dados COMPLETOS da Profile
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const response = await fetch(`${API_URL}/me`, {
+          headers: { 
+            Authorization: `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+        });
 
-        // 🔥 CORREÇÃO: Buscar dados completos do usuário via rota /me
-        try {
-          const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-          const response = await fetch(`${API_URL}/me`, {
-            headers: { 
-              Authorization: `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json'
-            },
+        if (response.ok) {
+          const userData = await response.json();
+          console.log("✅ Dados do Profile carregados:", userData);
+          
+          // 🔥 USAR APENAS OS DADOS DO PROFILE
+          setUser({
+            id: userData.id,
+            name: userData.name,
+            email: userData.email,
+            matricula: userData.matricula,
+            campusId: userData.campusId,
+            campus: userData.campus,
+            isAdmin: userData.isAdmin,
+            isSuperAdmin: userData.isSuperAdmin,
+            profilePic: userData.profilePic
           });
-
-          if (response.ok) {
-            const userData = await response.json();
-            console.log("✅ Dados do usuário carregados:", userData);
-            
-            // Atualiza o usuário com campusId e outros dados
-            setUser(prevUser => ({
-              ...prevUser,
-              ...userData,
-              campusId: userData.campusId || null
-            }));
-          } else {
-            console.warn("⚠️ Não foi possível carregar dados completos do usuário");
-          }
-        } catch (error) {
-          console.error("❌ Erro ao buscar dados do usuário:", error);
+        } else {
+          console.warn("⚠️ Não foi possível carregar dados do Profile");
+          // Fallback: usar dados básicos do Auth
+          setUser(session.user);
         }
-      } else {
-        setUser(null);
-        setToken(null);
+      } catch (error) {
+        console.error("❌ Erro ao buscar Profile:", error);
+        setUser(session.user);
       }
-    } catch (error) {
-      console.error("❌ Erro na sessão:", error);
+      
+      setToken(session.access_token);
+    } else {
       setUser(null);
       setToken(null);
-    } finally {
-      setLoading(false);
     }
-  }, []);
-
+  } catch (error) {
+    console.error("❌ Erro na sessão:", error);
+    setUser(null);
+    setToken(null);
+  } finally {
+    setLoading(false);
+  }
+}, []);
   useEffect(() => {
     // Atualiza no load inicial
     updateSession();

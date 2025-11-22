@@ -66,19 +66,20 @@ export async function authenticateToken(req, res, next) {
 
     // Se não existir → cria
     if (!profile && supaUser) {
-      profile = await prisma.profile.create({
-        data: {
-          id: userId,
-          email: supaUser.email,
-          name:
-            supaUser.user_metadata?.full_name ||
-            supaUser.user_metadata?.name ||
-            supaUser.email,
-          campusId: supaUser.user_metadata?.campusId || null,
-        },
-        include: { campus: true }, // 🔥 INCLUIR CAMPUS AQUI TAMBÉM
-      });
-    }
+  // 🔥 CORREÇÃO: Usar dados consistentes do user_metadata
+  const userMetadata = supaUser.user_metadata || {};
+  
+  profile = await prisma.profile.create({
+    data: {
+      id: userId,
+      email: supaUser.email,
+      name: userMetadata.name || userMetadata.nome || supaUser.email,
+      matricula: userMetadata.matricula || `user_${userId.slice(0, 8)}`,
+      campusId: userMetadata.campusId ? parseInt(userMetadata.campusId) : null,
+    },
+    include: { campus: true },
+  });
+}
 
     if (!profile) {
       return res.status(404).json({

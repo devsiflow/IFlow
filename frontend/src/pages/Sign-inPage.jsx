@@ -51,66 +51,53 @@ export default function Cadastro() {
   }, [API_URL]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
+  e.preventDefault();
+  setError("");
+  setSuccess(false);
 
-    if (!matricula || !nome || !email || !senha || !campusId) {
-      setError("Todos os campos são obrigatórios");
-      return;
+  if (!matricula || !nome || !email || !senha || !campusId) {
+    setError("Todos os campos são obrigatórios");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // 🔥 1. Criar usuário NO SUPABASE APENAS
+    const { data, error: supError } = await supabase.auth.signUp({
+      email,
+      password: senha,
+      options: {
+        data: {
+          name: nome,        // Apenas para display básico
+          matricula: matricula,
+          campusId: campusId
+        }
+      }
+    });
+
+    if (supError) {
+      setLoading(false);
+      return setError(supError.message);
     }
 
-    try {
-      setLoading(true);
-
-      // 1️⃣ Criar usuário no Supabase Auth
-      const { data, error: supError } = await supabase.auth.signUp({
-        email,
-        password: senha,
-      });
-
-      if (supError) {
-        setLoading(false);
-        return setError(supError.message);
-      }
-
-      if (!data.user) {
-        setLoading(false);
-        return setError("Usuário não retornou do Supabase");
-      }
-
-      const userId = data.user.id;
-
-      await supabase.auth.updateUser({
-        data: { nome, matricula },
-      });
-
-      // 2️⃣ Criar Profile no backend
-      const res = await fetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: userId,
-          nome,
-          matricula,
-          campusId: Number(campusId),
-          profilePic: null,
-        }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Erro ao criar perfil");
-      }
-
+    if (!data.user) {
       setLoading(false);
-      setSuccess(true);
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-      setError("Erro ao criar usuário: " + err.message);
+      return setError("Usuário não retornou do Supabase");
     }
-  };
+
+    // 🔥 2. O MIDDLEWARE auth.js JÁ CRIA O PROFILE AUTOMATICAMENTE
+    // Não precisa chamar /auth/register manualmente!
+
+    setLoading(false);
+    setSuccess(true);
+    
+  } catch (err) {
+    console.error(err);
+    setLoading(false);
+    setError("Erro ao criar usuário: " + err.message);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4 relative">

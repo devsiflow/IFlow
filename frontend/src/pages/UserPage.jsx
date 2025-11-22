@@ -343,21 +343,47 @@ export default function UserPage() {
 
   // Restante das funções mantidas iguais...
   const handleUpdate = async () => {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: { name: form.name },
-      });
-      if (error) throw error;
-      setUser((prev) => ({ ...prev, name: form.name }));
-      setEditing(false);
-      setMessage("✅ Perfil atualizado com sucesso!");
-      setMessageType("success");
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ Erro ao atualizar perfil");
-      setMessageType("error");
-    }
-  };
+  try {
+    const session = (await supabase.auth.getSession())?.data?.session;
+    if (!session) throw new Error("Usuário não autenticado");
+    
+    const token = session.access_token;
+
+    // 🔥 1. Atualizar APENAS no Profile
+    const API_URL = import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
+    const response = await fetch(`${API_URL}/me`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: form.name,
+        // matricula: form.matricula // se quiser atualizar matrícula também
+      }),
+    });
+
+    if (!response.ok) throw new Error("Erro ao atualizar perfil");
+
+    const updatedProfile = await response.json();
+
+    // 🔥 2. Atualizar estado com dados do Profile
+    setUser(prev => ({
+      ...prev,
+      name: updatedProfile.name,
+      matricula: updatedProfile.matricula
+    }));
+
+    setEditing(false);
+    setMessage("✅ Perfil atualizado com sucesso!");
+    setMessageType("success");
+    
+  } catch (err) {
+    console.error(err);
+    setMessage("❌ Erro ao atualizar perfil");
+    setMessageType("error");
+  }
+};
 
   const handleLogout = async () => {
     try {

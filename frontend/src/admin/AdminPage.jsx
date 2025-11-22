@@ -9,14 +9,21 @@ import {
   Menu,
   X,
   ArrowLeft,
+  Shield,
+  Building,
+  Key,
+  BarChart3
 } from "lucide-react";
 
 import TabelaSolicitacoes from "../components/admin/TabelaSolicitacoes";
 import TabelaUsuariosAdmin from "../components/admin/TabelaUsuariosAdmin";
 import TabelaItensAdmin from "../components/admin/TabelaItensAdmin";
-// import GeradorRelatorio from "../components/admin/GeradorRelatorio";
 import DashboardAdmin from "../components/admin/DashboardAdmin";
 import LogoLoader from "../components/LogoLoader";
+import ManageAdmins from "../components/admin/ManageAdmins";
+import ManageCampus from "../components/admin/ManageCampus";
+// import GeradorRelatorio from "../components/admin/GeradorRelatorio";
+// import GerenciarSenhas from "../components/admin/GerenciarSenhas";
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -25,11 +32,9 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [menuAberto, setMenuAberto] = useState(false);
   const [componenteAtivo, setComponenteAtivo] = useState("dashboard");
-
   const [solicitacoes, setSolicitacoes] = useState([]);
 
-  const API_BASE =
-    import.meta.env.VITE_API_URL || "https://iflow-backend.onrender.com";
+  const API_BASE = import.meta.env.VITE_API_URL || "https://iflow-backend.onrender.com";
 
   useEffect(() => {
     verificarAdmin();
@@ -96,40 +101,49 @@ export default function AdminPage() {
   }
 
   async function deleteSolicitacao(id) {
-  if (!confirm("Tem certeza que deseja excluir esta solicitação?")) return;
+    if (!confirm("Tem certeza que deseja excluir esta solicitação?")) return;
 
-  try {
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-    const res = await fetch(`${API_URL}/solicitacoes/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+      const res = await fetch(`${API_URL}/solicitacoes/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-    if (!res.ok) {
-      const error = await res.text();
-      alert("Erro ao excluir: " + error);
-      return;
+      if (!res.ok) {
+        const error = await res.text();
+        alert("Erro ao excluir: " + error);
+        return;
+      }
+
+      setSolicitacoes((prev) => prev.filter((s) => s.id !== id));
+      alert("Solicitação excluída com sucesso!");
+    } catch (err) {
+      alert("Erro ao excluir: " + err.message);
     }
-
-    // Atualizar a lista no frontend
-    setSolicitacoes((prev) => prev.filter((s) => s.id !== id));
-
-    alert("Solicitação excluída com sucesso!");
-  } catch (err) {
-    alert("Erro ao excluir: " + err.message);
   }
-}
 
-
-  const menuItems = [
+  // 🔥 MENU COMPLETO - TODAS AS FUNÇÕES ORIGINAIS + NOVAS
+  const baseMenuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "solicitacoes", label: "Solicitações", icon: FileText },
     { id: "usuarios", label: "Usuários", icon: Users },
     { id: "itens", label: "Itens", icon: Package },
-    { id: "relatorios", label: "Relatórios", icon: FileText },
-    { id: "senhas", label: "Gerenciar Senhas", icon: Settings },
+    { id: "relatorios", label: "Relatórios", icon: BarChart3 },
+    { id: "senhas", label: "Gerenciar Senhas", icon: Key },
   ];
+
+  // 🔥 FUNÇÕES EXTRAS APENAS PARA SUPERADMIN
+  const superAdminMenuItems = [
+    { id: "gerenciar-admins", label: "Gerenciar Admins", icon: Shield },
+    { id: "gerenciar-campus", label: "Gerenciar Campus", icon: Building },
+  ];
+
+  // 🔥 COMBINAR MENUS - SuperAdmin vê tudo, Admin normal vê só o básico
+  const menuItems = userData?.isSuperAdmin 
+    ? [...baseMenuItems, ...superAdminMenuItems]
+    : baseMenuItems;
 
   const renderComponente = () => {
     switch (componenteAtivo) {
@@ -149,7 +163,13 @@ export default function AdminPage() {
         return <TabelaItensAdmin />;
       case "relatorios":
         return <GeradorRelatorio />;
-         default:
+      case "senhas":
+        return <GerenciarSenhas />;
+      case "gerenciar-admins":
+        return <ManageAdmins />;
+      case "gerenciar-campus":
+        return <ManageCampus />;
+      default:
         return <div>Selecione uma opção do menu</div>;
     }
   };
@@ -190,6 +210,16 @@ export default function AdminPage() {
               {menuAberto ? <X size={20} /> : <Menu size={20} />}
             </button>
             <h1 className="text-xl font-bold">Painel Administrativo</h1>
+            {userData?.isSuperAdmin && (
+              <span className="px-2 py-1 bg-purple-600 text-white text-xs rounded-full">
+                SuperAdmin
+              </span>
+            )}
+            {userData?.isAdmin && !userData?.isSuperAdmin && (
+              <span className="px-2 py-1 bg-green-600 text-white text-xs rounded-full">
+                Admin
+              </span>
+            )}
           </div>
 
           <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -211,6 +241,8 @@ export default function AdminPage() {
             <ul className="space-y-2">
               {menuItems.map((item) => {
                 const Icon = item.icon;
+                const isSuperAdminItem = superAdminMenuItems.some(superItem => superItem.id === item.id);
+                
                 return (
                   <li key={item.id}>
                     <button
@@ -220,7 +252,9 @@ export default function AdminPage() {
                       }}
                       className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
                         componenteAtivo === item.id
-                          ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
+                          ? isSuperAdminItem
+                            ? "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300"
+                            : "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
                           : "hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-700 dark:text-gray-300"
                       }`}
                     >
@@ -234,6 +268,11 @@ export default function AdminPage() {
                       >
                         {item.label}
                       </span>
+                      {isSuperAdminItem && (
+                        <span className="ml-auto text-xs text-purple-500 font-semibold">
+                          SUPER
+                        </span>
+                      )}
                     </button>
                   </li>
                 );
@@ -254,6 +293,11 @@ export default function AdminPage() {
                 {menuItems.find((item) => item.id === componenteAtivo)?.label ||
                   "Dashboard"}
               </h2>
+              {superAdminMenuItems.some(item => item.id === componenteAtivo) && (
+                <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+                  ⚡ Funcionalidade exclusiva para SuperAdmin
+                </p>
+              )}
             </div>
             <div className="animate-fade-in">{renderComponente()}</div>
           </div>

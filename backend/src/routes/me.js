@@ -14,6 +14,13 @@ const PROFILE_SELECT = {
   isAdmin: true,
   isSuperAdmin: true,
   createdAt: true,
+  campusId: true, // 🔥 ADICIONAR CAMPUS ID
+  campus: { // 🔥 INCLUIR DADOS DO CAMPUS
+    select: {
+      id: true,
+      nome: true
+    }
+  }
 };
 
 function isNonEmptyString(v) {

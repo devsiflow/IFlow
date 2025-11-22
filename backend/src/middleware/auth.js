@@ -58,10 +58,10 @@ export async function authenticateToken(req, res, next) {
     if (!userId)
       return res.status(403).json({ error: "Token sem ID (sub) inválido" });
 
-    // Busca o profile
+    // Busca o profile INCLUINDO campus
     let profile = await prisma.profile.findUnique({
       where: { id: userId },
-      include: { campus: true },
+      include: { campus: true }, // 🔥 INCLUIR CAMPUS AQUI
     });
 
     // Se não existir → cria
@@ -76,7 +76,7 @@ export async function authenticateToken(req, res, next) {
             supaUser.email,
           campusId: supaUser.user_metadata?.campusId || null,
         },
-        include: { campus: true },
+        include: { campus: true }, // 🔥 INCLUIR CAMPUS AQUI TAMBÉM
       });
     }
 
@@ -86,7 +86,12 @@ export async function authenticateToken(req, res, next) {
       });
     }
 
-    req.user = profile;
+    // 🔥 ADICIONAR CAMPUS ID AO REQ.USER
+    req.user = {
+      ...profile,
+      campusId: profile.campusId // Garantir que campusId está disponível
+    };
+    
     next();
   } catch (err) {
     console.error("🔥 ERRO authenticateToken:", err);

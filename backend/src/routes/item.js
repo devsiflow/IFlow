@@ -1,11 +1,13 @@
 import express from "express"; 
 import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
+import jwt from "jsonwebtoken";
+import supabaseAdmin from "../lib/supabaseAdmin.js";
 
 const router = express.Router();
 
 /* ============================================================
-   LISTAR ITENS (PÚBLICO) — COM FILTRO DE CAMPUS CORRIGIDO
+   LISTAR ITENS (PÚBLICO) — COM FILTRO DE CAMPUS AUTOMÁTICO
    ============================================================ */
 router.get("/", async (req, res) => {
   try {
@@ -17,19 +19,65 @@ router.get("/", async (req, res) => {
       pageSize = 20,
       user,
       campusId,
+      // 🔥 NOVO: parâmetro para forçar mostrar todos os campus
+      allCampuses = false,
     } = req.query;
     
     const where = {};
 
-    // 🔥 FILTRO DE CAMPUS — AGORA 100% FUNCIONAL
-    if (campusId && campusId !== "undefined" && campusId !== "null") {
+    // 🔥 FILTRO DE CAMPUS — AGORA COM SUPORTE A USUÁRIO AUTENTICADO
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    
+    let userCampusId = null;
+
+    // Se tem token, tenta obter o campus do usuário
+    if (token && !allCampuses) {
+      try {
+        // Verifica o token para obter o campus do usuário
+        if (process.env.SUPABASE_JWT_SECRET) {
+          const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
+          const userId = decoded.sub || decoded.id;
+          
+          if (userId) {
+            const userProfile = await prisma.profile.findUnique({
+              where: { id: userId },
+              select: { campusId: true }
+            });
+            userCampusId = userProfile?.campusId;
+          }
+        }
+      } catch (err) {
+        // Se falhar na verificação JWT, tenta via Supabase
+        try {
+          const result = await supabaseAdmin.auth.getUser(token);
+          if (result?.data?.user) {
+            const userId = result.data.user.id;
+            const userProfile = await prisma.profile.findUnique({
+              where: { id: userId },
+              select: { campusId: true }
+            });
+            userCampusId = userProfile?.campusId;
+          }
+        } catch (supaErr) {
+          console.log("Erro ao obter campus do usuário:", supaErr);
+        }
+      }
+    }
+
+    // 🔥 PRIORIDADE: campusId do usuário autenticado
+    if (userCampusId && !allCampuses) {
+      where.campusId = userCampusId;
+    }
+    // Se não tem usuário autenticado, usa campusId da query (para visitantes)
+    else if (campusId && campusId !== "undefined" && campusId !== "null") {
       const cid = Number(campusId);
       if (!Number.isNaN(cid)) {
         where.campusId = cid;
       }
     }
 
-    // Outros filtros
+    // Outros filtros (mantidos)
     if (status && status !== "Todos") where.status = status;
 
     if (category && category !== "Todos") {
@@ -68,7 +116,7 @@ router.get("/", async (req, res) => {
     });
 
     const total = await prisma.item.count({ where });
-    res.json({ items, total });
+    res.json({ items, total, userCampusId }); // 🔥 Retorna o campusId usado
 
   } catch (err) {
     console.error("❌ Erro listando items:", err);

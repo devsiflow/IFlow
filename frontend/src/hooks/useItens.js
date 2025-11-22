@@ -7,24 +7,24 @@ export function useItens() {
   const [itens, setItens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
+  const { user, token } = useAuth(); // 🔥 PEGAR TOKEN TAMBÉM
 
   useEffect(() => {
     async function fetchItens() {
       try {
         const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-        const campusId = user?.campusId;
         
-        console.log("🔄 Buscando itens para campusId:", campusId);
+        console.log("🔄 Buscando itens para usuário:", user?.name);
+        console.log("🎯 Campus do usuário:", user?.campusId);
 
-        // Se não tem campusId, busca todos os itens (ou pode retornar vazio)
-        const url = campusId 
-          ? `${API_URL}/items?campusId=${campusId}`
-          : `${API_URL}/items`;
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
 
-        console.log("📡 URL da requisição:", url);
-
-        const res = await fetch(url);
+        const res = await fetch(`${API_URL}/items`, {
+          headers
+        });
         
         if (!res.ok) {
           const errorText = await res.text();
@@ -43,14 +43,8 @@ export function useItens() {
 
         console.log("📦 Itens recebidos:", itemsArray.length);
         
-        // Filtra por campusId no frontend também, para garantir
-        const filteredItems = campusId 
-          ? itemsArray.filter(item => item.campusId === campusId)
-          : itemsArray;
-
-        console.log("🎯 Itens filtrados por campus:", filteredItems.length);
-
-        const itensComImagens = filteredItems.map((item) => ({
+        // 🔥 REMOVER FILTRO NO FRONTEND - O BACKEND JÁ FILTROU
+        const itensComImagens = itemsArray.map((item) => ({
           ...item,
           images:
             item.images?.length > 0
@@ -67,13 +61,13 @@ export function useItens() {
       }
     }
 
-    // Só busca itens se o usuário estiver carregado (mesmo que campusId seja null)
+    // Só busca itens se o usuário estiver carregado
     if (user !== undefined) {
       fetchItens();
     } else {
       setLoading(false);
     }
-  }, [user?.campusId, user]); // Recarrega quando o campusId ou usuário mudar
+  }, [user, token]); // 🔥 ADICIONAR TOKEN COMO DEPENDÊNCIA
 
   return { itens, loading, error };
 }

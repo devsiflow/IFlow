@@ -11,7 +11,7 @@ export default function Cadastro() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [campusId, setCampusId] = useState("");
-  const [campusList, setCampusList] = useState([]);
+  const [campusList, setCampusList] = useState([]); // sempre array
   const [showSenha, setShowSenha] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,19 +19,34 @@ export default function Cadastro() {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // 🔹 Busca os campus ao carregar
+  // Buscar campus ao carregar
   useEffect(() => {
     const fetchCampus = async () => {
       try {
         const res = await fetch(`${API_URL}/campus`);
         const data = await res.json();
-        console.log("📡 Campus retornados:", data);
 
-        setCampusList(data); // ✅ Corrigido
+        console.log("📡 Retorno da API /campus:", data);
+
+        // --- CORREÇÃO AQUI ---
+        let lista = [];
+
+        if (Array.isArray(data)) {
+          lista = data;
+        } else if (Array.isArray(data.campus)) {
+          lista = data.campus;
+        } else if (Array.isArray(data.data)) {
+          lista = data.data;
+        } else {
+          console.warn("⚠️ Formato inesperado do backend");
+        }
+
+        setCampusList(lista);
       } catch (err) {
         console.error("Erro ao carregar campus:", err);
       }
     };
+
     fetchCampus();
   }, [API_URL]);
 
@@ -66,18 +81,17 @@ export default function Cadastro() {
 
       const userId = data.user.id;
 
-      // Atualiza user_metadata (nome e matrícula)
       await supabase.auth.updateUser({
-        data: { nome: nome, matricula },
+        data: { nome, matricula },
       });
 
-      // 2️⃣ Criar perfil no backend
+      // 2️⃣ Criar Profile no backend
       const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: userId,
-          nome: nome,
+          nome,
           matricula,
           campusId: Number(campusId),
           profilePic: null,
@@ -85,8 +99,8 @@ export default function Cadastro() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Erro ao criar perfil");
+        const errData = await res.json();
+        throw new Error(errData.error || "Erro ao criar perfil");
       }
 
       setLoading(false);
@@ -159,23 +173,27 @@ export default function Cadastro() {
               disabled={loading}
             />
 
-            {/* 🔹 Select de Campus */}
+            {/* Select de campus corrigido */}
             <select
               value={campusId}
               onChange={(e) => setCampusId(e.target.value)}
               className="w-full px-4 py-2 border rounded-md bg-white"
               required
-              disabled={loading}
+              disabled={loading || campusList.length === 0}
             >
               <option value="">Selecione seu campus</option>
-              {campusList.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
+
+              {campusList.length > 0 ? (
+                campusList.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))
+              ) : (
+                <option disabled>Carregando campus...</option>
+              )}
             </select>
 
-            {/* Campo de senha */}
             <div className="relative">
               <input
                 type={showSenha ? "text" : "password"}

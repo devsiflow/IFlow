@@ -20,15 +20,8 @@ function Catalogo() {
   console.log("👤 Usuário:", user?.name, "CampusId:", campusId);
   console.log("📦 Total de itens carregados:", itens.length);
 
-  // 🔥 FILTRO POR CAMPUS GARANTIDO AQUI
-  const itensDoCampus = itens.filter(
-    (item) => !campusId || item.campusId === campusId
-  );
-
-  console.log("🎓 Itens do campus:", itensDoCampus.length);
-
-  // Outros filtros
-  const filteredItems = itensDoCampus.filter((item) => {
+  // 🔥 AGORA O FILTRO É FEITO NO BACKEND - SÓ APLICAR OUTROS FILTROS AQUI
+  const filteredItems = itens.filter((item) => {
     const nameMatch =
       (item.title ?? "").toLowerCase().includes(searchTerm.toLowerCase());
     const statusMatch =
@@ -63,7 +56,7 @@ function Catalogo() {
         {campusId && (
           <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
             <p className="text-blue-800 dark:text-blue-200 text-sm">
-              🎯 Mostrando itens somente do seu campus
+              🎯 Mostrando itens somente do seu campus ({user?.campus?.nome || `ID: ${campusId}`})
             </p>
           </div>
         )}

@@ -1,17 +1,7 @@
+// middleware/auth.js
 import jwt from "jsonwebtoken";
 import prisma from "../lib/prismaClient.js";
 import supabaseAdmin from "../lib/supabaseAdmin.js";
-
-/**
- * Autenticação compatível com:
- *  - JWT do Supabase
- *  - Access Token padrão (supabase.auth)
- *
- * Garante:
- *  - Usuário com UUID (Supabase) funciona
- *  - Profile é criado automaticamente
- *  - CampusId SEMPRE vem no req.user
- */
 
 export async function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -61,25 +51,48 @@ export async function authenticateToken(req, res, next) {
     // Busca o profile INCLUINDO campus
     let profile = await prisma.profile.findUnique({
       where: { id: userId },
-      include: { campus: true }, // 🔥 INCLUIR CAMPUS AQUI
+      include: { campus: true },
     });
 
-    // Se não existir → cria
-    if (!profile && supaUser) {
-  // 🔥 CORREÇÃO: Usar dados consistentes do user_metadata
-  const userMetadata = supaUser.user_metadata || {};
-  
-  profile = await prisma.profile.create({
-    data: {
-      id: userId,
-      email: supaUser.email,
-      name: userMetadata.name || userMetadata.nome || supaUser.email,
-      matricula: userMetadata.matricula || `user_${userId.slice(0, 8)}`,
-      campusId: userMetadata.campusId ? parseInt(userMetadata.campusId) : null,
-    },
-    include: { campus: true },
-  });
-}
+    // Se não existir → cria com dados do Supabase
+    if (!profile) {
+      console.log("🆕 Criando profile automaticamente para:", userId);
+      
+      const userMetadata = supaUser?.user_metadata || {};
+      const email = supaUser?.email || decoded.email;
+      
+      // Dados padrão se não tiver metadata
+      const userName = userMetadata.name || userMetadata.nome || email || "Usuário";
+      const userMatricula = userMetadata.matricula || `user_${userId.slice(0, 8)}`;
+      const userCampusId = userMetadata.campusId ? parseInt(userMetadata.campusId) : null;
+
+      try {
+        profile = await prisma.profile.create({
+          data: {
+            id: userId,
+            email: email,
+            name: userName,
+            matricula: userMatricula,
+            campusId: userCampusId,
+            profilePic: null,
+          },
+          include: { campus: true },
+        });
+        console.log("✅ Profile criado automaticamente");
+      } catch (createError) {
+        console.error("❌ Erro ao criar profile:", createError);
+        
+        // Se for erro de duplicação (concorrência), busca novamente
+        if (createError.code === 'P2002') {
+          profile = await prisma.profile.findUnique({
+            where: { id: userId },
+            include: { campus: true },
+          });
+        } else {
+          throw createError;
+        }
+      }
+    }
 
     if (!profile) {
       return res.status(404).json({
@@ -90,7 +103,7 @@ export async function authenticateToken(req, res, next) {
     // 🔥 ADICIONAR CAMPUS ID AO REQ.USER
     req.user = {
       ...profile,
-      campusId: profile.campusId // Garantir que campusId está disponível
+      campusId: profile.campusId
     };
     
     next();

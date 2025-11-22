@@ -11,7 +11,7 @@ export default function Cadastro() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [campusId, setCampusId] = useState("");
-  const [campusList, setCampusList] = useState([]); // sempre array
+  const [campusList, setCampusList] = useState([]);
   const [showSenha, setShowSenha] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,6 @@ export default function Cadastro() {
 
         console.log("📡 Retorno da API /campus:", data);
 
-        // --- CORREÇÃO AQUI ---
         let lista = [];
 
         if (Array.isArray(data)) {
@@ -51,53 +50,69 @@ export default function Cadastro() {
   }, [API_URL]);
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
-  setSuccess(false);
+    e.preventDefault();
+    setError("");
+    setSuccess(false);
 
-  if (!matricula || !nome || !email || !senha || !campusId) {
-    setError("Todos os campos são obrigatórios");
-    return;
-  }
+    if (!matricula || !nome || !email || !senha || !campusId) {
+      setError("Todos os campos são obrigatórios");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // 🔥 1. Criar usuário NO SUPABASE APENAS
-    const { data, error: supError } = await supabase.auth.signUp({
-      email,
-      password: senha,
-      options: {
-        data: {
-          name: nome,        // Apenas para display básico
-          matricula: matricula,
-          campusId: campusId
+      // 1. Criar usuário no Supabase Auth
+      const { data, error: supError } = await supabase.auth.signUp({
+        email,
+        password: senha,
+        options: {
+          data: {
+            name: nome,
+            matricula: matricula,
+            campusId: campusId
+          }
         }
+      });
+
+      if (supError) {
+        setLoading(false);
+        return setError(supError.message);
       }
-    });
 
-    if (supError) {
+      if (!data.user) {
+        setLoading(false);
+        return setError("Usuário não retornou do Supabase");
+      }
+
+      const userId = data.user.id;
+
+      // 🔥 2. CRIAR PROFILE MANUALMENTE (já que o middleware não foi acionado)
+      const profileRes = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: userId,
+          nome: nome,
+          matricula: matricula,
+          campusId: parseInt(campusId),
+        }),
+      });
+
+      if (!profileRes.ok) {
+        const errData = await profileRes.json();
+        throw new Error(errData.error || "Erro ao criar perfil");
+      }
+
       setLoading(false);
-      return setError(supError.message);
-    }
-
-    if (!data.user) {
+      setSuccess(true);
+      
+    } catch (err) {
+      console.error(err);
       setLoading(false);
-      return setError("Usuário não retornou do Supabase");
+      setError("Erro ao criar usuário: " + err.message);
     }
-
-    // 🔥 2. O MIDDLEWARE auth.js JÁ CRIA O PROFILE AUTOMATICAMENTE
-    // Não precisa chamar /auth/register manualmente!
-
-    setLoading(false);
-    setSuccess(true);
-    
-  } catch (err) {
-    console.error(err);
-    setLoading(false);
-    setError("Erro ao criar usuário: " + err.message);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4 relative">
@@ -160,7 +175,6 @@ export default function Cadastro() {
               disabled={loading}
             />
 
-            {/* Select de campus corrigido */}
             <select
               value={campusId}
               onChange={(e) => setCampusId(e.target.value)}

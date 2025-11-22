@@ -114,6 +114,82 @@ router.get("/items", authenticateToken, onlyAdmin, async (req, res) => {
   }
 });
 
+// GET /admin/campus
+router.get("/campus", authenticateToken, onlyAdmin, async (req, res) => {
+  try {
+    const campus = await prisma.campus.findMany({
+      orderBy: { nome: "asc" },
+    });
+    res.json(campus);
+  } catch (err) {
+    console.error("❌ Erro GET /admin/campus:", err);
+    res.status(500).json({ error: "Erro ao listar campus" });
+  }
+});
 
+// POST /admin/campus
+router.post("/campus", authenticateToken, onlyAdmin, async (req, res) => {
+  try {
+    const { nome } = req.body;
+
+    if (!nome) {
+      return res.status(400).json({ error: "Nome do campus é obrigatório" });
+    }
+
+    const campus = await prisma.campus.create({
+      data: { nome },
+    });
+
+    res.json(campus);
+  } catch (err) {
+    console.error("❌ Erro POST /admin/campus:", err);
+    res.status(500).json({ error: "Erro ao criar campus" });
+  }
+});
+
+// PUT /admin/campus/:id
+router.put("/campus/:id", authenticateToken, onlyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nome } = req.body;
+
+    if (!nome) {
+      return res.status(400).json({ error: "Nome do campus é obrigatório" });
+    }
+
+    const campus = await prisma.campus.update({
+      where: { id: parseInt(id) },
+      data: { nome },
+    });
+
+    res.json(campus);
+  } catch (err) {
+    console.error("❌ Erro PUT /admin/campus/:id:", err);
+    res.status(500).json({ error: "Erro ao atualizar campus" });
+  }
+});
+
+// DELETE /admin/campus/:id
+router.delete("/campus/:id", authenticateToken, onlyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.campus.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.json({ message: "Campus excluído com sucesso" });
+  } catch (err) {
+    console.error("❌ Erro DELETE /admin/campus/:id:", err);
+    
+    if (err.code === "P2003") {
+      return res.status(400).json({ 
+        error: "Não é possível excluir campus com usuários ou itens vinculados" 
+      });
+    }
+    
+    res.status(500).json({ error: "Erro ao excluir campus" });
+  }
+});
 
 export default router;

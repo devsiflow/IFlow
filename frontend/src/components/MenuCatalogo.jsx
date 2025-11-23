@@ -71,6 +71,11 @@ export default function MenuBancoItens() {
           <li>
             <AnimatedLink onClick={() => navigate("/")}>Início</AnimatedLink>
           </li>
+          <li>
+            <AnimatedLink onClick={() => navigate("/itens-perdidos")}>
+              Itens Perdidos
+            </AnimatedLink>
+          </li>
         </ul>
 
         {/* Botão clean à direita */}
@@ -201,6 +206,14 @@ export default function MenuBancoItens() {
             }}
           >
             Cadastrar Item
+          </AnimatedLink>
+          <AnimatedLink
+            onClick={() => {
+              navigate("/itens-perdidos");
+              setMenuOpen(false);
+            }}
+          >
+            Itens Perdidos
           </AnimatedLink>
         </div>
 

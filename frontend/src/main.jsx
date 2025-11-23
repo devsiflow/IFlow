@@ -11,6 +11,7 @@ import Catalogo from "./pages/Catalogo.jsx";
 import CadastraItem from "./pages/CadastrarItem.jsx";
 import ValidarItem from "./pages/ValidarItem.jsx";
 import ValidacaoConfirmada from "./pages/ValidacaoConfirmada.jsx";
+import ItensNaoEncontrados from "./pages/ItensNaoEncontrados.jsx";
 import UserPage from "./pages/UserPage.jsx";
 import ItemPage from "./pages/ItemPage.jsx";
 import AdminPage from "./admin/AdminPage.jsx";
@@ -91,6 +92,14 @@ const router = createBrowserRouter([
     element: (
       <LayoutWrapper>
         <ValidacaoConfirmada />
+      </LayoutWrapper>
+    ),
+  },
+   {
+    path: "/itens-perdidos",
+    element: (
+      <LayoutWrapper>
+        <ItensNaoEncontrados />
       </LayoutWrapper>
     ),
   },

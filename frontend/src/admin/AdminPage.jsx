@@ -22,7 +22,7 @@ import DashboardAdmin from "../components/admin/DashboardAdmin";
 import LogoLoader from "../components/LogoLoader";
 import ManageAdmins from "../components/admin/ManageAdmins";
 import ManageCampus from "../components/admin/ManageCampus";
-// import GeradorRelatorio from "../components/admin/GeradorRelatorio";
+import GeradorRelatorio from "../components/admin/GeradorRelatorio";
 // import GerenciarSenhas from "../components/admin/GerenciarSenhas";
 
 export default function AdminPage() {
@@ -201,7 +201,7 @@ export default function AdminPage() {
               className="flex items-center gap-2 bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg transition-all"
             >
               <ArrowLeft size={18} />
-              <span className="hidden sm:inline">Voltar</span>
+              <span className="hidden sm:inline">Sair do admin</span>
             </button>
             <button
               onClick={() => setMenuAberto(!menuAberto)}

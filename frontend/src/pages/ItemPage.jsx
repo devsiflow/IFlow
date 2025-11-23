@@ -167,7 +167,7 @@ export default function ItemPage() {
                 <strong>Status:</strong>{" "}
                 <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                   item.status === "perdido" 
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" 
+                    ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" 
                     : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                 }`}>
                   {item.status || "Não informado"}

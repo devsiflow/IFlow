@@ -12,7 +12,7 @@ import {
   Shield,
   Building,
   Key,
-  BarChart3,
+  BarChart3
 } from "lucide-react";
 
 import TabelaSolicitacoes from "../components/admin/TabelaSolicitacoes";
@@ -33,20 +33,12 @@ export default function AdminPage() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [componenteAtivo, setComponenteAtivo] = useState("dashboard");
   const [solicitacoes, setSolicitacoes] = useState([]);
-  
 
-  const API_BASE =
-    import.meta.env.VITE_API_URL || "https://iflow-backend.onrender.com";
+  const API_BASE = import.meta.env.VITE_API_URL || "https://iflow-backend.onrender.com";
 
   useEffect(() => {
     verificarAdmin();
   }, []);
-
-  // const handleStatusUpdate = (id, novoStatus) => {
-  //   setSolicitacoes((prev) =>
-  //     prev.map((s) => (s.id === id ? { ...s, status: novoStatus } : s))
-  //   );
-  // };
 
   async function verificarAdmin() {
     try {
@@ -79,7 +71,7 @@ export default function AdminPage() {
 
   async function carregarSolicitacoes() {
     try {
-      const res = await fetch(`${API_BASE}/solicitacoes`);
+      const res = await fetch(`${API_BASE}/itemValidation`);
       if (!res.ok) throw new Error("Erro ao buscar solicitações");
       const data = await res.json();
       setSolicitacoes(data);
@@ -96,25 +88,15 @@ export default function AdminPage() {
 
   async function updateStatus(id, novoStatus) {
     try {
-      const res = await fetch(`${API_BASE}/solicitacoes/${id}/status`, {
-        method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
+      const res = await fetch(`${API_BASE}/itemValidation/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: novoStatus }),
       });
-      
       if (!res.ok) throw new Error("Erro ao atualizar status");
-      
-      setSolicitacoes(prev => 
-        prev.map(s => s.id === id ? { ...s, status: novoStatus } : s)
-      );
-      
-      return true;
+      carregarSolicitacoes();
     } catch (error) {
       console.error("❌ Erro ao atualizar status:", error);
-      return false;
     }
   }
 
@@ -122,11 +104,11 @@ export default function AdminPage() {
     if (!confirm("Tem certeza que deseja excluir esta solicitação?")) return;
 
     try {
-      const res = await fetch(`${API_BASE}/solicitacoes/${id}`, {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+      const res = await fetch(`${API_URL}/solicitacoes/${id}`, {
         method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -158,7 +140,7 @@ export default function AdminPage() {
   ];
 
   // 🔥 COMBINAR MENUS - SuperAdmin vê tudo, Admin normal vê só o básico
-  const menuItems = userData?.isSuperAdmin
+  const menuItems = userData?.isSuperAdmin 
     ? [...baseMenuItems, ...superAdminMenuItems]
     : baseMenuItems;
 
@@ -256,10 +238,8 @@ export default function AdminPage() {
             <ul className="space-y-2">
               {menuItems.map((item) => {
                 const Icon = item.icon;
-                const isSuperAdminItem = superAdminMenuItems.some(
-                  (superItem) => superItem.id === item.id
-                );
-
+                const isSuperAdminItem = superAdminMenuItems.some(superItem => superItem.id === item.id);
+                
                 return (
                   <li key={item.id}>
                     <button
@@ -300,7 +280,7 @@ export default function AdminPage() {
 
         {/* Conteúdo */}
         <main
-          className={`flex-1 transition-all duration-300 ${
+          className={`flex-1 transition-all duration-300 ${ 
             menuAberto ? "md:ml-64" : "md:ml-20"
           } p-6`}
         >
@@ -310,9 +290,7 @@ export default function AdminPage() {
                 {menuItems.find((item) => item.id === componenteAtivo)?.label ||
                   "Dashboard"}
               </h2>
-              {superAdminMenuItems.some(
-                (item) => item.id === componenteAtivo
-              ) && (
+              {superAdminMenuItems.some(item => item.id === componenteAtivo) && (
                 <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
                   ⚡ Funcionalidade exclusiva para SuperAdmin
                 </p>

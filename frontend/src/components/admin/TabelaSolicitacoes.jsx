@@ -135,22 +135,25 @@ function CarrosselImagens({ imagens = [], nome }) {
 export default function TabelaSolicitacoes({
   solicitacoes = [],
   deleteSolicitacao = () => {},
-  updateStatus = () => {},
 }) {
   const [expandedRow, setExpandedRow] = useState(null);
   const navigate = useNavigate();
 
-  // 🔥 NOVA FUNÇÃO: Atualizar status
-  const handleStatusUpdate = async (id, novoStatus) => {
-    const success = await updateStatus(id, novoStatus);
-    if (success) {
-      console.log(`Status da solicitação ${id} atualizado para ${novoStatus}`);
-    }
-  };
+  function calcularTag(data) {
+    const d = new Date(data);
+    if (isNaN(d.getTime())) return "Recente";
+    const dias = Math.floor((Date.now() - d.getTime()) / 86400000);
+    if (dias >= 90) return "Mais de 90 dias";
+    if (dias >= 60) return "Mais de 60 dias";
+    if (dias >= 45) return "Mais de 45 dias";
+    if (dias >= 30) return "Mais de 30 dias";
+    if (dias >= 15) return "Mais de 15 dias";
+    return "Recente";
+  }
 
   if (!solicitacoes.length)
     return (
-      <div className="p-6 text-center bg-white dark:bg-neutral-800 rounded-lg text-gray-600 dark:text-gray-400">
+      <div className="p-6 text-center bg-white dark:bg-neutral-800 rounded-lg">
         Nenhuma solicitação encontrada.
       </div>
     );
@@ -165,7 +168,7 @@ export default function TabelaSolicitacoes({
             <th className="p-3">Item</th>
             <th className="p-3">Aluno</th>
             <th className="p-3 w-32">Data</th>
-            <th className="p-3 w-32">Status</th>
+            <th className="p-3 w-32">Tag</th>
             <th className="p-3 w-48 text-center">Ações</th>
           </tr>
         </thead>
@@ -177,6 +180,7 @@ export default function TabelaSolicitacoes({
               s.data_solicitacao ?? s.createdAt ?? s.data ?? s.date ?? null;
 
             return (
+              // 🔥 ADICIONE UM FRAGMENT COM KEY
               <React.Fragment key={s.id}>
                 <tr className="border-b hover:bg-gray-100 dark:hover:bg-neutral-700">
                   <td
@@ -185,29 +189,15 @@ export default function TabelaSolicitacoes({
                   >
                     {isOpen ? <ChevronUp /> : <ChevronDown />}
                   </td>
+
                   <td className="p-3">{s.id}</td>
                   <td className="p-3">
                     {s.item?.title ?? "Item não encontrado"}
                   </td>
                   <td className="p-3">{nomeAluno(s)}</td>
                   <td className="p-3">{formatarData(dataRaw)}</td>
-                  <td className="p-3">
-                    <span
-                      className={`px-2 py-1 text-white text-xs font-semibold rounded ${
-                        s.status === "aprovada"
-                          ? "bg-green-500"
-                          : s.status === "negada"
-                          ? "bg-red-500"
-                          : "bg-yellow-500"
-                      }`}
-                    >
-                      {s.status === "aprovada"
-                        ? "Aprovada"
-                        : s.status === "negada"
-                        ? "Negada"
-                        : "Pendente"}
-                    </span>
-                  </td>
+                  <td className="p-3 font-semibold">{calcularTag(dataRaw)}</td>
+
                   <td className="p-3 text-center">
                     <div className="flex justify-center gap-2">
                       <button
@@ -216,31 +206,13 @@ export default function TabelaSolicitacoes({
                       >
                         Analisar
                       </button>
+
                       <button
                         className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                         onClick={() => deleteSolicitacao(s.id)}
                       >
                         Excluir
                       </button>
-                      {/* 🔥 BOTÕES DE STATUS RÁPIDO */}
-                      {s.status !== "aprovada" && (
-                        <button
-                          className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs"
-                          onClick={() => handleStatusUpdate(s.id, "aprovada")}
-                          title="Aprovar"
-                        >
-                          ✓
-                        </button>
-                      )}
-                      {s.status !== "negada" && (
-                        <button
-                          className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs"
-                          onClick={() => handleStatusUpdate(s.id, "negada")}
-                          title="Negar"
-                        >
-                          ✗
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -262,14 +234,17 @@ export default function TabelaSolicitacoes({
                             nome={s.item?.title}
                           />
                         </div>
+
                         <div className="flex-1 space-y-2">
                           <h3 className="font-semibold text-lg mb-2">
                             {s.item?.title}
                           </h3>
+
                           <p>
                             <span className="font-medium">Aluno: </span>
                             {nomeAluno(s)}
                           </p>
+
                           <p className="flex items-center gap-2">
                             <span className="font-medium">Status do Item:</span>
                             <span
@@ -286,29 +261,10 @@ export default function TabelaSolicitacoes({
                               {s.item?.status ?? "Não informado"}
                             </span>
                           </p>
+
                           <p>
                             <span className="font-medium">Data:</span>{" "}
                             {formatarData(dataRaw)}
-                          </p>
-                          <p className="flex items-center gap-2">
-                            <span className="font-medium">
-                              Status da Solicitação:
-                            </span>
-                            <span
-                              className={`px-2 py-1 text-white text-xs font-semibold rounded ${
-                                s.status === "aprovada"
-                                  ? "bg-green-500"
-                                  : s.status === "negada"
-                                  ? "bg-red-500"
-                                  : "bg-yellow-500"
-                              }`}
-                            >
-                              {s.status === "aprovada"
-                                ? "Aprovada"
-                                : s.status === "negada"
-                                ? "Negada"
-                                : "Pendente"}
-                            </span>
                           </p>
                         </div>
                       </div>

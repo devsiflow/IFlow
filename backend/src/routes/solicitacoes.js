@@ -15,8 +15,8 @@ router.get("/", async (req, res) => {
       orderBy: { id: "desc" },
       include: {
         item: { include: { images: true } },
-        profile: { select: { id: true, name: true } }
-      }
+        profile: { select: { id: true, name: true } },
+      },
     });
 
     const normalized = validacoes.map((v) => ({
@@ -101,6 +101,54 @@ router.get("/:id", async (req, res) => {
 });
 
 /* ===============================
+   PUT /solicitacoes/:id/status
+   Atualizar status da solicitação - CÓDIGO CORRIGIDO
+=============================== */
+router.put("/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    console.log(`🔄 Atualizando status da validação ${id} para: ${status}`);
+
+    // 🔥 CORREÇÃO: Usar itemValidation em vez de solicitacao
+    const updated = await prisma.itemValidation.update({
+      where: { id: Number(id) },
+      data: { status },
+      include: {
+        item: {
+          include: {
+            images: true,
+            category: true,
+          },
+        },
+        profile: {
+          select: {
+            id: true,
+            name: true,
+            matricula: true,
+            profilePic: true,
+          },
+        },
+      },
+    });
+
+    // Mapear profile para aluno para manter compatibilidade
+    const response = {
+      ...updated,
+      aluno: updated.profile,
+      createdAt: updated.createdAt ? updated.createdAt.toISOString() : null,
+    };
+
+    console.log(`✅ Status da validação ${id} atualizado para: ${status}`);
+    res.json(response);
+  } catch (err) {
+    console.error("❌ Erro ao atualizar status:", err);
+    res.status(500).json({ error: "Erro ao atualizar status" });
+  }
+});
+
+/* ===============================
    POST /solicitacoes
    Criar uma nova solicitação
 =============================== */
@@ -132,39 +180,6 @@ router.post("/", authenticateToken, async (req, res) => {
     res.status(201).json(created);
   } catch (err) {
     console.error("Erro ao criar solicitação:", err);
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
-});
-
-/* ===============================
-   PUT /solicitacoes/:id/status
-   Atualizar status da solicitação
-=============================== */
-router.put("/:id/status", authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ error: "Status é obrigatório" });
-    }
-
-    const updated = await prisma.solicitacao.update({
-      where: { id: Number(id) },
-      data: { status },
-      include: {
-        item: { include: { images: true } },
-        aluno: { select: { id: true, name: true } },
-      },
-    });
-
-    updated.data_solicitacao = updated.data_solicitacao
-      ? updated.data_solicitacao.toISOString()
-      : null;
-
-    res.json(updated);
-  } catch (err) {
-    console.error("Erro ao atualizar status:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });

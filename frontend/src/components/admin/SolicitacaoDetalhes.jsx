@@ -44,8 +44,7 @@ export default function SolicitacaoDetalhes() {
       }
 
       const data = await res.json();
-      console.log("📦 Dados recebidos:", data); // 🔥 DEBUG
-      console.log("📋 Status atual:", data.status); // 🔥 DEBUG
+      console.log("📦 Dados recebidos:", data);
       setSolicitacao(data);
     } catch (err) {
       console.error("Erro:", err);
@@ -59,20 +58,33 @@ export default function SolicitacaoDetalhes() {
     try {
       setProcessando(true);
 
-      // 🔥 ATUALIZAÇÃO: Chamar a API para atualizar no banco de dados
+      // 🔥 CORREÇÃO: Adicionar token de autenticação
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        throw new Error("Usuário não autenticado");
+      }
+
       const res = await fetch(`${API_URL}/solicitacoes/${id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // 🔥 ADICIONAR TOKEN
         },
         body: JSON.stringify({ status: novoStatus }),
       });
 
       if (!res.ok) {
+        // Se for erro 401, redirecionar para login
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          throw new Error("Sessão expirada. Faça login novamente.");
+        }
         throw new Error(`Erro ao atualizar status: ${res.status}`);
       }
 
-      // const data = await res.json();
+      const data = await res.json();
 
       // Atualiza localmente com os dados retornados do servidor
       setSolicitacao((prev) => ({
@@ -91,7 +103,7 @@ export default function SolicitacaoDetalhes() {
       );
     } catch (err) {
       console.error("Erro ao atualizar status:", err);
-      alert("Erro ao atualizar status da validação");
+      alert(err.message || "Erro ao atualizar status da validação");
     } finally {
       setProcessando(false);
     }

@@ -77,6 +77,7 @@ model ItemValidation {
   detalhesUnicos  String
   conteudoInterno String
   momentoPerda    String
+  status         String  @default("pendente")
   createdAt       DateTime @default(now())
 
   item            Item     @relation("ItemValidations", fields: [itemId], references: [id])

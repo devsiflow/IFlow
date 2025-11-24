@@ -1,4 +1,4 @@
-// backend/src/routes/solicitacoes.js
+// src/routes/solicitacoes.js - ROTA CORRIGIDA
 import express from "express";
 import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
@@ -7,26 +7,38 @@ const router = express.Router();
 
 /* ===============================
    GET /solicitacoes
-   Lista todas as solicitações
+   Lista todas as validações
 =============================== */
 router.get("/", async (req, res) => {
   try {
     const validacoes = await prisma.itemValidation.findMany({
       orderBy: { id: "desc" },
       include: {
-        item: { include: { images: true } },
-        profile: { select: { id: true, name: true } },
+        item: { 
+          include: { 
+            images: true,
+            category: true 
+          } 
+        },
+        profile: { 
+          select: { 
+            id: true, 
+            name: true,
+            matricula: true,
+            profilePic: true
+          } 
+        },
       },
     });
 
-    const normalized = validacoes.map((v) => ({
+    // Formatar resposta para manter compatibilidade
+    const formatted = validacoes.map(v => ({
       ...v,
-      // Mapear profile para aluno para manter compatibilidade
-      aluno: v.profile,
-      createdAt: v.createdAt ? v.createdAt.toISOString() : null,
+      aluno: v.profile, // Mapear profile para aluno
+      createdAt: v.createdAt ? v.createdAt.toISOString() : null
     }));
 
-    res.json(normalized);
+    res.json(formatted);
   } catch (err) {
     console.error("Erro ao listar validações:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
@@ -35,7 +47,7 @@ router.get("/", async (req, res) => {
 
 /* ===============================
    GET /solicitacoes/:id
-   Detalhes de uma solicitação específica - CÓDIGO CORRIGIDO
+   Detalhes de uma validação específica
 =============================== */
 router.get("/:id", async (req, res) => {
   try {
@@ -47,7 +59,6 @@ router.get("/:id", async (req, res) => {
       return res.status(400).json({ error: "ID inválido" });
     }
 
-    // 🔥 CORREÇÃO: Use itemValidation em vez de solicitacao
     const validacao = await prisma.itemValidation.findUnique({
       where: { id },
       include: {
@@ -65,7 +76,6 @@ router.get("/:id", async (req, res) => {
             },
           },
         },
-        // No model ItemValidation, o relacionamento com Profile se chama "profile", não "aluno"
         profile: {
           select: {
             id: true,
@@ -88,12 +98,14 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Validação não encontrada" });
     }
 
-    res.json({
+    // Formatar resposta para manter compatibilidade com frontend
+    const response = {
       ...validacao,
-      // Mapear profile para aluno para manter compatibilidade com frontend
-      aluno: validacao.profile,
-      createdAt: validacao.createdAt ? validacao.createdAt.toISOString() : null,
-    });
+      aluno: validacao.profile, // Mapear profile para aluno
+      createdAt: validacao.createdAt ? validacao.createdAt.toISOString() : null
+    };
+
+    res.json(response);
   } catch (err) {
     console.error("❌ Erro ao buscar validação:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
@@ -102,16 +114,22 @@ router.get("/:id", async (req, res) => {
 
 /* ===============================
    PUT /solicitacoes/:id/status
-   Atualizar status da solicitação - CÓDIGO CORRIGIDO
+   Atualizar status da validação - AGORA FUNCIONANDO
 =============================== */
-router.put("/:id/status", async (req, res) => {
+router.put("/:id/status", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
     console.log(`🔄 Atualizando status da validação ${id} para: ${status}`);
+    console.log(`👤 Usuário solicitante: ${req.user.id}`);
 
-    // 🔥 CORREÇÃO: Usar itemValidation em vez de solicitacao
+    // Verificar se o usuário é admin
+    if (!req.user.isAdmin && !req.user.isSuperAdmin) {
+      return res.status(403).json({ error: "Acesso restrito a administradores" });
+    }
+
+    // ✅ AGORA VAI FUNCIONAR - O CAMPO STATUS EXISTE
     const updated = await prisma.itemValidation.update({
       where: { id: Number(id) },
       data: { status },
@@ -133,7 +151,7 @@ router.put("/:id/status", async (req, res) => {
       },
     });
 
-    // Mapear profile para aluno para manter compatibilidade
+    // Formatar resposta para manter compatibilidade
     const response = {
       ...updated,
       aluno: updated.profile,
@@ -144,69 +162,43 @@ router.put("/:id/status", async (req, res) => {
     res.json(response);
   } catch (err) {
     console.error("❌ Erro ao atualizar status:", err);
+    
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: "Validação não encontrada" });
+    }
+    
     res.status(500).json({ error: "Erro ao atualizar status" });
   }
 });
 
 /* ===============================
-   POST /solicitacoes
-   Criar uma nova solicitação
-=============================== */
-router.post("/", authenticateToken, async (req, res) => {
-  try {
-    const { item_id, observacoes } = req.body;
-    const aluno_id = req.user.id;
-
-    if (!item_id) {
-      return res.status(400).json({ error: "Item_id é obrigatório" });
-    }
-
-    const created = await prisma.solicitacao.create({
-      data: {
-        item_id: Number(item_id),
-        observacoes,
-        aluno_id,
-      },
-      include: {
-        item: { include: { images: true } },
-        aluno: { select: { id: true, name: true } },
-      },
-    });
-
-    created.data_solicitacao = created.data_solicitacao
-      ? created.data_solicitacao.toISOString()
-      : null;
-
-    res.status(201).json(created);
-  } catch (err) {
-    console.error("Erro ao criar solicitação:", err);
-    res.status(500).json({ error: "Erro interno do servidor" });
-  }
-});
-
-/* ===============================
    DELETE /solicitacoes/:id
-   Excluir solicitação
+   Excluir validação
 =============================== */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticateToken, async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    const existing = await prisma.solicitacao.findUnique({
+    // Verificar se o usuário é admin
+    if (!req.user.isAdmin && !req.user.isSuperAdmin) {
+      return res.status(403).json({ error: "Acesso restrito a administradores" });
+    }
+
+    const existing = await prisma.itemValidation.findUnique({
       where: { id },
     });
 
     if (!existing) {
-      return res.status(404).json({ error: "Solicitação não encontrada" });
+      return res.status(404).json({ error: "Validação não encontrada" });
     }
 
-    await prisma.solicitacao.delete({
+    await prisma.itemValidation.delete({
       where: { id },
     });
 
-    res.json({ message: "Solicitação excluída com sucesso" });
+    res.json({ message: "Validação excluída com sucesso" });
   } catch (err) {
-    console.error("Erro ao deletar solicitação:", err);
+    console.error("Erro ao deletar validação:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });

@@ -11,22 +11,24 @@ const router = express.Router();
 =============================== */
 router.get("/", async (req, res) => {
   try {
-    const solicitacoes = await prisma.solicitacao.findMany({
+    const validacoes = await prisma.itemValidation.findMany({
       orderBy: { id: "desc" },
       include: {
         item: { include: { images: true } },
-        aluno: { select: { id: true, name: true } }
+        profile: { select: { id: true, name: true } }
       }
     });
 
-    const normalized = solicitacoes.map((s) => ({
-      ...s,
-      data_solicitacao: s.data_solicitacao ? s.data_solicitacao.toISOString() : null
+    const normalized = validacoes.map((v) => ({
+      ...v,
+      // Mapear profile para aluno para manter compatibilidade
+      aluno: v.profile,
+      createdAt: v.createdAt ? v.createdAt.toISOString() : null,
     }));
 
     res.json(normalized);
   } catch (err) {
-    console.error("Erro ao listar solicitações:", err);
+    console.error("Erro ao listar validações:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
@@ -38,57 +40,62 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    
-    console.log("🔍 GET /solicitacoes/:id - Buscando ID:", id);
-    
-    // Validação
+
+    console.log("🔍 GET /solicitacoes/:id - Buscando validação ID:", id);
+
     if (isNaN(id) || id <= 0) {
       return res.status(400).json({ error: "ID inválido" });
     }
 
-    // 🔥 CORREÇÃO: Use prisma.solicitacao.findUnique() em vez de itemValidation
-    const solicitacao = await prisma.solicitacao.findUnique({
+    // 🔥 CORREÇÃO: Use itemValidation em vez de solicitacao
+    const validacao = await prisma.itemValidation.findUnique({
       where: { id },
       include: {
-        item: { 
-          include: { 
+        item: {
+          include: {
             images: true,
             category: true,
             campus: true,
-            user: { 
-              select: { 
-                id: true, 
-                name: true, 
-                profilePic: true 
-              } 
-            }
-          } 
+            user: {
+              select: {
+                id: true,
+                name: true,
+                profilePic: true,
+              },
+            },
+          },
         },
-        aluno: { 
-          select: { 
-            id: true, 
+        // No model ItemValidation, o relacionamento com Profile se chama "profile", não "aluno"
+        profile: {
+          select: {
+            id: true,
             name: true,
             matricula: true,
-            profilePic: true 
-          } 
+            profilePic: true,
+          },
         },
       },
     });
 
-    console.log("📤 Resultado:", solicitacao ? `Encontrada ID ${solicitacao.id}` : "Não encontrada");
+    console.log(
+      "📤 Resultado:",
+      validacao
+        ? `Encontrada validação ID ${validacao.id}`
+        : "Validação não encontrada"
+    );
 
-    if (!solicitacao) {
-      return res.status(404).json({ error: "Solicitação não encontrada" });
+    if (!validacao) {
+      return res.status(404).json({ error: "Validação não encontrada" });
     }
 
     res.json({
-      ...solicitacao,
-      data_solicitacao: solicitacao.data_solicitacao
-        ? solicitacao.data_solicitacao.toISOString()
-        : null,
+      ...validacao,
+      // Mapear profile para aluno para manter compatibilidade com frontend
+      aluno: validacao.profile,
+      createdAt: validacao.createdAt ? validacao.createdAt.toISOString() : null,
     });
   } catch (err) {
-    console.error("❌ Erro ao buscar solicitação:", err);
+    console.error("❌ Erro ao buscar validação:", err);
     res.status(500).json({ error: "Erro interno do servidor" });
   }
 });

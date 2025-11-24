@@ -131,7 +131,7 @@ const FloatingBubble = ({ index }) => {
 
   return (
     <motion.div
-      className="absolute rounded-full bg-gradient-to-br from-cyan-400/20 to-blue-600/20 backdrop-blur-sm border border-cyan-300/30"
+      className="absolute rounded-full bg-gradient-to-br from-emerald-500/20 to-emerald-300/20 backdrop-blur-sm border border-emerald-300/30"
       style={{
         width: sizes[index % sizes.length],
         height: sizes[index % sizes.length],
@@ -502,7 +502,7 @@ export default function UserPage() {
 
         {/* Efeito de brilho central */}
         <motion.div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400/10 to-blue-600/10 rounded-full blur-3xl"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-emerald-500/10 to-emerald-300/10 rounded-full blur-3xl"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -561,7 +561,7 @@ export default function UserPage() {
         <div className="flex flex-col items-center md:w-1/3 relative">
           <div className="relative w-32 h-32 group">
             {!user.avatar_url ? (
-              <div className="w-32 h-32 rounded-full border-4 border-cyan-400 shadow-2xl flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 group-hover:opacity-0 transition-all duration-500 relative">
+              <div className="w-32 h-32 rounded-full border-4 border-emerald-400 shadow-2xl flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 group-hover:opacity-0 transition-all duration-500 relative">
                 <User className="w-16 h-16 text-gray-400" />
                 {uploading && (
                   <div className="absolute inset-0 flex justify-center items-center bg-black/30 rounded-full backdrop-blur-sm">
@@ -574,7 +574,7 @@ export default function UserPage() {
                 <img
                   src={user.avatar_url}
                   alt="Foto de perfil"
-                  className="w-32 h-32 rounded-full object-cover border-4 border-cyan-400 shadow-2xl"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-emerald-400 shadow-2xl"
                 />
                 {uploading && (
                   <div className="absolute inset-0 flex justify-center items-center bg-black/30 rounded-full backdrop-blur-sm">
@@ -584,7 +584,7 @@ export default function UserPage() {
               </div>
             )}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-cyan-500/60 to-blue-600/60 opacity-0 group-hover:opacity-100 flex justify-center items-center rounded-full cursor-pointer transition-all duration-500 backdrop-blur-sm"
+              className="absolute inset-0 bg-gradient-to-br from-emerald-500/60 to-emerald-300/60 opacity-0 group-hover:opacity-100 flex justify-center items-center rounded-full cursor-pointer transition-all duration-500 backdrop-blur-sm"
               onClick={() => setShowModal(true)}
             >
               <span className="text-white font-semibold text-center text-sm">
@@ -595,7 +595,7 @@ export default function UserPage() {
         </div>
 
         <div className="flex-1 space-y-4">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent tracking-wide">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent tracking-wide">
             Meu Perfil
           </h1>
           {!editing ? (
@@ -611,7 +611,7 @@ export default function UserPage() {
               </p>
               <div className="flex gap-3 mt-4">
                 <button
-                  className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl hover:from-cyan-400 hover:to-blue-400 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                  className="px-5 py-2 bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-xl hover:from-emerald-700 hover:to-emerald-500 transition-all shadow-lg hover:shadow-xl hover:scale-105"
                   onClick={() => setEditing(true)}
                 >
                   Editar Perfil
@@ -630,7 +630,7 @@ export default function UserPage() {
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2 border-2 rounded-xl border-cyan-400 focus:ring-2 focus:ring-cyan-300 focus:outline-none dark:bg-gray-700 dark:text-gray-100 transition-all"
+                className="w-full px-4 py-2 border-2 rounded-xl border-emerald-400 focus:ring-2 focus:ring-emerald-300 focus:outline-none dark:bg-gray-700 dark:text-gray-100 transition-all"
               />
               <input
                 type="email"
@@ -670,7 +670,7 @@ export default function UserPage() {
             >
               <X size={24} />
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 text-center bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent">
               Alterar Foto de Perfil
             </h2>
 
@@ -687,10 +687,10 @@ export default function UserPage() {
                 }
               }}
               className={`w-full border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 transition-all duration-300 ${previewUrl
-                ? "cursor-default opacity-100 border-cyan-400 bg-cyan-50/50 dark:bg-cyan-900/20"
+                ? "cursor-default opacity-100 border-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/20"
                 : "cursor-pointer hover:bg-cyan-50 dark:hover:bg-cyan-900/10"
                 } ${isDragging
-                  ? "border-cyan-400 bg-cyan-50 dark:bg-cyan-900/20"
+                  ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
                   : "border-gray-300 dark:border-gray-600"
                 }`}
             >
@@ -724,7 +724,7 @@ export default function UserPage() {
                   <User className="w-16 h-16 text-gray-400" />
                   <p className="text-gray-600 dark:text-gray-300">
                     Arraste uma imagem aqui ou{" "}
-                    <span className="underline text-cyan-500">clique</span>
+                    <span className="underline text-emerald-500">clique</span>
                   </p>
                 </div>
               )}
@@ -742,7 +742,7 @@ export default function UserPage() {
             <button
               onClick={handleUpload}
               disabled={uploading || !newImage}
-              className="mt-6 w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-xl hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl hover:scale-105 disabled:hover:scale-100"
+              className="mt-6 w-full py-3 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white font-medium rounded-xl hover:from-emerald-400 hover:to-emerald-300 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl hover:scale-105 disabled:hover:scale-100"
             >
               {uploading ? "Enviando..." : "Salvar Foto"}
             </button>
@@ -760,7 +760,7 @@ export default function UserPage() {
         
         <div className="flex items-center gap-2">
           <Package className="w-6 h-6" />
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-400 bg-clip-text text-transparent">
             Meus Itens
           </h2>
         </div>

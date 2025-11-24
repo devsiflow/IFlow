@@ -6,25 +6,22 @@ import { authenticateToken } from "../middleware/auth.js";
 const router = express.Router();
 
 /* ===============================
-      GET /solicitacoes
-   =============================== */
+   GET /solicitacoes
+   Lista todas as solicitações
+=============================== */
 router.get("/", async (req, res) => {
   try {
-    const solicitacoes = await prisma.itemValidation.findMany({
+    const solicitacoes = await prisma.solicitacao.findMany({
       orderBy: { id: "desc" },
       include: {
-        item: {
-          include: { images: true }
-        },
-        aluno: {   // user
-          select: { id: true, name: true, profilePic: true }
-        }
+        item: { include: { images: true } },
+        aluno: { select: { id: true, name: true } }
       }
     });
 
     const normalized = solicitacoes.map((s) => ({
       ...s,
-      createdAt: s.createdAt ? s.createdAt.toISOString() : null
+      data_solicitacao: s.data_solicitacao ? s.data_solicitacao.toISOString() : null
     }));
 
     res.json(normalized);
@@ -35,47 +32,52 @@ router.get("/", async (req, res) => {
 });
 
 /* ===============================
-      GET /solicitacoes/:id
-   =============================== */
+   GET /solicitacoes/:id
+   Detalhes de uma solicitação específica
+=============================== */
 router.get("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
-
-    const solicitacao = await prisma.itemValidation.findUnique({
+    
+    const solicitacao = await prisma.solicitacao.findUnique({
       where: { id },
-      include: {
-        item: { include: { images: true } },
-        aluno: { select: { id: true, name: true, profilePic: true } }
-      }
+      // // include: {
+      // //   item: { include: { images: true } },
+      // //   aluno: { select: { id: true, name: true } },
+      // },
     });
 
     if (!solicitacao) {
       return res.status(404).json({ error: "Solicitação não encontrada" });
     }
 
-    const normalized = {
+    res.json({
       ...solicitacao,
-      createdAt: solicitacao.createdAt
-        ? solicitacao.createdAt.toISOString()
-        : null
-    };
-
-    res.json(normalized);
+      data_solicitacao: solicitacao.data_solicitacao
+        ? solicitacao.data_solicitacao.toISOString()
+        : null,
+    });
   } catch (err) {
-    console.error("Erro ao buscar solicitação:", err);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar solicitação" });
   }
 });
 
+
 /* ===============================
-      POST /solicitacoes
-   =============================== */
+   POST /solicitacoes
+   Criar uma nova solicitação
+=============================== */
 router.post("/", authenticateToken, async (req, res) => {
   try {
     const { item_id, observacoes } = req.body;
     const aluno_id = req.user.id;
 
-    const created = await prisma.itemValidation.create({
+    if (!item_id) {
+      return res.status(400).json({ error: "Item_id é obrigatório" });
+    }
+
+    const created = await prisma.solicitacao.create({
       data: {
         item_id: Number(item_id),
         observacoes,
@@ -83,12 +85,12 @@ router.post("/", authenticateToken, async (req, res) => {
       },
       include: {
         item: { include: { images: true } },
-        aluno: { select: { id: true, name: true, profilePic: true } }
+        aluno: { select: { id: true, name: true } }
       }
     });
 
-    created.createdAt = created.createdAt
-      ? created.createdAt.toISOString()
+    created.data_solicitacao = created.data_solicitacao
+      ? created.data_solicitacao.toISOString()
       : null;
 
     res.status(201).json(created);
@@ -99,24 +101,29 @@ router.post("/", authenticateToken, async (req, res) => {
 });
 
 /* ===============================
-    PUT /solicitacoes/:id/status
-   =============================== */
+   PUT /solicitacoes/:id/status
+   Atualizar status da solicitação
+=============================== */
 router.put("/:id/status", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    const updated = await prisma.itemValidation.update({
+    if (!status) {
+      return res.status(400).json({ error: "Status é obrigatório" });
+    }
+
+    const updated = await prisma.solicitacao.update({
       where: { id: Number(id) },
       data: { status },
       include: {
         item: { include: { images: true } },
-        aluno: { select: { id: true, name: true, profilePic: true } }
+        aluno: { select: { id: true, name: true } }
       }
     });
 
-    updated.createdAt = updated.createdAt
-      ? updated.createdAt.toISOString()
+    updated.data_solicitacao = updated.data_solicitacao
+      ? updated.data_solicitacao.toISOString()
       : null;
 
     res.json(updated);
@@ -127,13 +134,14 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
 });
 
 /* ===============================
-      DELETE /solicitacoes/:id
-   =============================== */
+   DELETE /solicitacoes/:id
+   Excluir solicitação
+=============================== */
 router.delete("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    const existing = await prisma.itemValidation.findUnique({
+    const existing = await prisma.solicitacao.findUnique({
       where: { id }
     });
 
@@ -141,7 +149,7 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ error: "Solicitação não encontrada" });
     }
 
-    await prisma.itemValidation.delete({
+    await prisma.solicitacao.delete({
       where: { id }
     });
 

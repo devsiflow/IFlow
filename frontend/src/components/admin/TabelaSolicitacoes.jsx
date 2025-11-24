@@ -100,9 +100,7 @@ function CarrosselImagens({ imagens = [], nome }) {
             src={final}
             alt={nome}
             className={`absolute w-full h-full object-cover transition-all duration-500 ${
-              index === currentIndex
-                ? "opacity-100 scale-100"
-                : "opacity-0 scale-105"
+              index === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105"
             }`}
           />
         );
@@ -134,7 +132,6 @@ function CarrosselImagens({ imagens = [], nome }) {
 ------------------------- */
 export default function TabelaSolicitacoes({
   solicitacoes = [],
-  updateStatus = () => {},
   deleteSolicitacao = () => {},
 }) {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -201,19 +198,11 @@ export default function TabelaSolicitacoes({
 
                   <td className="p-3 text-center">
                     <div className="flex justify-center gap-2">
-                      {/* ✅ Navegação via React Router */}
                       <button
                         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                        onClick={() => navigate(`/admin/solicitacao/${s.id}`)}
+                        onClick={() => navigate(`/admin/solicitacoes/${s.id}`)}
                       >
                         Analisar
-                      </button>
-
-                      <button
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                        onClick={() => updateStatus(s.id, "solucionado")}
-                      >
-                        Solucionar
                       </button>
 
                       <button
@@ -244,9 +233,7 @@ export default function TabelaSolicitacoes({
                         </div>
 
                         <div className="flex-1 space-y-2">
-                          <h3 className="font-semibold text-lg mb-2">
-                            {s.item?.title}
-                          </h3>
+                          <h3 className="font-semibold text-lg mb-2">{s.item?.title}</h3>
 
                           <p>
                             <span className="font-medium">Aluno: </span>
@@ -263,7 +250,7 @@ export default function TabelaSolicitacoes({
                                   ? "bg-red-600"
                                   : s.item?.status === "reclamado"
                                   ? "bg-blue-600"
-                                  : "bg-green-600"
+                                  : "bg-gray-600"
                               }`}
                             >
                               {s.item?.status ?? "Não informado"}
@@ -271,8 +258,7 @@ export default function TabelaSolicitacoes({
                           </p>
 
                           <p>
-                            <span className="font-medium">Data:</span>{" "}
-                            {formatarData(dataRaw)}
+                            <span className="font-medium">Data:</span> {formatarData(dataRaw)}
                           </p>
                         </div>
                       </div>

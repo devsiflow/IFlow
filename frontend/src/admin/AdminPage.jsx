@@ -131,7 +131,6 @@ export default function AdminPage() {
     { id: "usuarios", label: "Usuários", icon: Users },
     { id: "itens", label: "Itens", icon: Package },
     { id: "relatorios", label: "Relatórios", icon: BarChart3 },
-    { id: "senhas", label: "Gerenciar Senhas", icon: Key },
   ];
 
   // 🔥 FUNÇÕES EXTRAS APENAS PARA SUPERADMIN
@@ -163,8 +162,6 @@ export default function AdminPage() {
         return <TabelaItensAdmin />;
       case "relatorios":
         return <GeradorRelatorio />;
-      case "senhas":
-        return <GerenciarSenhas />;
       case "gerenciar-admins":
         return <ManageAdmins />;
       case "gerenciar-campus":

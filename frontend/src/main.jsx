@@ -15,7 +15,7 @@ import ItensNaoEncontrados from "./pages/ItensNaoEncontrados.jsx";
 import UserPage from "./pages/UserPage.jsx";
 import ItemPage from "./pages/ItemPage.jsx";
 import AdminPage from "./admin/AdminPage.jsx";
-import SolicitacaoDetalhes from "./components/admin/SolicitacaoDetalhes.jsx"; // ✅ IMPORT CORRETA
+import SolicitacaoDetalhes from "./components/admin/SolicitacaoDetalhes.jsx"; 
 
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import AdminFloatingButton from "./components/AdminFloatingButton.jsx";
@@ -113,8 +113,8 @@ const router = createBrowserRouter([
   },
 
   {
-    path: "/admin/solicitacao/:id",
-    element: <SolicitacaoDetalhes />, // ✅ PÁGINA DE DETALHE
+    path: "/admin/solicitacoes/:id",
+    element: <SolicitacaoDetalhes />
   },
 
   { path: "/login", element: <Login /> },

@@ -18,6 +18,7 @@ export default function SolicitacaoDetalhes() {
     try {
       const res = await fetch(`${API_URL}/solicitacoes/${id}`);
 
+
       if (!res.ok) throw new Error("Erro ao carregar dados da solicitação");
 
       const data = await res.json();

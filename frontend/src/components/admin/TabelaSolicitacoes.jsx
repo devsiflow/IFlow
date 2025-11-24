@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -100,7 +100,9 @@ function CarrosselImagens({ imagens = [], nome }) {
             src={final}
             alt={nome}
             className={`absolute w-full h-full object-cover transition-all duration-500 ${
-              index === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105"
+              index === currentIndex
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-105"
             }`}
           />
         );
@@ -178,11 +180,9 @@ export default function TabelaSolicitacoes({
               s.data_solicitacao ?? s.createdAt ?? s.data ?? s.date ?? null;
 
             return (
-              <>
-                <tr
-                  key={s.id}
-                  className="border-b hover:bg-gray-100 dark:hover:bg-neutral-700"
-                >
+              // 🔥 ADICIONE UM FRAGMENT COM KEY
+              <React.Fragment key={s.id}>
+                <tr className="border-b hover:bg-gray-100 dark:hover:bg-neutral-700">
                   <td
                     className="text-center cursor-pointer"
                     onClick={() => setExpandedRow(isOpen ? null : s.id)}
@@ -191,7 +191,9 @@ export default function TabelaSolicitacoes({
                   </td>
 
                   <td className="p-3">{s.id}</td>
-                  <td className="p-3">{s.item?.title ?? "Item não encontrado"}</td>
+                  <td className="p-3">
+                    {s.item?.title ?? "Item não encontrado"}
+                  </td>
                   <td className="p-3">{nomeAluno(s)}</td>
                   <td className="p-3">{formatarData(dataRaw)}</td>
                   <td className="p-3 font-semibold">{calcularTag(dataRaw)}</td>
@@ -199,7 +201,7 @@ export default function TabelaSolicitacoes({
                   <td className="p-3 text-center">
                     <div className="flex justify-center gap-2">
                       <button
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition-colors"
                         onClick={() => navigate(`/admin/solicitacoes/${s.id}`)}
                       >
                         Analisar
@@ -222,7 +224,8 @@ export default function TabelaSolicitacoes({
                         <div>
                           <CarrosselImagens
                             imagens={
-                              Array.isArray(s.item?.images) && s.item.images.length > 0
+                              Array.isArray(s.item?.images) &&
+                              s.item.images.length > 0
                                 ? s.item.images.map((img) =>
                                     typeof img === "string" ? img : img?.url
                                   )
@@ -233,7 +236,9 @@ export default function TabelaSolicitacoes({
                         </div>
 
                         <div className="flex-1 space-y-2">
-                          <h3 className="font-semibold text-lg mb-2">{s.item?.title}</h3>
+                          <h3 className="font-semibold text-lg mb-2">
+                            {s.item?.title}
+                          </h3>
 
                           <p>
                             <span className="font-medium">Aluno: </span>
@@ -258,14 +263,15 @@ export default function TabelaSolicitacoes({
                           </p>
 
                           <p>
-                            <span className="font-medium">Data:</span> {formatarData(dataRaw)}
+                            <span className="font-medium">Data:</span>{" "}
+                            {formatarData(dataRaw)}
                           </p>
                         </div>
                       </div>
                     </td>
                   </tr>
                 )}
-              </>
+              </React.Fragment>
             );
           })}
         </tbody>

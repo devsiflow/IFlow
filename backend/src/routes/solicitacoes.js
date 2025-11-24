@@ -33,19 +33,49 @@ router.get("/", async (req, res) => {
 
 /* ===============================
    GET /solicitacoes/:id
-   Detalhes de uma solicitação específica
+   Detalhes de uma solicitação específica - CÓDIGO CORRIGIDO
 =============================== */
 router.get("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     
+    console.log("🔍 GET /solicitacoes/:id - Buscando ID:", id);
+    
+    // Validação
+    if (isNaN(id) || id <= 0) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+
+    // 🔥 CORREÇÃO: Use prisma.solicitacao.findUnique() em vez de itemValidation
     const solicitacao = await prisma.solicitacao.findUnique({
       where: { id },
-      // // include: {
-      // //   item: { include: { images: true } },
-      // //   aluno: { select: { id: true, name: true } },
-      // },
+      include: {
+        item: { 
+          include: { 
+            images: true,
+            category: true,
+            campus: true,
+            user: { 
+              select: { 
+                id: true, 
+                name: true, 
+                profilePic: true 
+              } 
+            }
+          } 
+        },
+        aluno: { 
+          select: { 
+            id: true, 
+            name: true,
+            matricula: true,
+            profilePic: true 
+          } 
+        },
+      },
     });
+
+    console.log("📤 Resultado:", solicitacao ? `Encontrada ID ${solicitacao.id}` : "Não encontrada");
 
     if (!solicitacao) {
       return res.status(404).json({ error: "Solicitação não encontrada" });
@@ -58,11 +88,10 @@ router.get("/:id", async (req, res) => {
         : null,
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar solicitação" });
+    console.error("❌ Erro ao buscar solicitação:", err);
+    res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
-
 
 /* ===============================
    POST /solicitacoes
@@ -81,12 +110,12 @@ router.post("/", authenticateToken, async (req, res) => {
       data: {
         item_id: Number(item_id),
         observacoes,
-        aluno_id
+        aluno_id,
       },
       include: {
         item: { include: { images: true } },
-        aluno: { select: { id: true, name: true } }
-      }
+        aluno: { select: { id: true, name: true } },
+      },
     });
 
     created.data_solicitacao = created.data_solicitacao
@@ -118,8 +147,8 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
       data: { status },
       include: {
         item: { include: { images: true } },
-        aluno: { select: { id: true, name: true } }
-      }
+        aluno: { select: { id: true, name: true } },
+      },
     });
 
     updated.data_solicitacao = updated.data_solicitacao
@@ -142,7 +171,7 @@ router.delete("/:id", async (req, res) => {
     const id = Number(req.params.id);
 
     const existing = await prisma.solicitacao.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!existing) {
@@ -150,7 +179,7 @@ router.delete("/:id", async (req, res) => {
     }
 
     await prisma.solicitacao.delete({
-      where: { id }
+      where: { id },
     });
 
     res.json({ message: "Solicitação excluída com sucesso" });

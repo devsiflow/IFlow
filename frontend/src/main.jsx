@@ -15,7 +15,9 @@ import ItensNaoEncontrados from "./pages/ItensNaoEncontrados.jsx";
 import UserPage from "./pages/UserPage.jsx";
 import ItemPage from "./pages/ItemPage.jsx";
 import AdminPage from "./admin/AdminPage.jsx";
-import SolicitacaoDetalhes from "./components/admin/SolicitacaoDetalhes.jsx"; 
+
+// 🔥 CORRIJA A IMPORTação - verifique o caminho exato
+import SolicitacaoDetalhes from "./components/admin/SolicitacaoDetalhes.jsx";
 
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import AdminFloatingButton from "./components/AdminFloatingButton.jsx";
@@ -95,7 +97,7 @@ const router = createBrowserRouter([
       </LayoutWrapper>
     ),
   },
-   {
+  {
     path: "/itens-perdidos",
     element: (
       <LayoutWrapper>
@@ -105,16 +107,17 @@ const router = createBrowserRouter([
   },
 
   // ================================
-  //     ROTAS DO ADMIN
+  //     ROTAS DO ADMIN - COM COMPONENTE REAL
   // ================================
   {
     path: "/admin",
     element: <AdminPage />,
   },
 
+  // 🔥 AGORA COM O COMPONENTE REAL
   {
     path: "/admin/solicitacoes/:id",
-    element: <SolicitacaoDetalhes />
+    element: <SolicitacaoDetalhes />,
   },
 
   { path: "/login", element: <Login /> },

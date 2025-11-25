@@ -73,7 +73,7 @@ export default function MenuBancoItens() {
           </li>
           <li>
             <AnimatedLink onClick={() => navigate("/itens-nao-encontrados")}>
-              Itens Perdidos
+              Ainda não encontrei meu item!
             </AnimatedLink>
           </li>
         </ul>
@@ -213,7 +213,7 @@ export default function MenuBancoItens() {
               setMenuOpen(false);
             }}
           >
-            Itens Perdidos
+            Ainda não encontrei meu item
           </AnimatedLink>
         </div>
 

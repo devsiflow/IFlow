@@ -5,6 +5,8 @@ import MenuCatalogo from "../components/MenuCatalogo";
 import { Search } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
 import ItemCard from "../components/ItemCard";
+import { CheckCircle } from "lucide-react";
+
 
 function Catalogo() {
   const { itens, loading, error } = useItens();
@@ -18,25 +20,29 @@ function Catalogo() {
   const campusId = user?.campusId;
 
   // 🚫 Não mostrar itens nao_encontrado/perdido no catálogo — apenas 'encontrado'
-const itensApenasEncontrados = itens.filter(item => item.status === "encontrado");
+  const itensApenasEncontrados = itens.filter(
+    (item) => item.status === "encontrado"
+  );
 
   console.log("👤 Usuário:", user?.name, "CampusId:", campusId);
   console.log("📦 Total de itens carregados:", itens.length);
 
   // 🔥 AGORA O FILTRO É FEITO NO BACKEND - SÓ APLICAR OUTROS FILTROS AQUI
- const filteredItems = itensApenasEncontrados.filter((item) => {
-  const nameMatch =
-    (item.title ?? "").toLowerCase().includes(searchTerm.toLowerCase());
-  const statusMatch =
-    statusFilter === "Todos" || item.status === statusFilter;
-  const localMatch =
-    (item.location ?? "").toLowerCase().includes(localFilter.toLowerCase());
-  const dateMatch =
-    !dateFilter ||
-    new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
+  const filteredItems = itensApenasEncontrados.filter((item) => {
+    const nameMatch = (item.title ?? "")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const statusMatch =
+      statusFilter === "Todos" || item.status === statusFilter;
+    const localMatch = (item.location ?? "")
+      .toLowerCase()
+      .includes(localFilter.toLowerCase());
+    const dateMatch =
+      !dateFilter ||
+      new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
 
-  return nameMatch && statusMatch && localMatch && dateMatch;
-});
+    return nameMatch && statusMatch && localMatch && dateMatch;
+  });
 
   if (authLoading) return <LogoLoader />;
 
@@ -59,10 +65,19 @@ const itensApenasEncontrados = itens.filter(item => item.status === "encontrado"
         {campusId && (
           <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
             <p className="text-blue-800 dark:text-blue-200 text-sm">
-              🎯 Mostrando itens somente do seu campus ({user?.campus?.nome || `ID: ${campusId}`})
+              🎯 Mostrando itens somente do seu campus (
+              {user?.campus?.nome || `ID: ${campusId}`})
             </p>
           </div>
         )}
+
+        <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
+          Catálogo
+          <span className="flex items-center text-sm text-blue-600 gap-1">
+            <CheckCircle size={16} strokeWidth={2} />
+            Itens encontrados
+          </span>
+        </h1>
 
         {!campusId && (
           <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">

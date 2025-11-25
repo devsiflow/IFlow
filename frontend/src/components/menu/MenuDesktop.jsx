@@ -68,7 +68,7 @@ export default function MenuDesktop({
             onClick={() => navigate("/catalogo")}
             className="relative group text-22"
           >
-            <span className="inline-block">Perdi um item</span>
+            <span className="inline-block">Procure seu item</span>
             <span className="absolute bottom-0 left-1/2 h-[2px] w-0 bg-white transition-all duration-300 group-hover:w-full group-hover:-translate-x-1/2"></span>
           </button>
         </li>

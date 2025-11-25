@@ -47,7 +47,7 @@ const scrollToSection = (id) => {
         </div>
 
         <div className="flex flex-col gap-3 mt-auto">
-          <button onClick={() => { navigate("/catalogo"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition text-22">Perdi um item</button>
+          <button onClick={() => { navigate("/catalogo"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition text-22">Procure seu item</button>
           <button onClick={() => { navigate("/cadastroitem"); setMenuOpen(false); }} className="px-4 py-2 border border-white rounded-md text-white hover:bg-white hover:text-green-900 transition text-22">Encontrei um item</button>
         </div>
 

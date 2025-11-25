@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import MenuOtherPages from "../components/MenuOtherPages";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../hooks/useAuth";
-import { ArchiveRestore } from "lucide-react";
+import { ArchiveRestore, Info } from "lucide-react";
 
 // Função para gerar miniatura antes de subir
 async function generateThumbnail(file, maxSize = 400) {
@@ -57,6 +57,10 @@ export default function CadastrarItem() {
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Aviso para logar se não estiver
+  const [showLoginWarning, setShowLoginWarning] = useState(!token);
+  const [warningBlink, setWarningBlink] = useState(false);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -105,15 +109,18 @@ export default function CadastrarItem() {
       return;
     }
 
-    if (loading) {
-      alert("Carregando sessão...");
-      return;
-    }
-
     if (!token) {
-      alert("Usuário não está logado!");
-      return;
-    }
+  const warning = document.getElementById("login-warning");
+
+  if (warning) {
+    warning.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    setWarningBlink(true);
+    setTimeout(() => setWarningBlink(false), 1000);
+  }
+
+  return;
+}
 
     setIsSubmitting(true);
 
@@ -162,8 +169,7 @@ export default function CadastrarItem() {
       }
 
       // 🔥 status conforme escolha do usuário
-      const statusFinal =
-        form.tipo === "encontrei" ? "encontrado" : "perdido";
+      const statusFinal = form.tipo === "encontrei" ? "encontrado" : "perdido";
 
       // Criar item
       const res = await fetch(`${API_URL}/items`, {
@@ -206,8 +212,21 @@ export default function CadastrarItem() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 font-sans">
       <MenuOtherPages />
+
       <div className="flex justify-center items-start px-4 pt-32 pb-16">
         <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-md border border-gray-200 dark:border-gray-700 p-10 space-y-8">
+          {!token && (
+            <div
+              id="login-warning"
+              className={`flex items-center justify-center gap-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-xl transition-all ${
+                warningBlink ? "animate-pulse" : ""
+              }`}
+            >
+              <Info size={16} strokeWidth={2} />
+              <span>Para cadastrar um item, você precisa estar logado.</span>
+            </div>
+          )}
+
           <h2 className="flex items-center justify-center gap-3 text-4xl font-extrabold text-center gradient-text mb-6">
             <ArchiveRestore className="w-10 h-10 text-green-700 dark:text-green-400" />
             Cadastrar Item

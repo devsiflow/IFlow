@@ -84,7 +84,7 @@ export default function ItensNaoEncontrados() {
       <MenuCatalogo />
 
       <div className="pt-32 px-6 max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Itens Perdidos (não encontrados)</h1>
+        <h1 className="text-3xl font-bold mb-6">Itens não encontrados</h1>
 
         {campusId ? (
           <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">

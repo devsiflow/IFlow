@@ -181,7 +181,7 @@ router.post("/", authenticateToken, async (req, res) => {
       title,
       description,
       imageUrls = [],
-      status, 
+      status = "perdido", 
       location,
       categoryName,
     } = req.body;

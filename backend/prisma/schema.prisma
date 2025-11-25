@@ -46,7 +46,7 @@ model Item {
   id          Int              @id @default(autoincrement())
   title       String
   description String
-  status      ItemStatus       @default(nao_encontrado)
+  status      ItemStatus       @default("perdido")
   location    String
   createdAt   DateTime         @default(now())
 

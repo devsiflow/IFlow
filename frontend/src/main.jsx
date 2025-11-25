@@ -98,7 +98,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/itens-perdidos",
+    path: "/itens-nao-encontrados",
     element: (
       <LayoutWrapper>
         <ItensNaoEncontrados />

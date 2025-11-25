@@ -163,7 +163,7 @@ export default function CadastrarItem() {
 
       // 🔥 status conforme escolha do usuário
       const statusFinal =
-        form.tipo === "encontrei" ? "encontrado" : "nao_encontrado";
+        form.tipo === "encontrei" ? "encontrado" : "perdido";
 
       // Criar item
       const res = await fetch(`${API_URL}/items`, {

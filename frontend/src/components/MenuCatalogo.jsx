@@ -72,7 +72,7 @@ export default function MenuBancoItens() {
             <AnimatedLink onClick={() => navigate("/")}>Início</AnimatedLink>
           </li>
           <li>
-            <AnimatedLink onClick={() => navigate("/itens-perdidos")}>
+            <AnimatedLink onClick={() => navigate("/itens-nao-encontrados")}>
               Itens Perdidos
             </AnimatedLink>
           </li>

@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useItens } from "../hooks/useItens";
+import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import MenuCatalogo from "../components/MenuCatalogo";
 import { Search } from "lucide-react";
@@ -7,8 +6,11 @@ import LogoLoader from "../components/LogoLoader";
 import ItemCard from "../components/ItemCard";
 
 export default function ItensNaoEncontrados() {
-  const { itens, loading, error } = useItens();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, token } = useAuth();
+
+  const [itens, setItens] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [localFilter, setLocalFilter] = useState("");
@@ -16,17 +18,55 @@ export default function ItensNaoEncontrados() {
 
   const campusId = user?.campusId;
 
-  if (authLoading) return <LogoLoader />;
+  useEffect(() => {
+    async function fetchPerdidos() {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // 🔥 Filtrar apenas itens perdidos
-  let perdidos = itens.filter((item) => item.status === "perdido");
+        const headers = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`${API_URL}/items?status=perdido`, {
+          headers,
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text);
+        }
+
+        const data = await res.json();
+
+        // 🔥 NORMALIZAR IMAGENS PARA O ItemCard (igual useItens)
+        const normalizados = (data.items || []).map((item) => ({
+          ...item,
+          images:
+            item.images?.length > 0
+              ? item.images.map((img) => img?.url).filter(Boolean)
+              : [],
+        }));
+
+        setItens(normalizados);
+      } catch (err) {
+        console.error("Erro ao buscar perdidos:", err);
+        setError("Erro ao carregar itens perdidos");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (!authLoading) fetchPerdidos();
+  }, [authLoading, token]);
+
+  if (authLoading || loading) return <LogoLoader />;
 
   // 🔥 Filtrar por campus
+  let perdidos = itens;
   if (campusId) {
     perdidos = perdidos.filter((item) => item.campusId === campusId);
   }
 
-  // 🔥 Filtros adicionais (pesquisa, local e data)
+  // 🔥 Filtros adicionais
   const filteredItems = perdidos.filter((item) => {
     const nameMatch =
       (item.title ?? "").toLowerCase().includes(searchTerm.toLowerCase());
@@ -46,7 +86,6 @@ export default function ItensNaoEncontrados() {
       <div className="pt-32 px-6 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Itens Perdidos (não encontrados)</h1>
 
-        {/* Informações do campus */}
         {campusId ? (
           <div className="mb-4 p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
             <p className="text-blue-800 dark:text-blue-200 text-sm">
@@ -63,7 +102,7 @@ export default function ItensNaoEncontrados() {
           </div>
         )}
 
-        {/* Filtros iguais ao catálogo */}
+        {/* Filtros */}
         <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-5 h-5" />
@@ -92,19 +131,17 @@ export default function ItensNaoEncontrados() {
           />
         </div>
 
-        {/* Lista de itens */}
-        {!loading && filteredItems.length > 0 ? (
+        {/* Lista */}
+        {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredItems.map((item) => (
               <ItemCard key={item.id} item={item} />
             ))}
           </div>
         ) : (
-          !loading && (
-            <div className="text-center text-neutral-500 mt-16 text-sm">
-              Nenhum item perdido encontrado.
-            </div>
-          )
+          <div className="text-center text-neutral-500 mt-16 text-sm">
+            Nenhum item perdido encontrado.
+          </div>
         )}
       </div>
     </div>

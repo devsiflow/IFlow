@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ItemStatus {
+  perdido
+  encontrado
+  nao_encontrado
+}
+
 model Profile {
   id           String           @id
   name         String
@@ -35,11 +41,12 @@ model Category {
   @@map("category")
 }
 
+
 model Item {
   id          Int              @id @default(autoincrement())
   title       String
   description String
-  status      String           @default("perdido")
+  status      ItemStatus       @default(nao_encontrado)
   location    String
   createdAt   DateTime         @default(now())
 

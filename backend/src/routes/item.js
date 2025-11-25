@@ -19,26 +19,21 @@ router.get("/", async (req, res) => {
       pageSize = 20,
       user,
       campusId,
-      // 🔥 NOVO: parâmetro para forçar mostrar todos os campus
       allCampuses = false,
     } = req.query;
     
     const where = {};
 
-    // 🔥 FILTRO DE CAMPUS — AGORA COM SUPORTE A USUÁRIO AUTENTICADO
+    // Autenticação do token para obter campus do usuário (mantido)
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
-    
     let userCampusId = null;
 
-    // Se tem token, tenta obter o campus do usuário
     if (token && !allCampuses) {
       try {
-        // Verifica o token para obter o campus do usuário
         if (process.env.SUPABASE_JWT_SECRET) {
           const decoded = jwt.verify(token, process.env.SUPABASE_JWT_SECRET);
           const userId = decoded.sub || decoded.id;
-          
           if (userId) {
             const userProfile = await prisma.profile.findUnique({
               where: { id: userId },
@@ -48,7 +43,6 @@ router.get("/", async (req, res) => {
           }
         }
       } catch (err) {
-        // Se falhar na verificação JWT, tenta via Supabase
         try {
           const result = await supabaseAdmin.auth.getUser(token);
           if (result?.data?.user) {
@@ -65,20 +59,23 @@ router.get("/", async (req, res) => {
       }
     }
 
-    // 🔥 PRIORIDADE: campusId do usuário autenticado
     if (userCampusId && !allCampuses) {
       where.campusId = userCampusId;
-    }
-    // Se não tem usuário autenticado, usa campusId da query (para visitantes)
-    else if (campusId && campusId !== "undefined" && campusId !== "null") {
+    } else if (campusId && campusId !== "undefined" && campusId !== "null") {
       const cid = Number(campusId);
       if (!Number.isNaN(cid)) {
         where.campusId = cid;
       }
     }
 
-    // Outros filtros (mantidos)
-    if (status && status !== "Todos") where.status = status;
+    // ------- STATUS: por padrão, listar apenas 'encontrado' no catálogo público -------
+    // Se o cliente passou ?status=..., respeitamos. Caso contrário, por padrão mostramos apenas 'encontrado'.
+    if (status && status !== "Todos") {
+      where.status = status;
+    } else if (!status) {
+      // comportamento padrão do catálogo público:
+      where.status = "encontrado";
+    }
 
     if (category && category !== "Todos") {
       where.category = { name: category };
@@ -102,12 +99,7 @@ router.get("/", async (req, res) => {
         category: true,
         campus: true,
         user: { 
-          select: { 
-            id: true, 
-            name: true, 
-            profilePic: true, 
-            campusId: true 
-          } 
+          select: { id: true, name: true, profilePic: true, campusId: true } 
         },
       },
       orderBy: { createdAt: "desc" },
@@ -116,14 +108,13 @@ router.get("/", async (req, res) => {
     });
 
     const total = await prisma.item.count({ where });
-    res.json({ items, total, userCampusId }); // 🔥 Retorna o campusId usado
+    res.json({ items, total, userCampusId });
 
   } catch (err) {
     console.error("❌ Erro listando items:", err);
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
-
 /* ============================================================
    LISTAR ITENS DO USUÁRIO LOGADO
    ============================================================ */
@@ -190,7 +181,7 @@ router.post("/", authenticateToken, async (req, res) => {
       title,
       description,
       imageUrls = [],
-      status = "perdido",
+      status, 
       location,
       categoryName,
     } = req.body;

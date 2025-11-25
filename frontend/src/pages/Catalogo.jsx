@@ -17,23 +17,26 @@ function Catalogo() {
 
   const campusId = user?.campusId;
 
+  // 🚫 Não mostrar itens nao_encontrado/perdido no catálogo — apenas 'encontrado'
+const itensApenasEncontrados = itens.filter(item => item.status === "encontrado");
+
   console.log("👤 Usuário:", user?.name, "CampusId:", campusId);
   console.log("📦 Total de itens carregados:", itens.length);
 
   // 🔥 AGORA O FILTRO É FEITO NO BACKEND - SÓ APLICAR OUTROS FILTROS AQUI
-  const filteredItems = itens.filter((item) => {
-    const nameMatch =
-      (item.title ?? "").toLowerCase().includes(searchTerm.toLowerCase());
-    const statusMatch =
-      statusFilter === "Todos" || item.status === statusFilter;
-    const localMatch =
-      (item.location ?? "").toLowerCase().includes(localFilter.toLowerCase());
-    const dateMatch =
-      !dateFilter ||
-      new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
+ const filteredItems = itensApenasEncontrados.filter((item) => {
+  const nameMatch =
+    (item.title ?? "").toLowerCase().includes(searchTerm.toLowerCase());
+  const statusMatch =
+    statusFilter === "Todos" || item.status === statusFilter;
+  const localMatch =
+    (item.location ?? "").toLowerCase().includes(localFilter.toLowerCase());
+  const dateMatch =
+    !dateFilter ||
+    new Date(item.createdAt).toISOString().split("T")[0] === dateFilter;
 
-    return nameMatch && statusMatch && localMatch && dateMatch;
-  });
+  return nameMatch && statusMatch && localMatch && dateMatch;
+});
 
   if (authLoading) return <LogoLoader />;
 

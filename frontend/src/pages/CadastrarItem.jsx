@@ -49,6 +49,7 @@ export default function CadastrarItem() {
     description: "",
     local: "",
     category: "",
+    tipo: "", // 🔥 encontrou / perdeu
   });
 
   const [imageFiles, setImageFiles] = useState([]);
@@ -65,7 +66,6 @@ export default function CadastrarItem() {
     const validFiles = files.filter((file) => file.type.startsWith("image/"));
     setImageFiles(validFiles);
 
-    // Criar previews
     const previews = validFiles.map((f) => URL.createObjectURL(f));
     setImagePreviews(previews);
   };
@@ -95,7 +95,11 @@ export default function CadastrarItem() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Suas validações atuais...
+    if (!form.tipo) {
+      alert("Escolha se você PERDEU ou ENCONTROU o item.");
+      return;
+    }
+
     if (!form.name || !form.description || !form.local || !form.category) {
       alert("Preencha todos os campos!");
       return;
@@ -114,17 +118,16 @@ export default function CadastrarItem() {
     setIsSubmitting(true);
 
     try {
-      // PRIMEIRO: Verificar/criar perfil do usuário
       const API_URL =
         import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
 
-      // Obter dados do usuário logado
+      // Obtém dados do usuário
       const userData = await supabase.auth.getUser(token);
       const user = userData.data.user;
 
-      // Tenta criar/atualizar o perfil usando a rota /me
-      const profileResponse = await fetch(`${API_URL}/me`, {
-        method: "PUT", // Usa PUT para criar/atualizar
+      // Sincroniza perfil
+      await fetch(`${API_URL}/me`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -137,16 +140,7 @@ export default function CadastrarItem() {
         }),
       });
 
-      if (!profileResponse.ok) {
-        const errorText = await profileResponse.text();
-        console.error("Resposta do perfil:", errorText);
-        throw new Error(`Erro ao criar perfil: ${profileResponse.status}`);
-      }
-
-      const profileData = await profileResponse.json();
-      console.log("Perfil sincronizado:", profileData);
-
-      // DEPOIS: Continua com o upload das imagens e criação do item
+      // Upload imagens
       const uploadedUrls = [];
 
       for (let i = 0; i < imageFiles.length; i++) {
@@ -156,14 +150,9 @@ export default function CadastrarItem() {
         const fileName = `${Date.now()}_${i}.${ext}`;
         const filePath = `public/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("iflow-item")
-          .upload(filePath, thumb, { upsert: true });
-
-        if (uploadError) {
-          console.error("Erro no upload:", uploadError);
-          throw new Error(`Falha no upload da imagem: ${uploadError.message}`);
-        }
+        await supabase.storage.from("iflow-item").upload(filePath, thumb, {
+          upsert: true,
+        });
 
         const { data } = supabase.storage
           .from("iflow-item")
@@ -172,7 +161,11 @@ export default function CadastrarItem() {
         uploadedUrls.push(data.publicUrl);
       }
 
-      // Agora cria o item
+      // 🔥 status conforme escolha do usuário
+      const statusFinal =
+        form.tipo === "encontrei" ? "encontrado" : "nao_encontrado";
+
+      // Criar item
       const res = await fetch(`${API_URL}/items`, {
         method: "POST",
         headers: {
@@ -183,217 +176,222 @@ export default function CadastrarItem() {
           title: form.name,
           description: form.description,
           imageUrls: uploadedUrls,
-          status: "perdido",
+          status: statusFinal,
           location: form.local,
           categoryName: form.category,
         }),
       });
 
-      // Verifica se a resposta é JSON válido
       const responseText = await res.text();
-      let responseData;
-
-      try {
-        responseData = JSON.parse(responseText);
-      // eslint-disable-next-line no-unused-vars
-      } catch (parseError) {
-        console.error("Resposta não é JSON:", responseText);
-        throw new Error(
-          `Resposta inválida da API: ${responseText.substring(0, 100)}`
-        );
-      }
+      const responseData = JSON.parse(responseText);
 
       if (!res.ok) {
-        throw new Error(
-          responseData.error || `Erro ${res.status}: ${res.statusText}`
-        );
+        throw new Error(responseData.error);
       }
 
-      console.log("Item criado com sucesso:", responseData);
-      navigate("/catalogo");
+      alert("Item cadastrado com sucesso!");
+
+      // Redireciona conforme tipo
+      navigate(
+        form.tipo === "encontrei" ? "/catalogo" : "/itens-nao-encontrados"
+      );
     } catch (err) {
-      console.error("Erro completo:", err);
+      console.error("Erro:", err);
       alert("Erro ao cadastrar item: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-return (
-  <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 font-sans">
-    <MenuOtherPages />
-    <div className="flex justify-center items-start px-4 pt-32 pb-16">
-      <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-md border border-gray-200 dark:border-gray-700 p-10 space-y-8">
-        
-        {/* Título com ícone */}
-        <h2 className="flex items-center justify-center gap-3 text-4xl font-extrabold text-center gradient-text mb-6">
-          <ArchiveRestore className="w-10 h-10 text-green-700 dark:text-green-400" />
-          Cadastrar Item
-        </h2>
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100 font-sans">
+      <MenuOtherPages />
+      <div className="flex justify-center items-start px-4 pt-32 pb-16">
+        <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-md border border-gray-200 dark:border-gray-700 p-10 space-y-8">
+          <h2 className="flex items-center justify-center gap-3 text-4xl font-extrabold text-center gradient-text mb-6">
+            <ArchiveRestore className="w-10 h-10 text-green-700 dark:text-green-400" />
+            Cadastrar Item
+          </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Nome */}
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-              Nome do Item
-            </label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              placeholder="Ex: Mochila, Celular..."
-              className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-600 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
-            />
-          </div>
-
-          {/* Descrição */}
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-              Descrição
-            </label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              required
-              placeholder="Ex: Preta, com adesivo da Marvel..."
-              rows={4}
-              className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-600 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 resize-none"
-            />
-          </div>
-
-          {/* Local */}
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-              Local
-            </label>
-            <input
-              name="local"
-              value={form.local}
-              onChange={handleChange}
-              required
-              placeholder="Ex: Sala 101, Corredor perto do banheiro..."
-              className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-600 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
-            />
-          </div>
-
-          {/* Categoria */}
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-              Categoria
-            </label>
-            <select
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              required
-              className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-600 outline-none transition text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700"
-            >
-              <option value="">Selecione</option>
-              <option value="Eletrônico">Eletrônico</option>
-              <option value="Roupa">Roupa</option>
-              <option value="Acessório">Acessório</option>
-              <option value="Material Escolar">Material Escolar</option>
-              <option value="Documentos">Documentos</option>
-              <option value="Outros">Outros</option>
-            </select>
-          </div>
-
-          {/* Upload de imagens */}
-          <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
-              Imagens do Item (até 5)
-            </label>
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition ${
-                isDragging
-                  ? "border-green-500 bg-green-50 dark:bg-green-900/30"
-                  : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
-              } text-gray-500 dark:text-gray-300`}
-            >
-              <label className="cursor-pointer w-full text-center">
-                {imagePreviews.length > 0 ? (
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {imagePreviews.map((src, i) => (
-                        <div key={i} className="relative">
-                          <img
-                            src={src}
-                            alt={`preview-${i}`}
-                            className="h-28 w-28 rounded-lg object-cover border"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(i)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-sm">Clique para alterar as imagens</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="text-4xl">📷</div>
-                    <p>
-                      Arraste até 5 imagens aqui ou{" "}
-                      <span className="underline text-green-700 dark:text-green-400">
-                        clique para selecionar
-                      </span>
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      PNG, JPG, JPEG até 5MB cada
-                    </p>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImages}
-                  className="hidden"
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Botão */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full py-4 rounded-2xl font-bold shadow-md transition-all duration-300 flex items-center justify-center gap-2
-              ${
-                isSubmitting
-                  ? "bg-green-800/70 text-white cursor-not-allowed"
-                  : "bg-green-800 hover:bg-green-700 text-white hover:scale-[1.02] shadow-lg hover:shadow-green-900/40"
+          {/* 🔥 escolha ENCONTREI / PERDI */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, tipo: "encontrei" })}
+              className={`p-4 rounded-xl border-2 transition-all font-medium ${
+                form.tipo === "encontrei"
+                  ? "border-green-600 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                  : "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
               }`}
-          >
-            {isSubmitting ? (
-              <>
-                <span className="animate-spin border-2 border-t-transparent border-white rounded-full w-5 h-5"></span>
-                <span>Enviando...</span>
-              </>
-            ) : (
-              <>
-                <ArchiveRestore className="w-6 h-6 text-white" />
-                <span>Cadastrar Item</span>
-              </>
-            )}
-          </button>
-        </form>
+            >
+              🟢 Encontrei este item
+              <p className="text-xs opacity-70 mt-1">Vai para o catálogo</p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, tipo: "perdi" })}
+              className={`p-4 rounded-xl border-2 transition-all font-medium ${
+                form.tipo === "perdi"
+                  ? "border-blue-600 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                  : "border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
+              }`}
+            >
+              🔵 Perdi este item
+              <p className="text-xs opacity-70 mt-1">
+                Vai para Itens Não Encontrados
+              </p>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Nome */}
+            <div className="flex flex-col">
+              <label className="mb-2 font-semibold">Nome do Item</label>
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+                placeholder="Ex: Mochila, Celular..."
+                className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+              />
+            </div>
+
+            {/* Descrição */}
+            <div className="flex flex-col">
+              <label className="mb-2 font-semibold">Descrição</label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                required
+                rows={4}
+                className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+              />
+            </div>
+
+            {/* Local */}
+            <div className="flex flex-col">
+              <label className="mb-2 font-semibold">Local</label>
+              <input
+                name="local"
+                value={form.local}
+                onChange={handleChange}
+                required
+                className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+              />
+            </div>
+
+            {/* Categoria */}
+            <div className="flex flex-col">
+              <label className="mb-2 font-semibold">Categoria</label>
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                required
+                className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+              >
+                <option value="">Selecione</option>
+                <option value="Eletrônico">Eletrônico</option>
+                <option value="Roupa">Roupa</option>
+                <option value="Acessório">Acessório</option>
+                <option value="Material Escolar">Material Escolar</option>
+                <option value="Documentos">Documentos</option>
+                <option value="Outros">Outros</option>
+              </select>
+            </div>
+
+            {/* Upload imagens */}
+            <div className="flex flex-col">
+              <label className="mb-2 font-semibold">Imagens (até 5)</label>
+
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                className={`w-full border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition ${
+                  isDragging
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/30"
+                    : "border-gray-300 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
+                }`}
+              >
+                <label className="cursor-pointer w-full text-center">
+                  {imagePreviews.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {imagePreviews.map((src, i) => (
+                          <div key={i} className="relative">
+                            <img
+                              src={src}
+                              alt="preview"
+                              className="h-28 w-28 rounded-lg object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(i)}
+                              className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-sm">Clique para alterar</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="text-4xl">📷</div>
+                      <p>
+                        Arraste imagens aqui ou{" "}
+                        <span className="underline text-green-700">
+                          clique para selecionar
+                        </span>
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        PNG, JPG, JPEG (máx. 5)
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImages}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 ${
+                isSubmitting
+                  ? "bg-green-800/70 cursor-not-allowed"
+                  : "bg-green-800 hover:bg-green-700"
+              } text-white`}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="animate-spin border-2 border-t-transparent border-white rounded-full w-5 h-5"></span>
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <ArchiveRestore className="w-6 h-6" />
+                  Cadastrar Item
+                </>
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
-  </div>
-);
-
-
+  );
 }

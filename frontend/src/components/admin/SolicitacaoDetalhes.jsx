@@ -60,7 +60,7 @@ export default function SolicitacaoDetalhes() {
 
       // 🔥 CORREÇÃO: Adicionar token de autenticação
       const token = localStorage.getItem("token");
-      
+
       if (!token) {
         throw new Error("Usuário não autenticado");
       }
@@ -69,7 +69,7 @@ export default function SolicitacaoDetalhes() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // 🔥 ADICIONAR TOKEN
+          Authorization: `Bearer ${token}`, // 🔥 ADICIONAR TOKEN
         },
         body: JSON.stringify({ status: novoStatus }),
       });
@@ -155,6 +155,33 @@ export default function SolicitacaoDetalhes() {
     if (podeValidar()) return "Validar";
 
     return `Status: ${solicitacao.status || "Pendente"}`;
+  };
+
+  const getImageUrl = (img) => {
+    if (!img) return null;
+
+    // Se já for uma URL completa (começa com http)
+    if (
+      typeof img === "string" &&
+      (img.startsWith("http") || img.startsWith("https"))
+    ) {
+      return img;
+    }
+
+    // Se for um objeto com propriedade url
+    if (typeof img === "object" && img.url) {
+      return img.url.startsWith("http") ? img.url : null;
+    }
+
+    // Se for uma string sem http (caminho relativo)
+    if (typeof img === "string") {
+      // Remove barras extras no início se houver
+      const cleanPath = img.replace(/^\//, "");
+      // Constrói a URL completa do Supabase Storage
+      return `https://qkisgvjvryqlbbdylvuc.supabase.co/storage/v1/object/public/iflow-item/${cleanPath}`;
+    }
+
+    return null;
   };
 
   if (loading) {
@@ -383,20 +410,37 @@ export default function SolicitacaoDetalhes() {
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     {solicitacao.item?.images?.length ? (
-                      solicitacao.item.images.map((img, index) => {
-                        const src = `${API_URL}${
-                          img.url.startsWith("/") ? img.url : "/" + img.url
-                        }`;
-                        return (
-                          <div key={img.id || index} className="relative group">
+                      // 🔥 FILTRAR E MAPEAR IMAGENS VÁLIDAS
+                      solicitacao.item.images
+                        .map((img) => getImageUrl(img))
+                        .filter(
+                          (url) => url && url !== "null" && url !== "undefined"
+                        )
+                        .map((src, index) => (
+                          <div key={index} className="relative group">
                             <img
                               src={src}
                               alt={solicitacao.item.title}
                               className="w-full h-32 object-cover border rounded-lg shadow-sm"
+                              onError={(e) => {
+                                console.error(
+                                  "❌ Erro ao carregar imagem:",
+                                  src
+                                );
+                                e.target.style.display = "none";
+                                // Mostra fallback se todas as imagens falharem
+                                const container = e.target.parentElement;
+                                if (container) {
+                                  container.innerHTML = `
+                    <div class="w-full h-32 flex items-center justify-center bg-gray-200 dark:bg-neutral-700 rounded-lg border">
+                      <span class="text-gray-500 dark:text-gray-400 text-xs">Erro ao carregar</span>
+                    </div>
+                  `;
+                                }
+                              }}
                             />
                           </div>
-                        );
-                      })
+                        ))
                     ) : (
                       <div className="col-span-2 w-full h-32 flex items-center justify-center bg-gray-200 dark:bg-neutral-700 rounded-lg border">
                         <span className="text-gray-500 dark:text-gray-400 text-sm">
@@ -404,6 +448,20 @@ export default function SolicitacaoDetalhes() {
                         </span>
                       </div>
                     )}
+
+                    {/* 🔥 SE NENHUMA IMAGEM FOR VÁLIDA APÓS O FILTRO */}
+                    {solicitacao.item?.images?.length > 0 &&
+                      solicitacao.item.images
+                        .map((img) => getImageUrl(img))
+                        .filter(
+                          (url) => url && url !== "null" && url !== "undefined"
+                        ).length === 0 && (
+                        <div className="col-span-2 w-full h-32 flex items-center justify-center bg-gray-200 dark:bg-neutral-700 rounded-lg border">
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">
+                            Nenhuma imagem válida encontrada
+                          </span>
+                        </div>
+                      )}
                   </div>
                 </div>
               </div>

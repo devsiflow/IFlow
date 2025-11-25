@@ -78,51 +78,94 @@ function CarrosselImagens({ imagens = [], nome }) {
     setTimeout(() => setIsTransitioning(false), 500);
   };
 
-  if (!imagens?.length)
+  // 🔥 CORREÇÃO: Função para obter a URL correta da imagem
+  const getImageUrl = (img) => {
+    if (!img) return null;
+
+    // Se já for uma URL completa (começa com http)
+    if (
+      typeof img === "string" &&
+      (img.startsWith("http") || img.startsWith("https"))
+    ) {
+      return img;
+    }
+
+    // Se for um objeto com propriedade url
+    if (typeof img === "object" && img.url) {
+      return img.url.startsWith("http") ? img.url : null;
+    }
+
+    // Se for uma string sem http (caminho relativo)
+    if (typeof img === "string") {
+      // Remove barras extras no início se houver
+      const cleanPath = img.replace(/^\//, "");
+      // Constrói a URL completa do Supabase Storage
+      return `https://qkisgvjvryqlbbdylvuc.supabase.co/storage/v1/object/public/iflow-item/${cleanPath}`;
+    }
+
+    return null;
+  };
+
+  // 🔥 Filtra apenas imagens válidas
+  const imagensValidas = imagens
+    .map((img) => getImageUrl(img))
+    .filter((url) => url && url !== "null" && url !== "undefined");
+
+  if (!imagensValidas.length) {
     return (
       <div className="w-48 h-48 flex items-center justify-center bg-gray-200 dark:bg-neutral-700 rounded-lg">
         <span className="text-gray-500 text-sm">Sem imagem</span>
       </div>
     );
+  }
 
   return (
     <div className="relative w-48 h-48 overflow-hidden rounded-lg group">
-      {imagens.map((img, index) => {
-        const src = typeof img === "string" ? img : img?.url ?? "";
+      {imagensValidas.map((src, index) => (
+        <img
+          key={index}
+          src={src}
+          alt={`${nome} - ${index + 1}`}
+          className={`absolute w-full h-full object-cover transition-all duration-500 ${
+            index === currentIndex
+              ? "opacity-100 scale-100"
+              : "opacity-0 scale-105"
+          }`}
+          onError={(e) => {
+            console.error("❌ Erro ao carregar imagem:", src);
+            e.target.style.display = "none";
+          }}
+        />
+      ))}
 
-        const final = `${
-          import.meta.env.VITE_API_URL || "http://localhost:5000"
-        }${src.startsWith("/") ? src : "/" + src}`;
-
-        return (
-          <img
-            key={index}
-            src={final}
-            alt={nome}
-            className={`absolute w-full h-full object-cover transition-all duration-500 ${
-              index === currentIndex
-                ? "opacity-100 scale-100"
-                : "opacity-0 scale-105"
-            }`}
-          />
-        );
-      })}
-
-      {imagens.length > 1 && (
+      {imagensValidas.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition z-10"
           >
             ❮
           </button>
 
           <button
             onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition z-10"
           >
             ❯
           </button>
+
+          {/* Indicadores */}
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1 z-10">
+            {imagensValidas.map((_, index) => (
+              <button
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  index === currentIndex ? "bg-white scale-125" : "bg-white/60"
+                }`}
+                onClick={() => setCurrentIndex(index)}
+              />
+            ))}
+          </div>
         </>
       )}
     </div>
@@ -254,10 +297,8 @@ export default function TabelaSolicitacoes({
                             imagens={
                               Array.isArray(s.item?.images) &&
                               s.item.images.length > 0
-                                ? s.item.images.map((img) =>
-                                    typeof img === "string" ? img : img?.url
-                                  )
-                                : ["/sem-imagem.png"]
+                                ? s.item.images
+                                : []
                             }
                             nome={s.item?.title}
                           />

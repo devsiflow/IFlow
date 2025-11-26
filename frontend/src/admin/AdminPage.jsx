@@ -33,7 +33,7 @@ export default function AdminPage() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [componenteAtivo, setComponenteAtivo] = useState("dashboard");
   const [solicitacoes, setSolicitacoes] = useState([]);
-  
+
 
   const API_BASE =
     import.meta.env.VITE_API_URL || "https://iflow-backend.onrender.com";
@@ -89,28 +89,29 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (componenteAtivo === "solicitacoes") {
+    if (componenteAtivo === "solicitacoes" && solicitacoes.length === 0) {
       carregarSolicitacoes();
     }
   }, [componenteAtivo]);
+
 
   async function updateStatus(id, novoStatus) {
     try {
       const res = await fetch(`${API_BASE}/solicitacoes/${id}/status`, {
         method: "PUT",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({ status: novoStatus }),
       });
-      
+
       if (!res.ok) throw new Error("Erro ao atualizar status");
-      
-      setSolicitacoes(prev => 
+
+      setSolicitacoes(prev =>
         prev.map(s => s.id === id ? { ...s, status: novoStatus } : s)
       );
-      
+
       return true;
     } catch (error) {
       console.error("❌ Erro ao atualizar status:", error);
@@ -246,11 +247,10 @@ export default function AdminPage() {
       <div className="flex pt-16">
         {/* Sidebar */}
         <aside
-          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white dark:bg-neutral-800 shadow-lg z-30 transition-all duration-300 ease-in-out ${
-            menuAberto
+          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white dark:bg-neutral-800 shadow-lg z-30 transition-all duration-300 ease-in-out ${menuAberto
               ? "w-64 translate-x-0"
               : "w-64 -translate-x-full md:translate-x-0 md:w-20"
-          }`}
+            }`}
         >
           <nav className="p-4">
             <ul className="space-y-2">
@@ -267,21 +267,19 @@ export default function AdminPage() {
                         setComponenteAtivo(item.id);
                         if (window.innerWidth < 768) setMenuAberto(false);
                       }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
-                        componenteAtivo === item.id
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${componenteAtivo === item.id
                           ? isSuperAdminItem
                             ? "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300"
                             : "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
                           : "hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-700 dark:text-gray-300"
-                      }`}
+                        }`}
                     >
                       <Icon size={20} />
                       <span
-                        className={`transition-opacity duration-200 ${
-                          menuAberto
+                        className={`transition-opacity duration-200 ${menuAberto
                             ? "opacity-100"
                             : "opacity-0 md:opacity-100"
-                        } ${!menuAberto && "md:hidden"}`}
+                          } ${!menuAberto && "md:hidden"}`}
                       >
                         {item.label}
                       </span>
@@ -300,9 +298,8 @@ export default function AdminPage() {
 
         {/* Conteúdo */}
         <main
-          className={`flex-1 transition-all duration-300 ${
-            menuAberto ? "md:ml-64" : "md:ml-20"
-          } p-6`}
+          className={`flex-1 transition-all duration-300 ${menuAberto ? "md:ml-64" : "md:ml-20"
+            } p-6`}
         >
           <div className="max-w-7xl mx-auto">
             <div className="mb-6">
@@ -313,10 +310,10 @@ export default function AdminPage() {
               {superAdminMenuItems.some(
                 (item) => item.id === componenteAtivo
               ) && (
-                <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
-                  ⚡ Funcionalidade exclusiva para SuperAdmin
-                </p>
-              )}
+                  <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+                    ⚡ Funcionalidade exclusiva para SuperAdmin
+                  </p>
+                )}
             </div>
             <div className="animate-fade-in">{renderComponente()}</div>
           </div>

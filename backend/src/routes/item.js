@@ -6,8 +6,6 @@ import supabaseAdmin from "../lib/supabaseAdmin.js";
 
 const router = express.Router();
 
-console.log("🔥 Backend carregou item.js!");
-
 
 /* ============================================================
    LISTAR ITENS (PÚBLICO + ADMIN)

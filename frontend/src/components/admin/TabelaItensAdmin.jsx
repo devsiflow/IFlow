@@ -372,7 +372,7 @@ function ImageCarousel({ item, onClose }) {
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 z-50 rounded-full bg-white/90 hover:bg-white p-2 shadow"
+            className="absolute top-3 right-3 z-50 rounded-full bg-black/90 hover:bg-white/20 p-2 shadow"
             aria-label="Fechar"
           >
             <X size={18} />
@@ -382,7 +382,7 @@ function ImageCarousel({ item, onClose }) {
           {urls.length > 1 && (
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-40 rounded-full bg-white/90 hover:bg-white p-2 shadow"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-40 rounded-full bg-black/90 hover:bg-white/20 p-2 shadow"
               aria-label="Anterior"
             >
               <ChevronLeft size={20} />
@@ -393,7 +393,7 @@ function ImageCarousel({ item, onClose }) {
           {urls.length > 1 && (
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-40 rounded-full bg-white/90 hover:bg-white p-2 shadow"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-40 rounded-full bg-black/90 hover:bg-white/20 p-2 shadow"
               aria-label="Próximo"
             >
               <ChevronRight size={20} />

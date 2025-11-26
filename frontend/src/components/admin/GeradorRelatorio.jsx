@@ -14,10 +14,11 @@ export default function GeradorRelatorio() {
   async function buscarDados() {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com"}/dashboard/solicitacoes?periodo=${periodo}`
+        `${import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com"}/solicitacoes?periodo=${periodo}`
       );
 
       const data = await response.json();
+      console.log("📌 Dados recebidos da API:", data); // <-- AQUI
       setDados(data || []);
       gerarGrafico(data || []);
     } catch (err) {
@@ -61,39 +62,114 @@ export default function GeradorRelatorio() {
   function exportarExcel() {
     if (!dados.length) return alert("Nenhum dado para exportar.");
 
-    // organiza colunas
-    const planilha = dados.map((item) => ({
-      ID: item.id,
-      Item: item.itemName || "—",
-      Categoria: item.category || "—",
-      Status: traduzirStatus(item.status),
-      "Data de Registro": formatarData(item.createdAt),
-      "Última Atualização": formatarData(item.updatedAt),
-      Usuário: item.userName || "—",
-      Campus: item.campusName || "—",
-    }));
+    const limpar = (v, f = "Não informado") =>
+      v && v !== "" ? v : f;
 
-    // cria worksheet
-    const ws = XLSX.utils.json_to_sheet(planilha);
+    const formatarItem = (item) => ({
+      "ID": limpar(item.id),
+      "Item": limpar(item.itemName),
+      "Categoria": limpar(item.category),
+      "Status": limpar(traduzirStatus(item.status)),
+      "Campus": limpar(item.campusName),
+      "Usuário (Criou)": limpar(item.userName),
+      "Usuário (Atualizou)": limpar(item.updatedBy?.name || item.updatedBy || "Não informado"),
+      "Data de Registro": limpar(formatarData(item.createdAt)),
+      "Última Atualização": limpar(formatarData(item.updatedAt)),
+    });
 
-    // ajusta largura das colunas
-    ws["!cols"] = [
-      { wch: 6 },
-      { wch: 25 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 16 },
-      { wch: 18 },
-      { wch: 22 },
-      { wch: 20 },
-    ];
+    const grupos = {
+      "Todos": dados,
+      "Achados": dados.filter(d => d.status === "solucionado"),
+      "Perdidos": dados.filter(d => d.status === "perdido"),
+      "Devolvidos": dados.filter(d => d.status === "devolvido"),
+      "Doação": dados.filter(d => d.status === "doacao"),
+    };
 
-    // cria arquivo excel
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Relatório");
 
-    XLSX.writeFile(wb, `relatorio_${periodo}.xlsx`);
+    for (const nomeAba in grupos) {
+      const grupo = grupos[nomeAba].map(formatarItem);
+
+      const header = [
+        [
+          "ID",
+          "Item",
+          "Categoria",
+          "Status",
+          "Campus",
+          "Usuário (Criou)",
+          "Usuário (Atualizou)",
+          "Data de Registro",
+          "Última Atualização",
+        ],
+      ];
+
+      const body = grupo.map((item) => Object.values(item));
+
+      const ws = XLSX.utils.aoa_to_sheet([...header, ...body]);
+
+      // Filtros
+      ws["!autofilter"] = { ref: "A1:I1" };
+
+      // Larguras
+      ws["!cols"] = [
+        { wch: 8 },
+        { wch: 30 },
+        { wch: 18 },
+        { wch: 14 },
+        { wch: 20 },
+        { wch: 22 },
+        { wch: 22 },
+        { wch: 18 },
+        { wch: 20 },
+      ];
+
+      // Estilizar cabeçalho
+      const headerCells = ["A1", "B1", "C1", "D1", "E1", "F1", "G1", "H1", "I1"];
+
+      headerCells.forEach((cell) => {
+        if (!ws[cell]) return;
+
+        ws[cell].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "4F81BD" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } },
+          },
+        };
+      });
+
+      // Bordas do corpo
+      const totalLinhas = body.length + 1;
+
+      for (let row = 2; row <= totalLinhas; row++) {
+        for (let col of "ABCDEFGHI".split("")) {
+          const cell = ws[`${col}${row}`];
+          if (!cell) continue;
+
+          cell.s = {
+            border: {
+              top: { style: "thin", color: { rgb: "000000" } },
+              bottom: { style: "thin", color: { rgb: "000000" } },
+              left: { style: "thin", color: { rgb: "000000" } },
+              right: { style: "thin", color: { rgb: "000000" } },
+            }
+          };
+        }
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, nomeAba);
+    }
+
+    XLSX.writeFile(wb, `relatorio_completo_${periodo}.xlsx`);
   }
+
+
+
 
   return (
     <div className="flex flex-col items-center gap-4">

@@ -14,7 +14,6 @@ import {
   Tooltip,
 } from "recharts";
 
-const COLORS = ["#16A34A", "#EF4444", "#84CC16", "#22C55E", "#60A5FA"];
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function DashboardAdmin() {
@@ -26,6 +25,7 @@ export default function DashboardAdmin() {
 
   const [totais, setTotais] = useState({
     totalItens: 0,
+    encontrados: 0,
     devolvidos: 0,
     perdidos: 0,
     pendentesSolicitacoes: 0,
@@ -41,20 +41,12 @@ export default function DashboardAdmin() {
   async function carregarDados() {
     setLoading(true);
     try {
-      console.log("🔄 Iniciando carregamento de dados...");
-
       const [itensResponse, solicitacoesResponse] = await Promise.all([
-        fetch(`${API_URL}/items?admin=true`, { credentials: "include" }), // <-- CORRIGIDO
+        fetch(`${API_URL}/items?admin=true`, { credentials: "include" }),
         fetch(`${API_URL}/itemValidation`, { credentials: "include" }),
       ]);
 
-      console.log("📦 Respostas recebidas:", {
-        itens: itensResponse.status,
-        solicitacoes: solicitacoesResponse.status
-      });
-
       const itensData = await itensResponse.json();
-      console.log("📥 RESPOSTA BRUTA ITEMS:", itensData); // <--- AQUI
       const solicitacoesData = await solicitacoesResponse.json();
 
       const items = Array.isArray(itensData.items)
@@ -63,53 +55,38 @@ export default function DashboardAdmin() {
           ? itensData
           : [];
 
-
-      console.log("📥 ITEMS FINAL USADOS:", items); // <--- AQUI
-
       const solic = Array.isArray(solicitacoesData)
         ? solicitacoesData
-        : Array.isArray(solicitacoesData.items)
-          ? solicitacoesData.items
-          : [];
+        : [];
 
       setItens(items);
       setSolicitacoes(solic);
 
       processarTotais(items, solic);
       gerarDadosGrafico(items, solic);
-
     } catch (err) {
-      console.error("❌ Erro ao carregar dashboard:", err);
+      console.error("Erro ao carregar dashboard:", err);
     } finally {
       setLoading(false);
     }
   }
 
   function processarTotais(itensData, solicData) {
-    console.log("📈 Processando totais...", {
-      totalItens: itensData.length,
-      totalSolicitacoes: solicData.length
-    });
-
+    let encontrados = 0;
     let devolvidos = 0;
     let perdidos = 0;
 
-    const normalizar = (texto) =>
-      texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
     for (const it of itensData) {
-      const status = normalizar(it.status || "");
+      const status = (it.status || "").toLowerCase();
 
-      if (status.includes("devolvido") || status.includes("encontrado")) {
-        devolvidos++;
-      }
-      else if (status.includes("perdido")) {
-        perdidos++;
-      }
+      if (status === "encontrado") encontrados++;
+      else if (status === "devolvido") devolvidos++;
+      else if (status === "perdido") perdidos++;
     }
 
     const novosTotais = {
       totalItens: itensData.length,
+      encontrados,
       devolvidos,
       perdidos,
       pendentesSolicitacoes: solicData.length,
@@ -118,17 +95,16 @@ export default function DashboardAdmin() {
     setTotais(novosTotais);
 
     const pizzaData = [
-      { name: "Devolvidos/Encontrados", value: devolvidos },
+      { name: "Encontrados", value: encontrados },
+      { name: "Devolvidos", value: devolvidos },
       { name: "Perdidos", value: perdidos },
       { name: "Solicitações Pendentes", value: solicData.length },
-    ].filter(item => item.value > 0);
+    ].filter((item) => item.value > 0);
 
     setDadosPizza(pizzaData);
   }
 
   function gerarDadosGrafico(itensData, solicData) {
-    console.log("📊 Gerando dados para gráficos...");
-
     const dadosPorMes = {};
     const meses = [];
 
@@ -137,45 +113,42 @@ export default function DashboardAdmin() {
       const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
       const mesAno = data.toLocaleDateString("pt-BR", {
         month: "short",
-        year: "numeric"
+        year: "numeric",
       });
       meses.push(mesAno);
       dadosPorMes[mesAno] = {
         mes: mesAno,
-        itens: 0,
-        itensPerdidos: 0,
-        itensDevolvidos: 0,
-        solicitacoes: 0
+        encontrados: 0,
+        devolvidos: 0,
+        perdidos: 0,
+        solicitacoes: 0,
       };
     }
 
-    itensData.forEach(item => {
+    itensData.forEach((item) => {
       if (item.createdAt) {
         const dataItem = new Date(item.createdAt);
         const mesAno = dataItem.toLocaleDateString("pt-BR", {
           month: "short",
-          year: "numeric"
+          year: "numeric",
         });
 
         if (dadosPorMes[mesAno]) {
-          dadosPorMes[mesAno].itens++;
-
           const status = (item.status || "").toLowerCase();
-          if (status.includes("devolvido") || status.includes("encontrado")) {
-            dadosPorMes[mesAno].itensDevolvidos++;
-          } else if (status.includes("perdido")) {
-            dadosPorMes[mesAno].itensPerdidos++;
-          }
+
+          if (status === "encontrado") dadosPorMes[mesAno].encontrados++;
+          else if (status === "devolvido") dadosPorMes[mesAno].devolvidos++;
+          else if (status === "perdido") dadosPorMes[mesAno].perdidos++;
         }
       }
     });
 
-    solicData.forEach(solic => {
+    solicData.forEach((solic) => {
       if (solic.createdAt) {
         const dataSolic = new Date(solic.createdAt);
         const mesAno = dataSolic.toLocaleDateString("pt-BR", {
           month: "short",
-          year: "numeric"
+          year: "numeric",
         });
 
         if (dadosPorMes[mesAno]) {
@@ -184,8 +157,7 @@ export default function DashboardAdmin() {
       }
     });
 
-    const linhaData = meses.map(mes => dadosPorMes[mes]);
-    setDadosLinha(linhaData);
+    setDadosLinha(meses.map((mes) => dadosPorMes[mes]));
   }
 
   return (
@@ -198,13 +170,14 @@ export default function DashboardAdmin() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <ResumoCard title="Total de Itens" value={totais.totalItens} color="bg-green-600" />
-            <ResumoCard title="Devolvidos/Encontrados" value={totais.devolvidos} color="bg-green-500" />
-            <ResumoCard title="Perdidos" value={totais.perdidos} color="bg-red-500" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <ResumoCard title="Total de Itens" value={totais.totalItens} color="bg-gray-700" />
+
+            <ResumoCard title="Encontrados" value={totais.encontrados} color="bg-blue-600" />
+            <ResumoCard title="Devolvidos" value={totais.devolvidos} color="bg-green-600" />
+            <ResumoCard title="Perdidos" value={totais.perdidos} color="bg-red-600" />
             <ResumoCard title="Solicitações Pendentes" value={totais.pendentesSolicitacoes} color="bg-yellow-500" />
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div onClick={() => setGraficoAberto("pizza")} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <GraficoPizza dados={dadosPizza} />
@@ -228,11 +201,11 @@ export default function DashboardAdmin() {
 
       {graficoAberto && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999] animate-fade"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999]"
           onClick={() => setGraficoAberto(null)}
         >
           <div
-            className="bg-white dark:bg-neutral-800 rounded-2xl p-6 w-[90%] max-w-4xl shadow-xl relative animate-zoom"
+            className="bg-white dark:bg-neutral-800 rounded-2xl p-6 w-[90%] max-w-4xl shadow-xl relative"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -268,9 +241,11 @@ function ResumoCard({ title, value, color = "bg-gray-600" }) {
 }
 
 function GraficoPizza({ dados }) {
-  const getColorPorCategoria = (nome) => {
+  const getCorCategoria = (nome) => {
     switch (nome) {
-      case "Devolvidos/Encontrados":
+      case "Encontrados":
+        return "#3B82F6";
+      case "Devolvidos":
         return "#16A34A";
       case "Perdidos":
         return "#EF4444";
@@ -280,17 +255,6 @@ function GraficoPizza({ dados }) {
         return "#60A5FA";
     }
   };
-
-  if (!dados || dados.length === 0) {
-    return (
-      <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
-        <h3 className="font-semibold mb-2">Distribuição de Status</h3>
-        <div className="flex items-center justify-center h-80">
-          <p className="text-gray-500">Nenhum dado disponível</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg:white dark:bg-neutral-800 rounded-2xl shadow p-4 bg-white">
@@ -306,7 +270,7 @@ function GraficoPizza({ dados }) {
               label={({ name, value }) => `${name}: ${value}`}
             >
               {dados.map((entry, idx) => (
-                <Cell key={`cell-${idx}`} fill={getColorPorCategoria(entry.name)} />
+                <Cell key={`cell-${idx}`} fill={getCorCategoria(entry.name)} />
               ))}
             </Pie>
             <ReTooltip />
@@ -319,38 +283,27 @@ function GraficoPizza({ dados }) {
 }
 
 function GraficoLinha({ dados }) {
-  const coresLinhas = {
-    itens: "#3B82F6",
-    itensDevolvidos: "#16A34A",
-    itensPerdidos: "#EF4444",
+  const cores = {
+    encontrados: "#3B82F6",
+    devolvidos: "#16A34A",
+    perdidos: "#EF4444",
     solicitacoes: "#EAB308",
   };
-
-  if (!dados || dados.length === 0) {
-    return (
-      <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
-        <h3 className="font-semibold mb-2">Itens e Solicitações por Mês</h3>
-        <div className="flex items-center justify-center h-80">
-          <p className="text-gray-500">Nenhum dado disponível</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4">
       <h3 className="font-semibold mb-2">Itens e Solicitações por Mês</h3>
       <div style={{ width: "100%", height: 320 }}>
         <ResponsiveContainer>
-          <LineChart data={dados} margin={{ top: 10, right: 12, left: -6, bottom: 6 }}>
+          <LineChart data={dados}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
             <XAxis dataKey="mes" />
             <YAxis />
             <Tooltip />
-            <Line type="monotone" dataKey="itens" stroke={coresLinhas.itens} strokeWidth={2} dot={{ r: 4 }} name="Total de Itens" />
-            <Line type="monotone" dataKey="itensDevolvidos" stroke={coresLinhas.itensDevolvidos} strokeWidth={2} dot={{ r: 4 }} name="Itens Devolvidos" />
-            <Line type="monotone" dataKey="itensPerdidos" stroke={coresLinhas.itensPerdidos} strokeWidth={2} dot={{ r: 4 }} name="Itens Perdidos" />
-            <Line type="monotone" dataKey="solicitacoes" stroke={coresLinhas.solicitacoes} strokeWidth={2} dot={{ r: 4 }} name="Solicitações" />
+            <Line type="monotone" dataKey="encontrados" stroke={cores.encontrados} name="Encontrados" />
+            <Line type="monotone" dataKey="devolvidos" stroke={cores.devolvidos} name="Devolvidos" />
+            <Line type="monotone" dataKey="perdidos" stroke={cores.perdidos} name="Perdidos" />
+            <Line type="monotone" dataKey="solicitacoes" stroke={cores.solicitacoes} name="Solicitações" />
           </LineChart>
         </ResponsiveContainer>
       </div>

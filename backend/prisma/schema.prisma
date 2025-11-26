@@ -10,6 +10,7 @@ datasource db {
 enum ItemStatus {
   perdido
   encontrado
+  devolvido
 }
 
 model Profile {

@@ -1,265 +1,435 @@
-import { useEffect, useState } from "react";
-import { Pencil, Trash2, Loader2 } from "lucide-react";
-import { supabase } from "../../lib/supabaseClient";
+import { useEffect, useState, useRef } from "react";
+import { Pencil, Trash2, Loader2, X, ArrowLeft, ArrowRight } from "lucide-react";
 
-export default function TabelaItensAdmin() {
+const API_URL = "https://iflow-zdbx.onrender.com";
+
+// --- Toast simples (success / error) ---
+function Toasts() {
+  const [toasts, setToasts] = useState([]);
+  useEffect(() => {
+    if (!toasts.length) return;
+    const timers = toasts.map((t) =>
+      setTimeout(() => setToasts((s) => s.filter((x) => x.id !== t.id)), 4000)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [toasts]);
+
+  // exposer via window (quick hack) — você pode trocar por context se quiser
+  window.__addToast = (type, text) => {
+    const id = Math.random().toString(36).slice(2, 9);
+    setToasts((s) => [...s, { id, type, text }]);
+  };
+
+  return (
+    <div className="fixed right-4 top-6 z-[9999] flex flex-col gap-3">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className={`px-4 py-2 rounded-lg shadow-md text-sm max-w-xs ${
+            t.type === "success"
+              ? "bg-green-600 text-white"
+              : "bg-red-600 text-white"
+          }`}
+        >
+          {t.text}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// --- Modal de imagens ---
+function ImageModal({ images = [], startIndex = 0, onClose }) {
+  const [idx, setIdx] = useState(startIndex || 0);
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative max-w-[960px] w-full bg-white dark:bg-neutral-800 rounded-xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-3 border-b dark:border-neutral-700">
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            Imagem {idx + 1} de {images.length}
+          </div>
+          <button onClick={onClose} className="p-1 text-gray-600 hover:text-gray-800">
+            <X />
+          </button>
+        </div>
+
+        <div className="w-full h-[min(70vh,600px)] flex items-center justify-center bg-black/5 dark:bg-black/20">
+          <button
+            onClick={() => setIdx((i) => (i - 1 + images.length) % images.length)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 hover:bg-white shadow"
+          >
+            <ArrowLeft />
+          </button>
+
+          <img
+            src={images[idx].url}
+            alt={`item-img-${idx}`}
+            className="max-h-[68vh] max-w-full object-contain"
+          />
+
+          <button
+            onClick={() => setIdx((i) => (i + 1) % images.length)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/90 hover:bg-white shadow"
+          >
+            <ArrowRight />
+          </button>
+        </div>
+
+        <div className="p-3 flex justify-between items-center border-t dark:border-neutral-700">
+          <div className="text-xs text-gray-500 dark:text-gray-400">{images[idx].url}</div>
+          <a
+            href={images[idx].url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Abrir em nova aba
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- helper: fetch com timeout + retry ---
+async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, { signal: controller.signal, ...options });
+    clearTimeout(id);
+    return res;
+  } catch (err) {
+    clearTimeout(id);
+    throw err;
+  }
+}
+
+export default function TabelaItensAdminDeluxe() {
   const [itens, setItens] = useState([]);
-  const [editando, setEditando] = useState(null);
   const [loading, setLoading] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [imagesModal, setImagesModal] = useState(null);
+  const retryRef = useRef(0);
 
   useEffect(() => {
-    carregarItens();
+    carregarItensWithRetry();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function carregarItens() {
-    try {
-      const { data: sessionRes } = await supabase.auth.getSession();
-      const token = sessionRes?.session?.access_token;
-      if (!token) return;
+    const res = await fetchWithTimeout(
+      `${API_URL}/items?admin=true&pageSize=500`,
+      { method: "GET", credentials: "include", cache: "no-cache" },
+      12000
+    );
+    if (!res.ok) throw new Error(`Status ${res.status}`);
+    const data = await res.json();
+    return data.items || [];
+  }
 
-      const response = await fetch(
-        "https://iflow-zdbx.onrender.com/items?admin=true&pageSize=500",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const data = await response.json();
-      setItens(data.items || []);
-    } finally {
-      setLoading(false);
+  async function carregarItensWithRetry() {
+    setLoading(true);
+    const maxRetries = 3;
+    const baseDelay = 800;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        const list = await carregarItens();
+        setItens(list);
+        window.__addToast?.("success", "Itens carregados");
+        retryRef.current = 0;
+        setLoading(false);
+        return;
+      } catch (err) {
+        attempt++;
+        retryRef.current = attempt;
+        console.warn("carregarItens tentativa", attempt, err.message);
+        if (attempt >= maxRetries) {
+          window.__addToast?.("error", "Erro ao carregar itens. Verifique a API.");
+          setItens([]);
+          setLoading(false);
+          return;
+        }
+        // backoff
+        await new Promise((r) => setTimeout(r, baseDelay * attempt));
+      }
     }
   }
 
   async function salvarEdicao() {
+    if (!editando) return;
+    setSalvando(true);
     try {
-      setSalvando(true);
-
-      const { data: sessionRes } = await supabase.auth.getSession();
-      const token = sessionRes?.session?.access_token;
-
-      await fetch(`https://iflow-zdbx.onrender.com/items/${editando.id}`, {
-        method: "PUT",
-        credentials: "include",
-        cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
+      const res = await fetchWithTimeout(
+        `${API_URL}/items/${editando.id}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editando),
         },
-        body: JSON.stringify(editando),
-      });
-
+        10000
+      );
+      if (!res.ok) throw new Error("Erro no servidor");
+      // atualiza local sem recarregar tudo
+      setItens((prev) => prev.map((p) => (p.id === editando.id ? editando : p)));
       setEditando(null);
-      carregarItens();
+      window.__addToast?.("success", "Item atualizado");
+    } catch (err) {
+      console.error(err);
+      window.__addToast?.("error", "Erro ao salvar. Tente novamente.");
     } finally {
       setSalvando(false);
     }
   }
 
   async function deletarItem(id) {
-    if (!confirm("Tem certeza que deseja excluir este item?")) return;
-
+    if (!confirm("Confirma exclusão deste item?")) return;
+    // optimistic UI
+    const backup = itens;
+    setItens((p) => p.filter((x) => x.id !== id));
     try {
-      const { data: sessionRes } = await supabase.auth.getSession();
-      const token = sessionRes?.session?.access_token;
-
-      await fetch(`https://iflow-zdbx.onrender.com/items/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setItens(itens.filter((i) => i.id !== id));
+      const res = await fetchWithTimeout(
+        `${API_URL}/items/${id}`,
+        { method: "DELETE", credentials: "include" },
+        8000
+      );
+      if (!res.ok) throw new Error("Erro ao deletar");
+      window.__addToast?.("success", "Item excluído");
     } catch (err) {
-      console.error("Erro ao excluir item:", err);
+      console.error(err);
+      setItens(backup);
+      window.__addToast?.("error", "Erro ao excluir item");
     }
   }
 
-  if (loading) return <div className="p-4 text-center">Carregando itens...</div>;
-
+  // grouped lists
   const perdidos = itens.filter((i) => i.status === "perdido");
   const encontrados = itens.filter((i) => i.status === "encontrado");
   const devolvidos = itens.filter((i) => i.status === "devolvido");
 
   return (
-    <div className="space-y-10 animate-fadeIn">
-      <StatusSection
-        title="Itens Perdidos"
-        cor="red"
-        itens={perdidos}
-        editando={editando}
-        setEditando={setEditando}
-        deletar={deletarItem}
-        salvando={salvando}
-        salvarEdicao={salvarEdicao}
-      />
+    <>
+      <Toasts />
 
-      <StatusSection
-        title="Itens Encontrados"
-        cor="blue"
-        itens={encontrados}
-        editando={editando}
-        setEditando={setEditando}
-        deletar={deletarItem}
-        salvando={salvando}
-        salvarEdicao={salvarEdicao}
-      />
+      <div className="p-6 bg-gray-50 dark:bg-neutral-900 min-h-[60vh]">
+        <header className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Tabela de Itens — Deluxe</h2>
 
-      <StatusSection
-        title="Itens Devolvidos"
-        cor="green"
-        itens={devolvidos}
-        editando={editando}
-        setEditando={setEditando}
-        deletar={deletarItem}
-        salvando={salvando}
-        salvarEdicao={salvarEdicao}
-      />
-    </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => carregarItensWithRetry()}
+              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2"
+            >
+              <Loader2 className="animate-spin" size={16} />
+              Recarregar
+            </button>
+
+            <div className="text-sm text-gray-500">
+              {loading ? "Carregando..." : `Itens: ${itens.length}`}
+              {retryRef.current > 0 && <span className="ml-2 text-xs text-yellow-600">tentativa {retryRef.current}</span>}
+            </div>
+          </div>
+        </header>
+
+        {loading ? (
+          <div className="w-full flex items-center justify-center py-20">
+            <div className="flex items-center gap-3 text-gray-600">
+              <Loader2 className="animate-spin" />
+              Carregando itens...
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Section
+              title="Itens Perdidos"
+              color="red"
+              itens={perdidos}
+              onEdit={setEditando}
+              onDelete={deletarItem}
+              onOpenImages={(imgs, idx) => setImagesModal({ imgs, idx })}
+              editando={editando}
+              salvarEdicao={salvarEdicao}
+              salvando={salvando}
+            />
+
+            <Section
+              title="Itens Encontrados"
+              color="blue"
+              itens={encontrados}
+              onEdit={setEditando}
+              onDelete={deletarItem}
+              onOpenImages={(imgs, idx) => setImagesModal({ imgs, idx })}
+              editando={editando}
+              salvarEdicao={salvarEdicao}
+              salvando={salvando}
+            />
+
+            <Section
+              title="Itens Devolvidos"
+              color="green"
+              itens={devolvidos}
+              onEdit={setEditando}
+              onDelete={deletarItem}
+              onOpenImages={(imgs, idx) => setImagesModal({ imgs, idx })}
+              editando={editando}
+              salvarEdicao={salvarEdicao}
+              salvando={salvando}
+            />
+          </div>
+        )}
+      </div>
+
+      {imagesModal && (
+        <ImageModal
+          images={imagesModal.imgs}
+          startIndex={imagesModal.idx}
+          onClose={() => setImagesModal(null)}
+        />
+      )}
+    </>
   );
 }
 
-
-/* ===========================================================
-   COMPONENTE DE SEÇÃO — COM ANIMAÇÃO NO EDITOR
-=========================================================== */
-function StatusSection({
+/* ---------------------------
+   Section component (column)
+   --------------------------- */
+function Section({
   title,
-  cor,
-  itens,
+  color = "blue",
+  itens = [],
+  onEdit,
+  onDelete,
+  onOpenImages,
   editando,
-  setEditando,
-  deletar,
+  salvarEdicao,
   salvando,
-  salvarEdicao
 }) {
-
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-xl shadow p-4 border border-gray-200 dark:border-gray-700">
-      <h2 className={`text-xl font-bold mb-4 text-${cor}-600`}>
-        {title} ({itens.length})
-      </h2>
+    <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow p-4 border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className={`text-lg font-semibold ${color === "red" ? "text-red-600" : color === "green" ? "text-green-600" : "text-blue-600"}`}>
+          {title} <span className="text-sm text-gray-500">({itens.length})</span>
+        </h3>
+      </div>
 
       {itens.length === 0 ? (
         <p className="text-gray-500">Nenhum item nesta categoria.</p>
       ) : (
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-gray-300 dark:border-gray-700">
-              <th className="p-2">ID</th>
-              <th className="p-2">Título</th>
-              <th className="p-2">Categoria</th>
-              <th className="p-2">Usuário</th>
-              <th className="p-2 text-center w-[120px]">Ações</th>
-            </tr>
-          </thead>
+        <div className="space-y-3">
+          {itens.map((item) => (
+            <div key={item.id} className="bg-white/60 dark:bg-neutral-900 p-3 rounded-lg border border-gray-100 dark:border-neutral-700 shadow-sm">
+              <div className="flex gap-3 items-start">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-gray-800 dark:text-gray-100">{item.title}</div>
+                      <div className="text-xs text-gray-500">{item.category?.name || "—"} • {new Date(item.createdAt).toLocaleString()}</div>
+                    </div>
 
-          <tbody>
-            {itens.map((item) => (
-              <>
-                <tr key={item.id} className="border-b border-gray-200 dark:border-gray-700">
-                  <td className="p-2">{item.id}</td>
-                  <td className="p-2">{item.title}</td>
-                  <td className="p-2">{item.category?.name || "N/A"}</td>
-                  <td className="p-2">{item.user?.name || "N/A"}</td>
-
-                  <td className="p-2 flex justify-center gap-2">
-                    <button
-                      onClick={() => setEditando(item)}
-                      className="p-1 text-blue-600 hover:text-blue-800 transition"
-                    >
-                      <Pencil size={18} />
-                    </button>
-
-                    <button
-                      onClick={() => deletar(item.id)}
-                      className="p-1 text-red-600 hover:text-red-800 transition"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-
-                {/* EDITOR ANIMADO */}
-                {editando?.id === item.id && (
-                  <tr>
-                    <td colSpan="5">
-                      <div
-                        className="
-                        mt-4 p-6 rounded-xl border border-gray-300 dark:border-gray-700 shadow
-                        bg-gray-50 dark:bg-neutral-900
-                        animate-slideDown
-                      "
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onOpenImages(item.images || [], 0)}
+                        className="text-sm text-gray-600 hover:text-gray-900"
+                        title="Ver imagens"
                       >
+                        {item.images?.length ? `${item.images.length} img` : "sem imagens"}
+                      </button>
 
-                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                          ✏️ Editando Item #{item.id}
-                        </h3>
+                      <button
+                        onClick={() => onEdit(item)}
+                        className="p-1 text-blue-600 hover:text-blue-800"
+                        title="Editar"
+                      >
+                        <Pencil size={16} />
+                      </button>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <button
+                        onClick={() => onDelete(item.id)}
+                        className="p-1 text-red-600 hover:text-red-800"
+                        title="Excluir"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
 
-                          <div className="flex flex-col">
-                            <label className="font-medium mb-1">Título</label>
-                            <input
-                              className="border border-gray-300 dark:border-gray-700 dark:bg-neutral-800 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                              value={editando.title}
-                              onChange={(e) => setEditando({ ...editando, title: e.target.value })}
-                            />
-                          </div>
+                  <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">{item.description}</div>
 
-                          <div className="flex flex-col">
-                            <label className="font-medium mb-1">Status</label>
-                            <select
-                              className="border border-gray-300 dark:border-gray-700 dark:bg-neutral-800 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                              value={editando.status}
-                              onChange={(e) => setEditando({ ...editando, status: e.target.value })}
-                            >
-                              <option value="perdido">Perdido</option>
-                              <option value="encontrado">Encontrado</option>
-                              <option value="devolvido">Devolvido</option>
-                            </select>
-                          </div>
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="text-xs text-gray-500">Local: {item.location || "—"}</span>
+                    <span className="text-xs text-gray-500">Usuário: {item.user?.name || "—"}</span>
+                  </div>
+                </div>
+              </div>
 
-                          <div className="flex flex-col md:col-span-2">
-                            <label className="font-medium mb-1">Descrição</label>
-                            <textarea
-                              className="border border-gray-300 dark:border-gray-700 dark:bg-neutral-800 rounded-lg px-3 py-2 h-24 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
-                              value={editando.description}
-                              onChange={(e) => setEditando({ ...editando, description: e.target.value })}
-                            />
-                          </div>
+              {/* Editor inline (aparece abaixo quando editando este item) */}
+              {editando?.id === item.id && (
+                <div className="mt-4 animate-slideDown animate-fadeIn p-4 rounded-lg border border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-900">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm text-gray-600">Título</label>
+                      <input
+                        value={editando.title}
+                        onChange={(e) => onEdit({ ...editando, title: e.target.value })}
+                        className="w-full mt-1 p-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-neutral-800"
+                      />
+                    </div>
 
-                        </div>
+                    <div>
+                      <label className="text-sm text-gray-600">Status</label>
+                      <select
+                        value={editando.status}
+                        onChange={(e) => onEdit({ ...editando, status: e.target.value })}
+                        className="w-full mt-1 p-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-neutral-800"
+                      >
+                        <option value="perdido">Perdido</option>
+                        <option value="encontrado">Encontrado</option>
+                        <option value="devolvido">Devolvido</option>
+                      </select>
+                    </div>
 
-                        <div className="flex justify-end gap-3 mt-6">
-                          <button
-                            onClick={() => setEditando(null)}
-                            className="px-4 py-2 rounded-lg border border-gray-400 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-neutral-700 transition"
-                          >
-                            Cancelar
-                          </button>
+                    <div className="md:col-span-2">
+                      <label className="text-sm text-gray-600">Descrição</label>
+                      <textarea
+                        value={editando.description}
+                        onChange={(e) => onEdit({ ...editando, description: e.target.value })}
+                        className="w-full mt-1 p-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-neutral-800 h-24"
+                      />
+                    </div>
+                  </div>
 
-                          <button
-                            onClick={salvarEdicao}
-                            disabled={salvando}
-                            className="px-5 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold shadow flex items-center gap-2 disabled:opacity-60"
-                          >
-                            {salvando ? (
-                              <>
-                                <Loader2 className="animate-spin" size={18} />
-                                Salvando...
-                              </>
-                            ) : (
-                              "Salvar"
-                            )}
-                          </button>
-                        </div>
+                  <div className="flex justify-end gap-3 mt-3">
+                    <button
+                      className="px-3 py-1 rounded-md border hover:bg-gray-100"
+                      onClick={() => onEdit(null)}
+                    >
+                      Cancelar
+                    </button>
 
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </>
-            ))}
-          </tbody>
-        </table>
+                    <button
+                      className="px-4 py-1 rounded-md bg-green-600 text-white flex items-center gap-2 disabled:opacity-60"
+                      onClick={salvarEdicao}
+                      disabled={salvando}
+                    >
+                      {salvando ? <Loader2 className="animate-spin" /> : "Salvar"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

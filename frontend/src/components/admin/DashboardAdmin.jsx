@@ -22,7 +22,7 @@ export default function DashboardAdmin() {
   const [itens, setItens] = useState([]);
   const [solicitacoes, setSolicitacoes] = useState([]);
 
-  const [graficoAberto, setGraficoAberto] = useState(null); // <--- ADICIONADO
+  const [graficoAberto, setGraficoAberto] = useState(null);
 
   const [totais, setTotais] = useState({
     totalItens: 0,
@@ -42,9 +42,9 @@ export default function DashboardAdmin() {
     setLoading(true);
     try {
       console.log("🔄 Iniciando carregamento de dados...");
-      
+
       const [itensResponse, solicitacoesResponse] = await Promise.all([
-        fetch(`${API_URL}/items`, { credentials: "include" }),
+        fetch(`${API_URL}/items?admin=true`, { credentials: "include" }), // <-- CORRIGIDO
         fetch(`${API_URL}/itemValidation`, { credentials: "include" }),
       ]);
 
@@ -54,22 +54,30 @@ export default function DashboardAdmin() {
       });
 
       const itensData = await itensResponse.json();
+      console.log("📥 RESPOSTA BRUTA ITEMS:", itensData); // <--- AQUI
       const solicitacoesData = await solicitacoesResponse.json();
 
-      console.log("📊 Dados recebidos:", {
-        itens: itensData.length,
-        solicitacoes: solicitacoesData.length
-      });
+      const items = Array.isArray(itensData.items)
+        ? itensData.items
+        : Array.isArray(itensData)
+          ? itensData
+          : [];
 
-      const items = Array.isArray(itensData) ? itensData : (itensData.items || []);
-      const solic = Array.isArray(solicitacoesData) ? solicitacoesData : [];
+
+      console.log("📥 ITEMS FINAL USADOS:", items); // <--- AQUI
+
+      const solic = Array.isArray(solicitacoesData)
+        ? solicitacoesData
+        : Array.isArray(solicitacoesData.items)
+          ? solicitacoesData.items
+          : [];
 
       setItens(items);
       setSolicitacoes(solic);
-      
+
       processarTotais(items, solic);
       gerarDadosGrafico(items, solic);
-      
+
     } catch (err) {
       console.error("❌ Erro ao carregar dashboard:", err);
     } finally {
@@ -85,12 +93,17 @@ export default function DashboardAdmin() {
 
     let devolvidos = 0;
     let perdidos = 0;
-    
+
+    const normalizar = (texto) =>
+      texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
     for (const it of itensData) {
-      const status = (it.status || "").toLowerCase();
+      const status = normalizar(it.status || "");
+
       if (status.includes("devolvido") || status.includes("encontrado")) {
         devolvidos++;
-      } else if (status.includes("perdido")) {
+      }
+      else if (status.includes("perdido")) {
         perdidos++;
       }
     }
@@ -102,7 +115,6 @@ export default function DashboardAdmin() {
       pendentesSolicitacoes: solicData.length,
     };
 
-    console.log("🎯 Totais calculados:", novosTotais);
     setTotais(novosTotais);
 
     const pizzaData = [
@@ -111,16 +123,15 @@ export default function DashboardAdmin() {
       { name: "Solicitações Pendentes", value: solicData.length },
     ].filter(item => item.value > 0);
 
-    console.log("🍕 Dados pizza:", pizzaData);
     setDadosPizza(pizzaData);
   }
 
   function gerarDadosGrafico(itensData, solicData) {
     console.log("📊 Gerando dados para gráficos...");
-    
+
     const dadosPorMes = {};
     const meses = [];
-    
+
     const hoje = new Date();
     for (let i = 5; i >= 0; i--) {
       const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
@@ -129,16 +140,14 @@ export default function DashboardAdmin() {
         year: "numeric"
       });
       meses.push(mesAno);
-      dadosPorMes[mesAno] = { 
-        mes: mesAno, 
-        itens: 0, 
+      dadosPorMes[mesAno] = {
+        mes: mesAno,
+        itens: 0,
         itensPerdidos: 0,
         itensDevolvidos: 0,
-        solicitacoes: 0 
+        solicitacoes: 0
       };
     }
-
-    console.log("📅 Meses base:", meses);
 
     itensData.forEach(item => {
       if (item.createdAt) {
@@ -147,10 +156,10 @@ export default function DashboardAdmin() {
           month: "short",
           year: "numeric"
         });
-        
+
         if (dadosPorMes[mesAno]) {
           dadosPorMes[mesAno].itens++;
-          
+
           const status = (item.status || "").toLowerCase();
           if (status.includes("devolvido") || status.includes("encontrado")) {
             dadosPorMes[mesAno].itensDevolvidos++;
@@ -168,7 +177,7 @@ export default function DashboardAdmin() {
           month: "short",
           year: "numeric"
         });
-        
+
         if (dadosPorMes[mesAno]) {
           dadosPorMes[mesAno].solicitacoes++;
         }
@@ -176,8 +185,6 @@ export default function DashboardAdmin() {
     });
 
     const linhaData = meses.map(mes => dadosPorMes[mes]);
-    
-    console.log("📈 Dados linha:", linhaData);
     setDadosLinha(linhaData);
   }
 
@@ -199,8 +206,6 @@ export default function DashboardAdmin() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* APENAS ADICIONADO O onClick */}
             <div onClick={() => setGraficoAberto("pizza")} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <GraficoPizza dados={dadosPizza} />
             </div>
@@ -208,7 +213,6 @@ export default function DashboardAdmin() {
             <div onClick={() => setGraficoAberto("linha")} className="cursor-pointer hover:scale-[1.02] transition-transform">
               <GraficoLinha dados={dadosLinha} />
             </div>
-
           </div>
 
           <div className="mt-6 text-center">
@@ -222,7 +226,6 @@ export default function DashboardAdmin() {
         </>
       )}
 
-      {/* ====================== MODAL ADICIONADO ====================== */}
       {graficoAberto && (
         <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[999] animate-fade"

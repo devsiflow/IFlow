@@ -1,4 +1,4 @@
-import express from "express"; 
+import express from "express";
 import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
 import jwt from "jsonwebtoken";
@@ -6,11 +6,15 @@ import supabaseAdmin from "../lib/supabaseAdmin.js";
 
 const router = express.Router();
 
+console.log("🔥 Backend carregou item.js!");
+
+
 /* ============================================================
-   LISTAR ITENS (PÚBLICO) — COM FILTRO DE CAMPUS AUTOMÁTICO
+   LISTAR ITENS (PÚBLICO + ADMIN)
    ============================================================ */
 router.get("/", async (req, res) => {
   try {
+
     const {
       status,
       category,
@@ -20,8 +24,9 @@ router.get("/", async (req, res) => {
       user,
       campusId,
       allCampuses = false,
+      admin = false
     } = req.query;
-    
+
     const where = {};
 
     // Autenticação do token para obter campus do usuário (mantido)
@@ -68,14 +73,18 @@ router.get("/", async (req, res) => {
       }
     }
 
-    // ------- STATUS: por padrão, listar apenas 'encontrado' no catálogo público -------
-    // Se o cliente passou ?status=..., respeitamos. Caso contrário, por padrão mostramos apenas 'encontrado'.
+    /* ========= CORREÇÃO DO PROBLEMA =========== */
+
     if (status && status !== "Todos") {
       where.status = status;
-    } else if (!status) {
-      // comportamento padrão do catálogo público:
+    }
+    else if (!status && !admin) {
+      // Catálogo público → exibe só ENCONTRADO
       where.status = "encontrado";
     }
+    // Se for admin (dashboard), não filtra status!
+
+    /* =========================================== */
 
     if (category && category !== "Todos") {
       where.category = { name: category };
@@ -92,14 +101,17 @@ router.get("/", async (req, res) => {
       where.userId = user;
     }
 
+    console.log("🟥 WHERE FINAL =", where); // <--- AQUI
+
+
     const items = await prisma.item.findMany({
       where,
       include: {
         images: true,
         category: true,
         campus: true,
-        user: { 
-          select: { id: true, name: true, profilePic: true, campusId: true } 
+        user: {
+          select: { id: true, name: true, profilePic: true, campusId: true }
         },
       },
       orderBy: { createdAt: "desc" },
@@ -115,6 +127,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
+
 /* ============================================================
    LISTAR ITENS DO USUÁRIO LOGADO
    ============================================================ */
@@ -173,7 +186,7 @@ router.get("/:id", async (req, res) => {
 });
 
 /* ============================================================
-   CRIAR ITEM — INCLUINDO CAMPUS AUTOMÁTICO DO USUÁRIO
+   CRIAR ITEM
    ============================================================ */
 router.post("/", authenticateToken, async (req, res) => {
   try {
@@ -181,7 +194,7 @@ router.post("/", authenticateToken, async (req, res) => {
       title,
       description,
       imageUrls = [],
-      status = "perdido", 
+      status = "perdido",
       location,
       categoryName,
     } = req.body;
@@ -194,7 +207,6 @@ router.post("/", authenticateToken, async (req, res) => {
       });
     }
 
-    // busca o campus do usuário
     const userProfile = await prisma.profile.findUnique({
       where: { id: userId },
       select: { campusId: true }
@@ -240,7 +252,7 @@ router.post("/", authenticateToken, async (req, res) => {
 });
 
 /* ============================================================
-   ATUALIZAR ITEM
+   EDITAR ITEM
    ============================================================ */
 router.put("/:id", authenticateToken, async (req, res) => {
   try {

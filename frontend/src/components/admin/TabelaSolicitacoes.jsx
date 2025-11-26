@@ -126,11 +126,10 @@ function CarrosselImagens({ imagens = [], nome }) {
           key={index}
           src={src}
           alt={`${nome} - ${index + 1}`}
-          className={`absolute w-full h-full object-cover transition-all duration-500 ${
-            index === currentIndex
+          className={`absolute w-full h-full object-cover transition-all duration-500 ${index === currentIndex
               ? "opacity-100 scale-100"
               : "opacity-0 scale-105"
-          }`}
+            }`}
           onError={(e) => {
             console.error("❌ Erro ao carregar imagem:", src);
             e.target.style.display = "none";
@@ -159,9 +158,8 @@ function CarrosselImagens({ imagens = [], nome }) {
             {imagensValidas.map((_, index) => (
               <button
                 key={index}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index === currentIndex ? "bg-white scale-125" : "bg-white/60"
-                }`}
+                className={`w-2 h-2 rounded-full transition-all ${index === currentIndex ? "bg-white scale-125" : "bg-white/60"
+                  }`}
                 onClick={() => setCurrentIndex(index)}
               />
             ))}
@@ -177,9 +175,12 @@ function CarrosselImagens({ imagens = [], nome }) {
 ------------------------- */
 export default function TabelaSolicitacoes({
   solicitacoes = [],
-  deleteSolicitacao = () => {},
-  updateStatus = () => {},
+  deleteSolicitacao = () => { },
+  updateStatus = () => { },
 }) {
+
+console.log("📄 TabelaSolicitacoes MONTADA", performance.now());
+
   const [expandedRow, setExpandedRow] = useState(null);
   const navigate = useNavigate();
 
@@ -236,19 +237,18 @@ export default function TabelaSolicitacoes({
                   <td className="p-3">{formatarData(dataRaw)}</td>
                   <td className="p-3">
                     <span
-                      className={`px-2 py-1 text-white text-xs font-semibold rounded ${
-                        s.status === "aprovada"
+                      className={`px-2 py-1 text-white text-xs font-semibold rounded ${s.status === "aprovada"
                           ? "bg-green-500"
                           : s.status === "negada"
-                          ? "bg-red-500"
-                          : "bg-yellow-500"
-                      }`}
+                            ? "bg-red-500"
+                            : "bg-yellow-500"
+                        }`}
                     >
                       {s.status === "aprovada"
                         ? "Aprovada"
                         : s.status === "negada"
-                        ? "Negada"
-                        : "Pendente"}
+                          ? "Negada"
+                          : "Pendente"}
                     </span>
                   </td>
                   <td className="p-3 text-center">
@@ -296,7 +296,7 @@ export default function TabelaSolicitacoes({
                           <CarrosselImagens
                             imagens={
                               Array.isArray(s.item?.images) &&
-                              s.item.images.length > 0
+                                s.item.images.length > 0
                                 ? s.item.images
                                 : []
                             }
@@ -314,15 +314,14 @@ export default function TabelaSolicitacoes({
                           <p className="flex items-center gap-2">
                             <span className="font-medium">Status do Item:</span>
                             <span
-                              className={`px-2 py-1 rounded text-white text-xs font-semibold ${
-                                s.item?.status === "encontrado"
+                              className={`px-2 py-1 rounded text-white text-xs font-semibold ${s.item?.status === "encontrado"
                                   ? "bg-green-600"
                                   : s.item?.status === "perdido"
-                                  ? "bg-red-600"
-                                  : s.item?.status === "reclamado"
-                                  ? "bg-blue-600"
-                                  : "bg-gray-600"
-                              }`}
+                                    ? "bg-red-600"
+                                    : s.item?.status === "reclamado"
+                                      ? "bg-blue-600"
+                                      : "bg-gray-600"
+                                }`}
                             >
                               {s.item?.status ?? "Não informado"}
                             </span>
@@ -336,19 +335,18 @@ export default function TabelaSolicitacoes({
                               Status da Solicitação:
                             </span>
                             <span
-                              className={`px-2 py-1 text-white text-xs font-semibold rounded ${
-                                s.status === "aprovada"
+                              className={`px-2 py-1 text-white text-xs font-semibold rounded ${s.status === "aprovada"
                                   ? "bg-green-500"
                                   : s.status === "negada"
-                                  ? "bg-red-500"
-                                  : "bg-yellow-500"
-                              }`}
+                                    ? "bg-red-500"
+                                    : "bg-yellow-500"
+                                }`}
                             >
                               {s.status === "aprovada"
                                 ? "Aprovada"
                                 : s.status === "negada"
-                                ? "Negada"
-                                : "Pendente"}
+                                  ? "Negada"
+                                  : "Pendente"}
                             </span>
                           </p>
                         </div>

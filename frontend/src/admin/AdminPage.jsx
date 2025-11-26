@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -23,9 +23,11 @@ import LogoLoader from "../components/LogoLoader";
 import ManageAdmins from "../components/admin/ManageAdmins";
 import ManageCampus from "../components/admin/ManageCampus";
 import GeradorRelatorio from "../components/admin/GeradorRelatorio";
-// import GerenciarSenhas from "../components/admin/GerenciarSenhas";
 
 export default function AdminPage() {
+console.log("🔥 ADMINPAGE MONTADO", performance.now());
+
+
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -34,19 +36,21 @@ export default function AdminPage() {
   const [componenteAtivo, setComponenteAtivo] = useState("dashboard");
   const [solicitacoes, setSolicitacoes] = useState([]);
 
+  // refs para evitar chamadas duplicadas
+  const solicitacoesFetchedRef = useRef(false); // marca se já buscou com sucesso
+  const solicitacoesFetchingRef = useRef(false); // marca se há fetch em andamento
+  const isMountedRef = useRef(true);
 
   const API_BASE =
     import.meta.env.VITE_API_URL || "https://iflow-backend.onrender.com";
 
   useEffect(() => {
+    isMountedRef.current = true;
     verificarAdmin();
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
-
-  // const handleStatusUpdate = (id, novoStatus) => {
-  //   setSolicitacoes((prev) =>
-  //     prev.map((s) => (s.id === id ? { ...s, status: novoStatus } : s))
-  //   );
-  // };
 
   async function verificarAdmin() {
     try {
@@ -77,39 +81,69 @@ export default function AdminPage() {
     }
   }
 
-  async function carregarSolicitacoes() {
+  // carregarSolicitacoes agora com AbortController e checagens de ref
+  async function carregarSolicitacoes(signal = undefined) {
+    // evita chamadas duplicadas
+    if (solicitacoesFetchedRef.current || solicitacoesFetchingRef.current) return;
+    solicitacoesFetchingRef.current = true;
+
     try {
-      const res = await fetch(`${API_BASE}/solicitacoes`);
-      if (!res.ok) throw new Error("Erro ao buscar solicitações");
+      const token = localStorage.getItem("token") || "";
+      const controller = signal ? null : new AbortController();
+      const fetchSignal = signal ?? controller.signal;
+
+      const res = await fetch(`${API_BASE}/solicitacoes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        signal: fetchSignal,
+      });
+
+      if (!res.ok) {
+        // log detalhado para debugging
+        const text = await res.text().catch(() => "");
+        throw new Error(`Erro ao buscar solicitações: ${res.status} ${text}`);
+      }
+
       const data = await res.json();
+      if (!isMountedRef.current) return;
+
       setSolicitacoes(data);
+      solicitacoesFetchedRef.current = true; // marca sucesso
     } catch (error) {
-      console.error("❌ Erro ao carregar solicitações:", error);
+      if (error.name === "AbortError") {
+        console.warn("Fetch de /solicitacoes abortado.");
+      } else {
+        console.error("❌ Erro ao carregar solicitações:", error);
+      }
+    } finally {
+      solicitacoesFetchingRef.current = false;
     }
   }
 
-  useEffect(() => {
-    if (componenteAtivo === "solicitacoes" && solicitacoes.length === 0) {
-      carregarSolicitacoes();
-    }
-  }, [componenteAtivo]);
+  // Se você quiser forçar recarregar (ex: botão "Atualizar"), zera a flag e chama de novo
+  function forcarRecarregarSolicitacoes() {
+    solicitacoesFetchedRef.current = false;
+    carregarSolicitacoes();
+  }
 
-
+  // Mantém a lógica de update/delete com otimização local
   async function updateStatus(id, novoStatus) {
     try {
       const res = await fetch(`${API_BASE}/solicitacoes/${id}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({ status: novoStatus }),
       });
 
       if (!res.ok) throw new Error("Erro ao atualizar status");
 
-      setSolicitacoes(prev =>
-        prev.map(s => s.id === id ? { ...s, status: novoStatus } : s)
+      setSolicitacoes((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: novoStatus } : s))
       );
 
       return true;
@@ -126,7 +160,7 @@ export default function AdminPage() {
       const res = await fetch(`${API_BASE}/solicitacoes/${id}`, {
         method: "DELETE",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
@@ -143,7 +177,6 @@ export default function AdminPage() {
     }
   }
 
-  // 🔥 MENU COMPLETO - TODAS AS FUNÇÕES ORIGINAIS + NOVAS
   const baseMenuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "solicitacoes", label: "Solicitações", icon: FileText },
@@ -152,16 +185,23 @@ export default function AdminPage() {
     { id: "relatorios", label: "Relatórios", icon: BarChart3 },
   ];
 
-  // 🔥 FUNÇÕES EXTRAS APENAS PARA SUPERADMIN
   const superAdminMenuItems = [
     { id: "gerenciar-admins", label: "Gerenciar Admins", icon: Shield },
     { id: "gerenciar-campus", label: "Gerenciar Campus", icon: Building },
   ];
 
-  // 🔥 COMBINAR MENUS - SuperAdmin vê tudo, Admin normal vê só o básico
   const menuItems = userData?.isSuperAdmin
     ? [...baseMenuItems, ...superAdminMenuItems]
     : baseMenuItems;
+
+  // Carrega uma vez ao mudar para a aba *somente se ainda não tiver buscado*
+  useEffect(() => {
+    if (componenteAtivo === "solicitacoes") {
+      // chama somente se não tiver sido buscado antes
+      carregarSolicitacoes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [componenteAtivo]);
 
   const renderComponente = () => {
     switch (componenteAtivo) {
@@ -208,7 +248,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-gray-900 dark:text-gray-100">
-      {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white dark:bg-neutral-800 shadow-md z-40">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
@@ -245,7 +284,6 @@ export default function AdminPage() {
       </header>
 
       <div className="flex pt-16">
-        {/* Sidebar */}
         <aside
           className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white dark:bg-neutral-800 shadow-lg z-30 transition-all duration-300 ease-in-out ${menuAberto
               ? "w-64 translate-x-0"
@@ -266,6 +304,10 @@ export default function AdminPage() {
                       onClick={() => {
                         setComponenteAtivo(item.id);
                         if (window.innerWidth < 768) setMenuAberto(false);
+                        // Carrega imediamente se for solicitacoes e ainda não buscou
+                        if (item.id === "solicitacoes" && !solicitacoesFetchedRef.current) {
+                          carregarSolicitacoes();
+                        }
                       }}
                       className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${componenteAtivo === item.id
                           ? isSuperAdminItem
@@ -276,9 +318,7 @@ export default function AdminPage() {
                     >
                       <Icon size={20} />
                       <span
-                        className={`transition-opacity duration-200 ${menuAberto
-                            ? "opacity-100"
-                            : "opacity-0 md:opacity-100"
+                        className={`transition-opacity duration-200 ${menuAberto ? "opacity-100" : "opacity-0 md:opacity-100"
                           } ${!menuAberto && "md:hidden"}`}
                       >
                         {item.label}
@@ -296,7 +336,6 @@ export default function AdminPage() {
           </nav>
         </aside>
 
-        {/* Conteúdo */}
         <main
           className={`flex-1 transition-all duration-300 ${menuAberto ? "md:ml-64" : "md:ml-20"
             } p-6`}
@@ -307,13 +346,11 @@ export default function AdminPage() {
                 {menuItems.find((item) => item.id === componenteAtivo)?.label ||
                   "Dashboard"}
               </h2>
-              {superAdminMenuItems.some(
-                (item) => item.id === componenteAtivo
-              ) && (
-                  <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
-                    ⚡ Funcionalidade exclusiva para SuperAdmin
-                  </p>
-                )}
+              {superAdminMenuItems.some((item) => item.id === componenteAtivo) && (
+                <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
+                  ⚡ Funcionalidade exclusiva para SuperAdmin
+                </p>
+              )}
             </div>
             <div className="animate-fade-in">{renderComponente()}</div>
           </div>

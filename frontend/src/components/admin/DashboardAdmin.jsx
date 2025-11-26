@@ -17,6 +17,7 @@ import {
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function DashboardAdmin() {
+    console.log("📊 DashboardAdmin MONTADO");
   const [loading, setLoading] = useState(true);
   const [itens, setItens] = useState([]);
   const [solicitacoes, setSolicitacoes] = useState([]);

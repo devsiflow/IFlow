@@ -119,11 +119,10 @@ router.get("/:id", async (req, res) => {
 router.put("/:id/status", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, destino } = req.body;
+    const { status, atualizarItem } = req.body;
 
-    console.log(
-      `🔄 Atualizando status da validação ${id} para: ${status}, destino: ${destino}`
-    );
+    console.log(`🔄 Atualizando status da validação ${id} para: ${status}`);
+    console.log(`👤 Usuário solicitante: ${req.user.id}`);
 
     // Verificar se o usuário é admin
     if (!req.user.isAdmin && !req.user.isSuperAdmin) {
@@ -132,60 +131,64 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
         .json({ error: "Acesso restrito a administradores" });
     }
 
-    // VALIDAÇÃO: Se for aprovada, destino é obrigatório
-    if (status === "aprovada" && !destino) {
-      return res
-        .status(400)
-        .json({ error: "Destino é obrigatório para aprovação" });
-    }
-
-    // VALIDAÇÃO: Se for negada, destino deve ser null
-    if (status === "negada" && destino) {
-      return res
-        .status(400)
-        .json({ error: "Destino não deve ser informado para negação" });
-    }
-
-    // Dados para atualização
-    const updateData = {
-      status,
-      // Se for aprovada, salva o destino; se for negada, define como null
-      destino: status === "aprovada" ? destino : null,
-    };
-
-    const updated = await prisma.itemValidation.update({
-      where: { id: Number(id) },
-      data: updateData,
-      include: {
-        item: {
-          include: {
-            images: true,
-            category: true,
+    // Iniciar transação para atualizar validação E item
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Atualizar o status da validação
+      const updatedValidation = await tx.itemValidation.update({
+        where: { id: Number(id) },
+        data: { status },
+        include: {
+          item: {
+            include: {
+              images: true,
+              category: true,
+            },
+          },
+          profile: {
+            select: {
+              id: true,
+              name: true,
+              matricula: true,
+              profilePic: true,
+            },
           },
         },
-        profile: {
-          select: {
-            id: true,
-            name: true,
-            matricula: true,
-            profilePic: true,
-          },
-        },
-      },
+      });
+
+      // 2. Se for aprovação E foi solicitado atualizar o item, marcar como "devolvido"
+      let updatedItem = null;
+      if (status === "aprovada" && atualizarItem && updatedValidation.itemId) {
+        updatedItem = await tx.item.update({
+          where: { id: updatedValidation.itemId },
+          data: { status: "devolvido" },
+        });
+        console.log(
+          `✅ Item ${updatedValidation.itemId} marcado como devolvido`
+        );
+      }
+
+      return {
+        validation: updatedValidation,
+        item: updatedItem,
+      };
     });
 
     // Formatar resposta para manter compatibilidade
     const response = {
-      ...updated,
-      aluno: updated.profile,
-      createdAt: updated.createdAt ? updated.createdAt.toISOString() : null,
+      ...result.validation,
+      aluno: result.validation.profile,
+      createdAt: result.validation.createdAt
+        ? result.validation.createdAt.toISOString()
+        : null,
+      // Incluir informação sobre o item atualizado
+      _itemAtualizado: result.item ? true : false,
     };
 
-    console.log(
-      `✅ Status da validação ${id} atualizado para: ${status}, destino: ${
-        destino || "null"
-      }`
-    );
+    console.log(`✅ Status da validação ${id} atualizado para: ${status}`);
+    if (status === "aprovada") {
+      console.log(`📦 Item ${result.validation.itemId} marcado como devolvido`);
+    }
+
     res.json(response);
   } catch (err) {
     console.error("❌ Erro ao atualizar status:", err);

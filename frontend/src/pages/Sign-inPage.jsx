@@ -4,6 +4,23 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import logo from "../assets/logo.jpg";
 import { supabase } from "../lib/supabaseClient";
 
+// Lista de palavras proibidas
+const palavrasProibidas = [
+  "porra",
+  "caralho",
+  "buceta",
+  "foder",
+  "foda-se",
+  "retardado",
+  "arrombado",
+  "fdp",
+  "viado",
+  "puta",
+  "cacete",
+  "krl",
+  "pnc",
+];
+
 export default function Cadastro() {
   const navigate = useNavigate();
   const [matricula, setMatricula] = useState("");
@@ -21,6 +38,12 @@ export default function Cadastro() {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
+  // Verificação de nome clean
+  const contemPalavraRuim = (texto) => {
+    const lower = texto.toLowerCase();
+    return palavrasProibidas.some((palavra) => lower.includes(palavra));
+  };
+
   // Buscar campus ao carregar
   useEffect(() => {
     const fetchCampus = async () => {
@@ -30,13 +53,9 @@ export default function Cadastro() {
 
         let lista = [];
 
-        if (Array.isArray(data)) {
-          lista = data;
-        } else if (Array.isArray(data.campus)) {
-          lista = data.campus;
-        } else if (Array.isArray(data.data)) {
-          lista = data.data;
-        }
+        if (Array.isArray(data)) lista = data;
+        else if (Array.isArray(data.campus)) lista = data.campus;
+        else if (Array.isArray(data.data)) lista = data.data;
 
         setCampusList(lista);
       } catch (err) {
@@ -51,6 +70,15 @@ export default function Cadastro() {
     e.preventDefault();
     setError("");
     setSuccess(false);
+
+    // Verifica palavras sensíveis
+    if (contemPalavraRuim(nome)) {
+      return setError("Remova palavras ofensivas do nome.");
+    }
+
+    if (contemPalavraRuim(matricula)) {
+      return setError("A matrícula contém texto ofensivo.");
+    }
 
     if (!matricula || !nome || !email || !senha || !campusId) {
       return setError("Todos os campos são obrigatórios");
@@ -71,9 +99,9 @@ export default function Cadastro() {
           data: {
             name: nome,
             matricula: matricula,
-            campusId: campusId
-          }
-        }
+            campusId: campusId,
+          },
+        },
       });
 
       if (supError) {
@@ -83,12 +111,12 @@ export default function Cadastro() {
 
       if (!data.user) {
         setLoading(false);
-        return setError("Usuário não retornou do Supabase");
+        return setError("Erro ao criar usuário no Supabase");
       }
 
       const userId = data.user.id;
 
-      // Criar profile manualmente
+      // Criar profile manualmente no backend
       const profileRes = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -101,22 +129,22 @@ export default function Cadastro() {
       });
 
       if (!profileRes.ok) {
-        const errData = await profileRes.json();
-        throw new Error(errData.error || "Erro ao criar perfil");
+        const e = await profileRes.json();
+        throw new Error(e.error || "Erro ao criar perfil no banco");
       }
 
       setLoading(false);
       setSuccess(true);
-
     } catch (err) {
       console.error(err);
       setLoading(false);
-      setError("Erro ao criar usuário: " + err.message);
+      setError("Erro ao criar conta: " + err.message);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-4 relative">
+
       <button
         onClick={() => navigate(-1)}
         className="fixed top-4 left-4 z-50 p-2 rounded hover:bg-gray-200 transition group"
@@ -137,7 +165,7 @@ export default function Cadastro() {
 
         {success ? (
           <div className="p-4 bg-green-100 border border-green-400 rounded-md text-green-800 text-center">
-            Conta criada com sucesso! Verifique seu e-mail para ativar a conta.
+            Conta criada com sucesso! Verifique seu e-mail.
             <button
               onClick={() => navigate("/login")}
               className="mt-3 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-500"
@@ -148,6 +176,7 @@ export default function Cadastro() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
 
+            {/* MATRÍCULA */}
             <input
               type="text"
               placeholder="Matrícula"
@@ -155,10 +184,10 @@ export default function Cadastro() {
               onChange={(e) => setMatricula(e.target.value)}
               className="w-full px-4 py-2 border rounded-md"
               required
-              autoFocus
               disabled={loading}
             />
 
+            {/* NOME */}
             <input
               type="text"
               placeholder="Nome completo"
@@ -169,6 +198,7 @@ export default function Cadastro() {
               disabled={loading}
             />
 
+            {/* EMAIL */}
             <input
               type="email"
               placeholder="E-mail institucional"
@@ -179,6 +209,7 @@ export default function Cadastro() {
               disabled={loading}
             />
 
+            {/* CAMPUS */}
             <select
               value={campusId}
               onChange={(e) => setCampusId(e.target.value)}
@@ -211,7 +242,7 @@ export default function Cadastro() {
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
                 disabled={loading}
               >
-                {showSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showSenha ? <EyeOff /> : <Eye />}
               </button>
             </div>
 
@@ -232,7 +263,7 @@ export default function Cadastro() {
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
                 disabled={loading}
               >
-                {showConfirmSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showConfirmSenha ? <EyeOff /> : <Eye />}
               </button>
             </div>
 
@@ -240,7 +271,7 @@ export default function Cadastro() {
               <p className="text-red-500 text-sm text-center">{error}</p>
             )}
 
-            {/* BOTÃO COM LOADER */}
+            {/* BOTÃO */}
             <button
               type="submit"
               className="w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-md flex items-center justify-center gap-2"
@@ -261,7 +292,6 @@ export default function Cadastro() {
             >
               Voltar para login
             </button>
-
           </form>
         )}
       </div>

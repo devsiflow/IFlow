@@ -49,9 +49,9 @@ function formatDateHelper(iso) {
 function getStatusClass(status) {
   if (!status) return "bg-gray-500 text-white";
   const s = String(status).toLowerCase();
-  if (s.includes("perd")) return "bg-yellow-200 text-yellow-800";
-  if (s.includes("encontr")) return "bg-blue-200 text-blue-800";
-  if (s.includes("devol")) return "bg-green-200 text-green-800";
+  if (s.includes("perd")) return "bg-red-300 text-red-800";
+  if (s.includes("encontr")) return "bg-blue-300 text-blue-800";
+  if (s.includes("devol")) return "bg-green-300 text-green-800";
   return "bg-gray-200 text-gray-800";
 }
 

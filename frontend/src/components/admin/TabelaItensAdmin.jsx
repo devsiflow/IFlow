@@ -14,25 +14,10 @@ import {
 import { supabase } from "../../lib/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import Loader from "../Loader"; 
 
-/**
- * TabelaItensAdmin.jsx (DELUXE - CORRIGIDO)
- * - Mantém fetch / edição / exclusão (admin=true,pageSize=500)
- * - Ao clicar no olho abre modal com:
- *   - carrossel drag/swipe
- *   - thumbnails com highlight
- *   - skeleton por imagem
- *   - zoom (double click ou botão)
- *   - keyboard (ESC, ←, →)
- *   - botão ver item completo (navega pra /item/:id)
- *   - copiar ID/abrir link externo/mostrar metadados/timeline básica
- *
- * Correção: helpers compartilhados (formatDate) declarados UMA vez para evitar conflitos.
- */
 
-/* ----------------------
-   Helper único para formatar datas (evita declaração duplicada)
-   ---------------------- */
+
 function formatDateHelper(iso) {
   if (!iso) return "-";
   try {
@@ -134,7 +119,9 @@ export default function TabelaItensAdmin() {
     }
   }
 
-  if (loading) return <div className="p-4 text-center">Carregando itens...</div>;
+  if (loading) {
+    return <Loader message="Carregando solicitações..." />;
+  }
 
   const perdidos = itens.filter((i) => i.status === "perdido");
   const encontrados = itens.filter((i) => i.status === "encontrado");
@@ -511,9 +498,8 @@ function DeluxeModal({ item, onClose, navigate }) {
                       initial={{ opacity: 0.85 }}
                       animate={loadedMap[urls[index]] ? { opacity: 1 } : { opacity: 0.85 }}
                       transition={{ duration: 0.4 }}
-                      className={`max-h-[52vh] md:max-h-[62vh] object-contain select-none ${
-                        zoomed ? "cursor-zoom-out" : "cursor-zoom-in"
-                      }`}
+                      className={`max-h-[52vh] md:max-h-[62vh] object-contain select-none ${zoomed ? "cursor-zoom-out" : "cursor-zoom-in"
+                        }`}
                       style={{
                         transform: zoomed ? "scale(1.9)" : "scale(1)",
                         transition: "transform 300ms ease",
@@ -577,11 +563,10 @@ function DeluxeModal({ item, onClose, navigate }) {
                         setIndex(i);
                         setZoomed(false);
                       }}
-                      className={`w-20 h-14 rounded overflow-hidden border-2 shrink-0 transition transform ${
-                        i === index
-                          ? "border-blue-400 scale-105"
-                          : "border-transparent hover:scale-105"
-                      }`}
+                      className={`w-20 h-14 rounded overflow-hidden border-2 shrink-0 transition transform ${i === index
+                        ? "border-blue-400 scale-105"
+                        : "border-transparent hover:scale-105"
+                        }`}
                       aria-label={`Ir para imagem ${i + 1}`}
                     >
                       <img src={u} alt={`thumb-${i}`} className="w-full h-full object-cover" />

@@ -21,6 +21,7 @@ import SolicitacaoDetalhes from "./components/admin/SolicitacaoDetalhes.jsx";
 
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import AdminFloatingButton from "./components/AdminFloatingButton.jsx";
+import ConfirmacaoEncontrado from "./pages/ConfirmacaoEncontrado.jsx";
 
 // eslint-disable-next-line react-refresh/only-export-components
 function LayoutWrapper({ children }) {
@@ -103,6 +104,15 @@ const router = createBrowserRouter([
     element: (
       <LayoutWrapper>
         <ItensNaoEncontrados />
+      </LayoutWrapper>
+    ),
+  },
+
+   {
+    path: "/confirmacao-encontrado/:id",
+    element: (
+      <LayoutWrapper>
+        <ConfirmacaoEncontrado />
       </LayoutWrapper>
     ),
   },

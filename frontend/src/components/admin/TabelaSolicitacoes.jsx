@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Loader from "../Loader";
 
 /* ------------------------
    RESOLVER NOME DO ALUNO
@@ -126,11 +127,10 @@ function CarrosselImagens({ imagens = [], nome }) {
           key={index}
           src={src}
           alt={`${nome} - ${index + 1}`}
-          className={`absolute w-full h-full object-cover transition-all duration-500 ${
-            index === currentIndex
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-105"
-          }`}
+          className={`absolute w-full h-full object-cover transition-all duration-500 ${index === currentIndex
+            ? "opacity-100 scale-100"
+            : "opacity-0 scale-105"
+            }`}
           onError={(e) => {
             console.error("❌ Erro ao carregar imagem:", src);
             e.target.style.display = "none";
@@ -159,9 +159,8 @@ function CarrosselImagens({ imagens = [], nome }) {
             {imagensValidas.map((_, index) => (
               <button
                 key={index}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index === currentIndex ? "bg-white scale-125" : "bg-white/60"
-                }`}
+                className={`w-2 h-2 rounded-full transition-all ${index === currentIndex ? "bg-white scale-125" : "bg-white/60"
+                  }`}
                 onClick={() => setCurrentIndex(index)}
               />
             ))}
@@ -248,13 +247,17 @@ function FiltrosSolicitacoes({ filtros, onFiltrosChange, contadores }) {
   );
 }
 
+
+
+
 /* ------------------------
    TABELA DE SOLICITAÇÕES
 ------------------------- */
 export default function TabelaSolicitacoes({
+
   solicitacoes = [],
-  deleteSolicitacao = () => {},
-  updateStatus = () => {},
+  deleteSolicitacao = () => { },
+  updateStatus = () => { },
 }) {
   console.log("📄 TabelaSolicitacoes MONTADA", performance.now());
 
@@ -389,12 +392,10 @@ export default function TabelaSolicitacoes({
     }
   };
 
-  if (!solicitacoes.length)
-    return (
-      <div className="p-6 text-center bg-white dark:bg-neutral-800 rounded-lg text-gray-600 dark:text-gray-400">
-        Nenhuma solicitação encontrada.
-      </div>
-    );
+  if (solicitacoes.length === 0)
+    return <Loader message="Carregando solicitações..." />;
+
+
 
   return (
     <div>
@@ -448,19 +449,18 @@ export default function TabelaSolicitacoes({
                     <td className="p-3">{formatarData(dataRaw)}</td>
                     <td className="p-3">
                       <span
-                        className={`px-2 py-1 text-white text-xs font-semibold rounded ${
-                          s.status === "aprovada"
-                            ? "bg-green-500"
-                            : s.status === "negada"
+                        className={`px-2 py-1 text-white text-xs font-semibold rounded ${s.status === "aprovada"
+                          ? "bg-green-500"
+                          : s.status === "negada"
                             ? "bg-red-500"
                             : "bg-yellow-500"
-                        }`}
+                          }`}
                       >
                         {s.status === "aprovada"
                           ? "Aprovada"
                           : s.status === "negada"
-                          ? "Negada"
-                          : "Pendente"}
+                            ? "Negada"
+                            : "Pendente"}
                       </span>
                     </td>
                     <td className="p-3 text-center">
@@ -510,7 +510,7 @@ export default function TabelaSolicitacoes({
                             <CarrosselImagens
                               imagens={
                                 Array.isArray(s.item?.images) &&
-                                s.item.images.length > 0
+                                  s.item.images.length > 0
                                   ? s.item.images
                                   : []
                               }
@@ -530,15 +530,14 @@ export default function TabelaSolicitacoes({
                                 Status do Item:
                               </span>
                               <span
-                                className={`px-2 py-1 rounded text-white text-xs font-semibold ${
-                                  s.item?.status === "encontrado"
-                                    ? "bg-green-600"
-                                    : s.item?.status === "perdido"
+                                className={`px-2 py-1 rounded text-white text-xs font-semibold ${s.item?.status === "encontrado"
+                                  ? "bg-green-600"
+                                  : s.item?.status === "perdido"
                                     ? "bg-red-600"
                                     : s.item?.status === "reclamado"
-                                    ? "bg-blue-600"
-                                    : "bg-gray-600"
-                                }`}
+                                      ? "bg-blue-600"
+                                      : "bg-gray-600"
+                                  }`}
                               >
                                 {s.item?.status ?? "Não informado"}
                               </span>
@@ -552,19 +551,18 @@ export default function TabelaSolicitacoes({
                                 Status da Solicitação:
                               </span>
                               <span
-                                className={`px-2 py-1 text-white text-xs font-semibold rounded ${
-                                  s.status === "aprovada"
-                                    ? "bg-green-500"
-                                    : s.status === "negada"
+                                className={`px-2 py-1 text-white text-xs font-semibold rounded ${s.status === "aprovada"
+                                  ? "bg-green-500"
+                                  : s.status === "negada"
                                     ? "bg-red-500"
                                     : "bg-yellow-500"
-                                }`}
+                                  }`}
                               >
                                 {s.status === "aprovada"
                                   ? "Aprovada"
                                   : s.status === "negada"
-                                  ? "Negada"
-                                  : "Pendente"}
+                                    ? "Negada"
+                                    : "Pendente"}
                               </span>
                             </p>
                           </div>

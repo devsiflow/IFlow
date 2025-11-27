@@ -22,47 +22,11 @@ const palavrasProibidas = [
   "pnc",
 ];
 
-// 🔥 Verificador igual do SignPage
 const contemPalavraRuim = (texto) => {
   if (!texto) return false;
   const lower = texto.toLowerCase();
   return palavrasProibidas.some((p) => lower.includes(p));
 };
-
-// Função para gerar miniatura antes de subir
-async function generateThumbnail(file, maxSize = 400) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      let { width, height } = img;
-
-      if (width > height) {
-        if (width > maxSize) {
-          height *= maxSize / width;
-          width = maxSize;
-        }
-      } else {
-        if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => resolve(new File([blob], file.name, { type: "image/jpeg" })),
-        "image/jpeg",
-        0.8
-      );
-    };
-    img.src = URL.createObjectURL(file);
-  });
-}
 
 export default function CadastrarItem() {
   const navigate = useNavigate();
@@ -73,7 +37,7 @@ export default function CadastrarItem() {
     description: "",
     local: "",
     category: "",
-    tipo: "", // 🔥 encontrou / perdeu
+    tipo: "", 
   });
 
   const [imageFiles, setImageFiles] = useState([]);
@@ -81,7 +45,6 @@ export default function CadastrarItem() {
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Aviso para logar se não estiver
   const [showLoginWarning, setShowLoginWarning] = useState(!token);
   const [warningBlink, setWarningBlink] = useState(false);
 
@@ -103,10 +66,9 @@ export default function CadastrarItem() {
     setIsDragging(false);
     const files = Array.from(e.dataTransfer.files).slice(0, 5);
     const validFiles = files.filter((file) => file.type.startsWith("image/"));
-    setImageFiles(validFiles);
 
-    const previews = validFiles.map((f) => URL.createObjectURL(f));
-    setImagePreviews(previews);
+    setImageFiles(validFiles);
+    setImagePreviews(validFiles.map((f) => URL.createObjectURL(f)));
   };
 
   const removeImage = (index) => {
@@ -123,7 +85,6 @@ export default function CadastrarItem() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 🔥 MODERADOR AQUI — Igual SignPage
     if (contemPalavraRuim(form.name)) {
       alert("Remova palavras ofensivas do nome do item.");
       return;
@@ -152,7 +113,6 @@ export default function CadastrarItem() {
 
       if (warning) {
         warning.scrollIntoView({ behavior: "smooth", block: "center" });
-
         setWarningBlink(true);
         setTimeout(() => setWarningBlink(false), 1000);
       }
@@ -166,11 +126,10 @@ export default function CadastrarItem() {
       const API_URL =
         import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
 
-      // Obtém dados do usuário
+      // pega dados do user
       const userData = await supabase.auth.getUser(token);
       const user = userData.data.user;
 
-      // Sincroniza perfil
       await fetch(`${API_URL}/me`, {
         method: "PUT",
         headers: {
@@ -185,17 +144,16 @@ export default function CadastrarItem() {
         }),
       });
 
-      // Upload imagens
+      // UPLOAD DAS IMAGENS COM QUALIDADE MÁXIMA 🔥🔥🔥
       const uploadedUrls = [];
 
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
-        const thumb = await generateThumbnail(file);
-        const ext = thumb.name.split(".").pop();
+        const ext = file.name.split(".").pop();
         const fileName = `${Date.now()}_${i}.${ext}`;
         const filePath = `public/${fileName}`;
 
-        await supabase.storage.from("iflow-item").upload(filePath, thumb, {
+        await supabase.storage.from("iflow-item").upload(filePath, file, {
           upsert: true,
         });
 
@@ -206,10 +164,9 @@ export default function CadastrarItem() {
         uploadedUrls.push(data.publicUrl);
       }
 
-      // 🔥 status conforme escolha do usuário
-      const statusFinal = form.tipo === "encontrei" ? "encontrado" : "perdido";
+      const statusFinal =
+        form.tipo === "encontrei" ? "encontrado" : "perdido";
 
-      // Criar item
       const res = await fetch(`${API_URL}/items`, {
         method: "POST",
         headers: {
@@ -258,7 +215,7 @@ export default function CadastrarItem() {
                 warningBlink ? "animate-pulse" : ""
               }`}
             >
-              <Info size={16} strokeWidth={2} />
+              <Info size={16} />
               <span>Para cadastrar um item, você precisa estar logado.</span>
             </div>
           )}
@@ -316,30 +273,28 @@ export default function CadastrarItem() {
             {/* Descrição */}
             <div className="flex flex-col">
               <label className="mb-2 font-semibold">Descrição</label>
-             <textarea
-  name="description"
-  value={form.description}
-  onChange={handleChange}
-  required
-  rows={4}
-  placeholder="Descreva o item detalhadamente: cor, marca, estado, detalhes únicos..."
-  className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700 placeholder-gray-400"
-/>
-
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                required
+                rows={4}
+                placeholder="Descreva o item detalhadamente"
+                className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+              />
             </div>
 
             {/* Local */}
             <div className="flex flex-col">
               <label className="mb-2 font-semibold">Local</label>
-             <input
-  name="local"
-  value={form.local}
-  onChange={handleChange}
-  required
-  placeholder="Ex: Quadra, laboratório, corredor do bloco A..."
-  className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700 placeholder-gray-400"
-/>
-
+              <input
+                name="local"
+                value={form.local}
+                onChange={handleChange}
+                required
+                placeholder="Ex: Quadra, laboratório..."
+                className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
+              />
             </div>
 
             {/* Categoria */}

@@ -12,35 +12,63 @@
 .fontgeist {
   font-family: "Geist", sans-serif;
 
-  font-weight: 400  ;
+  font-weight: 400;
 
   color: rgb(102, 102, 102);
-};
+}
+
+;
 
 /* Remove scrol horizontal */
-html, body, #root{
-    overflow-x: hidden !important;
-};
+html,
+body,
+#root {
+  overflow-x: hidden !important;
+}
+
+;
 
 .menuhome {
-  background: linear-gradient(to bottom, rgb(0, 0, 0), rgba(0,0,0,0)); 
+  background: linear-gradient(to bottom, rgb(0, 0, 0), rgba(0, 0, 0, 0));
   color: yellow;
 }
 
 @keyframes shooting {
-  0% { transform: translateX(0) translateY(0) rotate(45deg); opacity: 0; }
-  50% { opacity: 1; }
-  100% { transform: translateX(200px) translateY(200px) rotate(45deg); opacity: 0; }
+  0% {
+    transform: translateX(0) translateY(0) rotate(45deg);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(200px) translateY(200px) rotate(45deg);
+    opacity: 0;
+  }
 }
 
 @keyframes fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes zoom {
-  from { transform: scale(0.85); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .animate-fade {
@@ -57,6 +85,7 @@ html, body, #root{
     opacity: 0;
     transform: translateY(-10px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
@@ -68,8 +97,13 @@ html, body, #root{
 }
 
 @keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
+  from {
+    opacity: 0
+  }
+
+  to {
+    opacity: 1
+  }
 }
 
 .animate-fadeIn {
@@ -77,9 +111,23 @@ html, body, #root{
 }
 
 
-html, body {
+html,
+body {
   overflow-x: hidden !important;
   width: 100% !important;
 }
 
 
+@keyframes spinInsano {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.15);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}

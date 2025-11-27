@@ -133,11 +133,13 @@ export default function ItensNaoEncontrados() {
 
         {/* Lista */}
         {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <ul className="space-y-4">
             {filteredItems.map((item) => (
-              <ItemCard key={item.id} item={item} />
+              <li key={item.id}>
+                <ItemCard item={item} />
+              </li>
             ))}
-          </div>
+          </ul>
         ) : (
           <div className="text-center text-neutral-500 mt-16 text-sm">
             Nenhum item perdido encontrado.

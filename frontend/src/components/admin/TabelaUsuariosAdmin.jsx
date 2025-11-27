@@ -11,12 +11,17 @@ import {
   MapPin,
 } from "lucide-react";
 
+import Loader from "../Loader";
+
 export default function TabelaUsuariosAdmin() {
   const [usuarios, setUsuarios] = useState([]);
   const [editando, setEditando] = useState(null);
   const [visualizando, setVisualizando] = useState(null);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+
 
   const token = localStorage.getItem("token");
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -30,7 +35,8 @@ export default function TabelaUsuariosAdmin() {
       const res = await fetch(`${API_URL}/admin/usuarios`, {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
-      });
+      }
+      );
 
       if (!res.ok) throw new Error("Erro ao carregar usuários");
 
@@ -39,6 +45,8 @@ export default function TabelaUsuariosAdmin() {
       setUsuarios(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -143,6 +151,9 @@ export default function TabelaUsuariosAdmin() {
     });
   }
 
+
+  if (loading) return <Loader message="Carregando usuários..." />;
+
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-xl shadow p-4 overflow-x-auto">
       {/* Modal de Visualização */}
@@ -227,13 +238,12 @@ export default function TabelaUsuariosAdmin() {
                 <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-neutral-900 rounded-lg">
                   <div className="w-5 h-5 flex items-center justify-center">
                     <div
-                      className={`w-3 h-3 rounded-full ${
-                        visualizando.isSuperAdmin
-                          ? "bg-purple-500"
-                          : visualizando.isAdmin
+                      className={`w-3 h-3 rounded-full ${visualizando.isSuperAdmin
+                        ? "bg-purple-500"
+                        : visualizando.isAdmin
                           ? "bg-green-500"
                           : "bg-gray-400"
-                      }`}
+                        }`}
                     />
                   </div>
                   <div>

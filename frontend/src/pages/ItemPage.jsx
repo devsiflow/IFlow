@@ -164,11 +164,11 @@ export default function ItemPage() {
                 <strong>Categoria:</strong> {item.category?.name || "—"}
               </p>
               <p>
-                <strong>Status:</strong>{" "}
+                <strong>Status:  </strong>{""}
                 <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                   item.status === "perdido" 
                     ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" 
-                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                    : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                 }`}>
                   {item.status || "Não informado"}
                 </span>

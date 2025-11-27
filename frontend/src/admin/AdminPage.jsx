@@ -13,6 +13,7 @@ import {
   Building,
   Key,
   BarChart3,
+  Mail,
 } from "lucide-react";
 
 import TabelaSolicitacoes from "../components/admin/TabelaSolicitacoes";
@@ -22,11 +23,9 @@ import DashboardAdmin from "../components/admin/DashboardAdmin";
 import LogoLoader from "../components/LogoLoader";
 import ManageAdmins from "../components/admin/ManageAdmins";
 import ManageCampus from "../components/admin/ManageCampus";
-import GeradorRelatorio from "../components/admin/GeradorRelatorio";
 
 export default function AdminPage() {
-console.log("🔥 ADMINPAGE MONTADO", performance.now());
-
+  console.log("🔥 ADMINPAGE MONTADO", performance.now());
 
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
@@ -36,9 +35,8 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
   const [componenteAtivo, setComponenteAtivo] = useState("dashboard");
   const [solicitacoes, setSolicitacoes] = useState([]);
 
-  // refs para evitar chamadas duplicadas
-  const solicitacoesFetchedRef = useRef(false); // marca se já buscou com sucesso
-  const solicitacoesFetchingRef = useRef(false); // marca se há fetch em andamento
+  const solicitacoesFetchedRef = useRef(false);
+  const solicitacoesFetchingRef = useRef(false);
   const isMountedRef = useRef(true);
 
   const API_BASE =
@@ -81,10 +79,9 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
     }
   }
 
-  // carregarSolicitacoes agora com AbortController e checagens de ref
   async function carregarSolicitacoes(signal = undefined) {
-    // evita chamadas duplicadas
-    if (solicitacoesFetchedRef.current || solicitacoesFetchingRef.current) return;
+    if (solicitacoesFetchedRef.current || solicitacoesFetchingRef.current)
+      return;
     solicitacoesFetchingRef.current = true;
 
     try {
@@ -101,7 +98,6 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
       });
 
       if (!res.ok) {
-        // log detalhado para debugging
         const text = await res.text().catch(() => "");
         throw new Error(`Erro ao buscar solicitações: ${res.status} ${text}`);
       }
@@ -110,7 +106,7 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
       if (!isMountedRef.current) return;
 
       setSolicitacoes(data);
-      solicitacoesFetchedRef.current = true; // marca sucesso
+      solicitacoesFetchedRef.current = true;
     } catch (error) {
       if (error.name === "AbortError") {
         console.warn("Fetch de /solicitacoes abortado.");
@@ -122,14 +118,12 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
     }
   }
 
-  // Se você quiser forçar recarregar (ex: botão "Atualizar"), zera a flag e chama de novo
   function forcarRecarregarSolicitacoes() {
     solicitacoesFetchedRef.current = false;
     carregarSolicitacoes();
   }
 
-  // Mantém a lógica de update/delete com otimização local
-  async function updateStatus(id, novoStatus) {
+async function updateStatus(id, novoStatus) {
     try {
       const res = await fetch(`${API_BASE}/solicitacoes/${id}/status`, {
         method: "PUT",
@@ -182,7 +176,6 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
     { id: "solicitacoes", label: "Solicitações", icon: FileText },
     { id: "usuarios", label: "Usuários", icon: Users },
     { id: "itens", label: "Itens", icon: Package },
-    { id: "relatorios", label: "Relatórios", icon: BarChart3 },
   ];
 
   const superAdminMenuItems = [
@@ -194,13 +187,10 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
     ? [...baseMenuItems, ...superAdminMenuItems]
     : baseMenuItems;
 
-  // Carrega uma vez ao mudar para a aba *somente se ainda não tiver buscado*
   useEffect(() => {
     if (componenteAtivo === "solicitacoes") {
-      // chama somente se não tiver sido buscado antes
       carregarSolicitacoes();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [componenteAtivo]);
 
   const renderComponente = () => {
@@ -219,8 +209,6 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
         return <TabelaUsuariosAdmin />;
       case "itens":
         return <TabelaItensAdmin />;
-      case "relatorios":
-        return <GeradorRelatorio />;
       case "gerenciar-admins":
         return <ManageAdmins />;
       case "gerenciar-campus":
@@ -252,24 +240,28 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
               className="flex items-center gap-2 bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg transition-all"
             >
               <ArrowLeft size={18} />
               <span className="hidden sm:inline">Sair do admin</span>
             </button>
+
             <button
               onClick={() => setMenuAberto(!menuAberto)}
               className="p-2 rounded-lg bg-gray-100 dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600 transition-all"
             >
               {menuAberto ? <X size={20} /> : <Menu size={20} />}
             </button>
+
             <h1 className="text-xl font-bold">Painel Administrativo</h1>
+
             {userData?.isSuperAdmin && (
               <span className="px-2 py-1 bg-purple-600 text-white text-xs rounded-full">
                 SuperAdmin
               </span>
             )}
+
             {userData?.isAdmin && !userData?.isSuperAdmin && (
               <span className="px-2 py-1 bg-green-600 text-white text-xs rounded-full">
                 Admin
@@ -277,18 +269,35 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
             )}
           </div>
 
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Bem-vindo, <span className="font-semibold">{userData?.name}</span>
+          {/* 🔥 BOTÃO DE SUPORTE */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() =>
+                window.open(
+                  "https://mail.google.com/mail/?view=cm&fs=1&to=devsiflow@gmail.com&su=Suporte%20IFlow",
+                  "_blank"
+                )
+              }
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg shadow transition-all hover:scale-105"
+            >
+              <Mail />
+              Suporte
+            </button>
+
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Bem-vindo, <span className="font-semibold">{userData?.name}</span>
+            </div>
           </div>
         </div>
       </header>
 
       <div className="flex pt-16">
         <aside
-          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white dark:bg-neutral-800 shadow-lg z-30 transition-all duration-300 ease-in-out ${menuAberto
+          className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white dark:bg-neutral-800 shadow-lg z-30 transition-all duration-300 ease-in-out ${
+            menuAberto
               ? "w-64 translate-x-0"
               : "w-64 -translate-x-full md:translate-x-0 md:w-20"
-            }`}
+          }`}
         >
           <nav className="p-4">
             <ul className="space-y-2">
@@ -304,27 +313,37 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
                       onClick={() => {
                         setComponenteAtivo(item.id);
                         if (window.innerWidth < 768) setMenuAberto(false);
-                        // Carrega imediamente se for solicitacoes e ainda não buscou
-                        if (item.id === "solicitacoes" && !solicitacoesFetchedRef.current) {
+                        if (
+                          item.id === "solicitacoes" &&
+                          !solicitacoesFetchedRef.current
+                        ) {
                           carregarSolicitacoes();
                         }
                       }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${componenteAtivo === item.id
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        componenteAtivo === item.id
                           ? isSuperAdminItem
                             ? "bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300"
                             : "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
                           : "hover:bg-gray-100 dark:hover:bg-neutral-700 text-gray-700 dark:text-gray-300"
-                        }`}
+                      }`}
                     >
                       <Icon size={20} />
                       <span
-                        className={`transition-opacity duration-200 ${menuAberto ? "opacity-100" : "opacity-0 md:opacity-100"
-                          } ${!menuAberto && "md:hidden"}`}
+                        className={`transition-opacity duration-200 ${
+                          menuAberto
+                            ? "opacity-100"
+                            : "opacity-0 md:opacity-100"
+                        } ${!menuAberto && "md:hidden"}`}
                       >
                         {item.label}
                       </span>
                       {isSuperAdminItem && (
-                        <span className="ml-auto text-xs text-purple-500 font-semibold">
+                        <span
+                          className={`ml-auto text-xs text-purple-500 font-semibold ${
+                            !menuAberto && "md:hidden"
+                          }`}
+                        >
                           SUPER
                         </span>
                       )}
@@ -337,8 +356,9 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
         </aside>
 
         <main
-          className={`flex-1 transition-all duration-300 ${menuAberto ? "md:ml-64" : "md:ml-20"
-            } p-6`}
+          className={`flex-1 transition-all duration-300 ${
+            menuAberto ? "md:ml-64" : "md:ml-20"
+          } p-6`}
         >
           <div className="max-w-7xl mx-auto">
             <div className="mb-6">
@@ -346,12 +366,8 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
                 {menuItems.find((item) => item.id === componenteAtivo)?.label ||
                   "Dashboard"}
               </h2>
-              {superAdminMenuItems.some((item) => item.id === componenteAtivo) && (
-                <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
-                  ⚡ Funcionalidade exclusiva para SuperAdmin
-                </p>
-              )}
             </div>
+
             <div className="animate-fade-in">{renderComponente()}</div>
           </div>
         </main>
@@ -359,3 +375,5 @@ console.log("🔥 ADMINPAGE MONTADO", performance.now());
     </div>
   );
 }
+
+//JOAO NOVINHO SAFADO

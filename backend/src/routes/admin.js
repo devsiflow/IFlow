@@ -16,32 +16,58 @@ function onlyAdmin(req, res, next) {
 // GET /admin/usuarios
 router.get("/usuarios", authenticateToken, onlyAdmin, async (req, res) => {
   try {
+    console.log("🟢 BACKEND: Iniciando busca de usuários...");
+    
     const profiles = await prisma.profile.findMany({
       select: {
         id: true,
         name: true,
         matricula: true,
+        email: true,
         profilePic: true,
         isAdmin: true,
         isSuperAdmin: true,
         createdAt: true,
+        campusId: true,
+        campus: {
+          select: {
+            id: true,
+            nome: true
+          }
+        }
       },
       orderBy: { createdAt: "desc" },
+    });
+
+    console.log(`🟢 BACKEND: ${profiles.length} usuários encontrados`);
+    
+    // DEBUG: Verificar se o campus está sendo carregado
+    profiles.forEach((profile, index) => {
+      console.log(`👤 Usuário ${index + 1}: ${profile.name}`);
+      console.log(`   📍 campusId: ${profile.campusId}`);
+      console.log(`   🏫 campus:`, profile.campus);
+      console.log(`   ---`);
     });
 
     const mapped = profiles.map((p) => ({
       id: p.id,
       name: p.name,
       matricula: p.matricula,
-      role: p.isSuperAdmin ? "superadmin" : p.isAdmin ? "admin" : "user",
+      email: p.email,
       profilePic: p.profilePic,
       isAdmin: p.isAdmin,
       isSuperAdmin: p.isSuperAdmin,
+      createdAt: p.createdAt,
+      campusId: p.campusId,
+      campus: p.campus,
+      role: p.isSuperAdmin ? "superadmin" : p.isAdmin ? "admin" : "user",
     }));
 
+    console.log("🟢 BACKEND: Enviando resposta para frontend");
     res.json(mapped);
+    
   } catch (err) {
-    console.error("❌ Erro GET /admin/usuarios:", err);
+    console.error("❌ BACKEND: Erro GET /admin/usuarios:", err);
     res.status(500).json({ error: "Erro ao listar usuários" });
   }
 });

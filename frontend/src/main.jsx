@@ -27,7 +27,7 @@ function LayoutWrapper({ children }) {
   return (
     <>
       {children}
-      {/* <AdminFloatingButton /> */}
+       <AdminFloatingButton /> 
 
     </>
   );

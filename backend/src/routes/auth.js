@@ -21,26 +21,29 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Campus não encontrado" });
     }
 
-    // ✅ Criar o profile
+    // ✅ Criar o profile COM campusId
     const profile = await prisma.profile.create({
       data: {
         id,
         name: nome,
         matricula,
-        campusId: parseInt(campusId),
+        campusId: parseInt(campusId), // ✅ SALVAR CAMPUS ID CORRETAMENTE
         profilePic: null,
+      },
+      include: {
+        campus: true, // ✅ INCLUIR DADOS DO CAMPUS NA RESPOSTA
       },
     });
 
     res.json({ message: "Profile criado!", profile });
   } catch (err) {
     console.error(err);
-    
+
     // Se for erro de duplicação, ainda retorna sucesso
-    if (err.code === 'P2002') {
+    if (err.code === "P2002") {
       return res.json({ message: "Profile já existe", profile: null });
     }
-    
+
     res.status(500).json({ error: "Erro ao criar profile" });
   }
 });

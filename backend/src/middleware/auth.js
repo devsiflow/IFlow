@@ -57,20 +57,23 @@ export async function authenticateToken(req, res, next) {
     // Se não existir → cria com dados do Supabase
     if (!profile) {
       console.log("🆕 Criando profile automaticamente para:", userId);
-      
+
       const userMetadata = supaUser?.user_metadata || {};
       const email = supaUser?.email || decoded.email;
-      
+
       // Dados padrão se não tiver metadata
-      const userName = userMetadata.name || userMetadata.nome || email || "Usuário";
-      const userMatricula = userMetadata.matricula || `user_${userId.slice(0, 8)}`;
-      const userCampusId = userMetadata.campusId ? parseInt(userMetadata.campusId) : null;
+      const userName =
+        userMetadata.name || userMetadata.nome || email || "Usuário";
+      const userMatricula =
+        userMetadata.matricula || `user_${userId.slice(0, 8)}`;
+      const userCampusId = userMetadata.campusId
+        ? parseInt(userMetadata.campusId)
+        : null;
 
       try {
         profile = await prisma.profile.create({
           data: {
             id: userId,
-            email: email,
             name: userName,
             matricula: userMatricula,
             campusId: userCampusId,
@@ -81,9 +84,9 @@ export async function authenticateToken(req, res, next) {
         console.log("✅ Profile criado automaticamente");
       } catch (createError) {
         console.error("❌ Erro ao criar profile:", createError);
-        
+
         // Se for erro de duplicação (concorrência), busca novamente
-        if (createError.code === 'P2002') {
+        if (createError.code === "P2002") {
           profile = await prisma.profile.findUnique({
             where: { id: userId },
             include: { campus: true },
@@ -103,9 +106,9 @@ export async function authenticateToken(req, res, next) {
     // 🔥 ADICIONAR CAMPUS ID AO REQ.USER
     req.user = {
       ...profile,
-      campusId: profile.campusId
+      campusId: profile.campusId,
     };
-    
+
     next();
   } catch (err) {
     console.error("🔥 ERRO authenticateToken:", err);

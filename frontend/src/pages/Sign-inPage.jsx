@@ -10,9 +10,11 @@ export default function Cadastro() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmSenha, setConfirmSenha] = useState("");
   const [campusId, setCampusId] = useState("");
   const [campusList, setCampusList] = useState([]);
   const [showSenha, setShowSenha] = useState(false);
+  const [showConfirmSenha, setShowConfirmSenha] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -26,8 +28,6 @@ export default function Cadastro() {
         const res = await fetch(`${API_URL}/campus`);
         const data = await res.json();
 
-        console.log("📡 Retorno da API /campus:", data);
-
         let lista = [];
 
         if (Array.isArray(data)) {
@@ -36,8 +36,6 @@ export default function Cadastro() {
           lista = data.campus;
         } else if (Array.isArray(data.data)) {
           lista = data.data;
-        } else {
-          console.warn("⚠️ Formato inesperado do backend");
         }
 
         setCampusList(lista);
@@ -55,14 +53,17 @@ export default function Cadastro() {
     setSuccess(false);
 
     if (!matricula || !nome || !email || !senha || !campusId) {
-      setError("Todos os campos são obrigatórios");
-      return;
+      return setError("Todos os campos são obrigatórios");
+    }
+
+    if (senha !== confirmSenha) {
+      return setError("As senhas não coincidem");
     }
 
     try {
       setLoading(true);
 
-      // 1. Criar usuário no Supabase Auth
+      // Criar usuário no Supabase Auth
       const { data, error: supError } = await supabase.auth.signUp({
         email,
         password: senha,
@@ -87,7 +88,7 @@ export default function Cadastro() {
 
       const userId = data.user.id;
 
-      // 🔥 2. CRIAR PROFILE MANUALMENTE (já que o middleware não foi acionado)
+      // Criar profile manualmente
       const profileRes = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,7 +107,7 @@ export default function Cadastro() {
 
       setLoading(false);
       setSuccess(true);
-      
+
     } catch (err) {
       console.error(err);
       setLoading(false);
@@ -146,6 +147,7 @@ export default function Cadastro() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
+
             <input
               type="text"
               placeholder="Matrícula"
@@ -156,6 +158,7 @@ export default function Cadastro() {
               autoFocus
               disabled={loading}
             />
+
             <input
               type="text"
               placeholder="Nome completo"
@@ -165,6 +168,7 @@ export default function Cadastro() {
               required
               disabled={loading}
             />
+
             <input
               type="email"
               placeholder="E-mail institucional"
@@ -183,18 +187,14 @@ export default function Cadastro() {
               disabled={loading || campusList.length === 0}
             >
               <option value="">Selecione seu campus</option>
-
-              {campusList.length > 0 ? (
-                campusList.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))
-              ) : (
-                <option disabled>Carregando campus...</option>
-              )}
+              {campusList.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
             </select>
 
+            {/* SENHA */}
             <div className="relative">
               <input
                 type={showSenha ? "text" : "password"}
@@ -211,11 +211,28 @@ export default function Cadastro() {
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
                 disabled={loading}
               >
-                {showSenha ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
+                {showSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* CONFIRMAR SENHA */}
+            <div className="relative">
+              <input
+                type={showConfirmSenha ? "text" : "password"}
+                placeholder="Confirmar senha"
+                value={confirmSenha}
+                onChange={(e) => setConfirmSenha(e.target.value)}
+                className="w-full px-4 py-2 border rounded-md pr-10"
+                required
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmSenha(!showConfirmSenha)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800"
+                disabled={loading}
+              >
+                {showConfirmSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
 
@@ -223,12 +240,17 @@ export default function Cadastro() {
               <p className="text-red-500 text-sm text-center">{error}</p>
             )}
 
+            {/* BOTÃO COM LOADER */}
             <button
               type="submit"
-              className="w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-md"
+              className="w-full bg-green-800 hover:bg-green-700 text-white py-2 rounded-md flex items-center justify-center gap-2"
               disabled={loading}
             >
-              {loading ? "Criando..." : "Criar conta"}
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                "Criar conta"
+              )}
             </button>
 
             <button
@@ -239,6 +261,7 @@ export default function Cadastro() {
             >
               Voltar para login
             </button>
+
           </form>
         )}
       </div>

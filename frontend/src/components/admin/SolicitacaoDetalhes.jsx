@@ -210,7 +210,7 @@ export default function SolicitacaoDetalhes() {
       <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 p-6">
         <div className="max-w-6xl mx-auto">
           <button
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate(-1)}
             className="flex items-center gap-2 mb-6 px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-neutral-700 dark:hover:bg-neutral-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           >
             ← Voltar para Admin

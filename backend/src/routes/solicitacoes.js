@@ -14,28 +14,28 @@ router.get("/", async (req, res) => {
     const validacoes = await prisma.itemValidation.findMany({
       orderBy: { id: "desc" },
       include: {
-        item: { 
-          include: { 
+        item: {
+          include: {
             images: true,
-            category: true 
-          } 
+            category: true,
+          },
         },
-        profile: { 
-          select: { 
-            id: true, 
+        profile: {
+          select: {
+            id: true,
             name: true,
             matricula: true,
-            profilePic: true
-          } 
+            profilePic: true,
+          },
         },
       },
     });
 
     // Formatar resposta para manter compatibilidade
-    const formatted = validacoes.map(v => ({
+    const formatted = validacoes.map((v) => ({
       ...v,
-      aluno: v.profile, // Mapear profile para aluno
-      createdAt: v.createdAt ? v.createdAt.toISOString() : null
+      aluno: v.profile,
+      createdAt: v.createdAt ? v.createdAt.toISOString() : null,
     }));
 
     res.json(formatted);
@@ -90,7 +90,7 @@ router.get("/:id", async (req, res) => {
     console.log(
       "📤 Resultado:",
       validacao
-        ? `Encontrada validação ID ${validacao.id}`
+        ? `Encontrada validação ID ${validacao.id} - Destino: ${validacao.destino}`
         : "Validação não encontrada"
     );
 
@@ -101,8 +101,8 @@ router.get("/:id", async (req, res) => {
     // Formatar resposta para manter compatibilidade com frontend
     const response = {
       ...validacao,
-      aluno: validacao.profile, // Mapear profile para aluno
-      createdAt: validacao.createdAt ? validacao.createdAt.toISOString() : null
+      aluno: validacao.profile,
+      createdAt: validacao.createdAt ? validacao.createdAt.toISOString() : null,
     };
 
     res.json(response);
@@ -119,20 +119,43 @@ router.get("/:id", async (req, res) => {
 router.put("/:id/status", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, destino } = req.body;
 
-    console.log(`🔄 Atualizando status da validação ${id} para: ${status}`);
-    console.log(`👤 Usuário solicitante: ${req.user.id}`);
+    console.log(
+      `🔄 Atualizando status da validação ${id} para: ${status}, destino: ${destino}`
+    );
 
     // Verificar se o usuário é admin
     if (!req.user.isAdmin && !req.user.isSuperAdmin) {
-      return res.status(403).json({ error: "Acesso restrito a administradores" });
+      return res
+        .status(403)
+        .json({ error: "Acesso restrito a administradores" });
     }
 
-    // ✅ AGORA VAI FUNCIONAR - O CAMPO STATUS EXISTE
+    // VALIDAÇÃO: Se for aprovada, destino é obrigatório
+    if (status === "aprovada" && !destino) {
+      return res
+        .status(400)
+        .json({ error: "Destino é obrigatório para aprovação" });
+    }
+
+    // VALIDAÇÃO: Se for negada, destino deve ser null
+    if (status === "negada" && destino) {
+      return res
+        .status(400)
+        .json({ error: "Destino não deve ser informado para negação" });
+    }
+
+    // Dados para atualização
+    const updateData = {
+      status,
+      // Se for aprovada, salva o destino; se for negada, define como null
+      destino: status === "aprovada" ? destino : null,
+    };
+
     const updated = await prisma.itemValidation.update({
       where: { id: Number(id) },
-      data: { status },
+      data: updateData,
       include: {
         item: {
           include: {
@@ -158,19 +181,22 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
       createdAt: updated.createdAt ? updated.createdAt.toISOString() : null,
     };
 
-    console.log(`✅ Status da validação ${id} atualizado para: ${status}`);
+    console.log(
+      `✅ Status da validação ${id} atualizado para: ${status}, destino: ${
+        destino || "null"
+      }`
+    );
     res.json(response);
   } catch (err) {
     console.error("❌ Erro ao atualizar status:", err);
-    
-    if (err.code === 'P2025') {
+
+    if (err.code === "P2025") {
       return res.status(404).json({ error: "Validação não encontrada" });
     }
-    
+
     res.status(500).json({ error: "Erro ao atualizar status" });
   }
 });
-
 /* ===============================
    DELETE /solicitacoes/:id
    Excluir validação
@@ -181,7 +207,9 @@ router.delete("/:id", authenticateToken, async (req, res) => {
 
     // Verificar se o usuário é admin
     if (!req.user.isAdmin && !req.user.isSuperAdmin) {
-      return res.status(403).json({ error: "Acesso restrito a administradores" });
+      return res
+        .status(403)
+        .json({ error: "Acesso restrito a administradores" });
     }
 
     const existing = await prisma.itemValidation.findUnique({

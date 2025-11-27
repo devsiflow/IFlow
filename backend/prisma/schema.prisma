@@ -7,12 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ItemStatus {
-  perdido
-  encontrado
-  devolvido
-}
-
 model Profile {
   id           String           @id
   name         String
@@ -21,13 +15,10 @@ model Profile {
   createdAt    DateTime         @default(now())
   isAdmin      Boolean          @default(false)
   isSuperAdmin Boolean          @default(false)
-
   campusId     Int?
-  campus       Campus?    @relation(fields: [campusId], references: [id])
-
   items        Item[]
   validations  ItemValidation[] @relation("ProfileValidations")
-
+  campus       Campus?          @relation(fields: [campusId], references: [id])
   solicitacoes Solicitacao[]    @relation("SolicitacaoAluno")
 
   @@map("profile")
@@ -41,27 +32,22 @@ model Category {
   @@map("category")
 }
 
-
 model Item {
-  id          Int              @id @default(autoincrement())
-  title       String
-  description String
-  status      ItemStatus       @default(perdido)
-  location    String
-  createdAt   DateTime         @default(now())
-
-  userId      String
-  categoryId  Int?
-  campusId    Int?
-
-  category    Category?        @relation(fields: [categoryId], references: [id])
-  campus      Campus?          @relation(fields: [campusId], references: [id])
-  user        Profile          @relation(fields: [userId], references: [id])
-
-  images      ItemImage[]
-  validations ItemValidation[] @relation("ItemValidations")
-
-  solicitacoes Solicitacao[]   @relation("SolicitacaoItem")
+  id           Int              @id @default(autoincrement())
+  title        String
+  description  String
+  status       ItemStatus       @default(perdido)
+  location     String
+  createdAt    DateTime         @default(now())
+  userId       String
+  categoryId   Int?
+  campusId     Int?
+  campus       Campus?          @relation(fields: [campusId], references: [id])
+  category     Category?        @relation(fields: [categoryId], references: [id])
+  user         Profile          @relation(fields: [userId], references: [id])
+  images       ItemImage[]
+  validations  ItemValidation[] @relation("ItemValidations")
+  solicitacoes Solicitacao[]    @relation("SolicitacaoItem")
 
   @@map("item")
 }
@@ -76,7 +62,7 @@ model ItemImage {
 }
 
 model ItemValidation {
-  id              Int      @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   userId          String?
   itemId          Int
   descricao       String
@@ -84,35 +70,39 @@ model ItemValidation {
   detalhesUnicos  String
   conteudoInterno String
   momentoPerda    String
-  status         String  @default("pendente")
-  createdAt       DateTime @default(now())
-
-  item            Item     @relation("ItemValidations", fields: [itemId], references: [id])
-  profile         Profile? @relation("ProfileValidations", fields: [userId], references: [id])
+  status          String       @default("pendente")
+  createdAt       DateTime     @default(now())
+  item            Item         @relation("ItemValidations", fields: [itemId], references: [id])
+  profile         Profile?     @relation("ProfileValidations", fields: [userId], references: [id])
 
   @@map("item_validation")
 }
 
 model Solicitacao {
-  id               Int       @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   item_id          Int
   aluno_id         String
-  status           String    @default("pendente")
+  status           String   @default("pendente")
   observacoes      String?
-  data_solicitacao DateTime  @default(now())
-
-  item   Item     @relation("SolicitacaoItem", fields: [item_id], references: [id])
-  aluno  Profile  @relation("SolicitacaoAluno", fields: [aluno_id], references: [id])
+  data_solicitacao DateTime @default(now())
+  aluno            Profile  @relation("SolicitacaoAluno", fields: [aluno_id], references: [id])
+  item             Item     @relation("SolicitacaoItem", fields: [item_id], references: [id])
 
   @@map("solicitacoes")
 }
 
-
 model Campus {
-  id        Int       @id @default(autoincrement())
-  nome      String
-  profiles  Profile[]
-  items     Item[]
+  id       Int       @id @default(autoincrement())
+  nome     String
+  items    Item[]
+  profiles Profile[]
 
   @@map("campus")
 }
+
+enum ItemStatus {
+  perdido
+  encontrado
+  devolvido
+}
+

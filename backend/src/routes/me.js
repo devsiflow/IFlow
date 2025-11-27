@@ -42,7 +42,23 @@ router.get("/", authenticateToken, async (req, res) => {
 
     const profile = await prisma.profile.findUnique({
       where: { id: userId },
-      select: PROFILE_SELECT,
+      select: {
+        id: true,
+        name: true,
+        matricula: true,
+        email: true,
+        profilePic: true,
+        isAdmin: true,
+        isSuperAdmin: true,
+        createdAt: true,
+        campusId: true,
+        campus: { // ✅ INCLUIR DADOS DO CAMPUS
+          select: {
+            id: true,
+            nome: true
+          }
+        }
+      },
     });
 
     if (!profile) {

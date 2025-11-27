@@ -163,7 +163,7 @@ export default function DashboardAdmin() {
 
   return (
     <div className="p-6 bg-gray-50 dark:bg-neutral-900 min-h-[60vh]">
-      <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
+      <h2 className="text-2xl font-bold mb-4">Dados dos itens</h2>
 
       {loading ? (
         <div className="flex justify-center items-center h-40">

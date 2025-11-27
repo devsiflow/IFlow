@@ -1,9 +1,20 @@
-// src/routes/me.js - VERSÃO CORRIGIDA
+// src/routes/me.js - VERSÃO COMPLETA CORRIGIDA
 import express from "express";
 import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = express.Router();
+
+// ✅ ADICIONAR: Funções auxiliares que estavam faltando
+function isNonEmptyString(v) {
+  return typeof v === "string" && v.trim().length > 0;
+}
+
+function isValidProfilePic(url) {
+  if (url === null) return true;
+  if (!isNonEmptyString(url)) return false;
+  return /^(https?:\/\/|data:)/i.test(url) && url.length <= 2000;
+}
 
 // campos selecionados em várias respostas
 const PROFILE_SELECT = {
@@ -30,17 +41,15 @@ router.get("/", authenticateToken, async (req, res) => {
     if (!userId)
       return res.status(401).json({ error: "Usuário não autenticado" });
 
-    // ✅ CORREÇÃO: Remover email da query do Prisma
     const profile = await prisma.profile.findUnique({
       where: { id: userId },
-      select: PROFILE_SELECT, // ✅ Usar o SELECT corrigido
+      select: PROFILE_SELECT,
     });
 
     if (!profile) {
       return res.status(404).json({ error: "Perfil não encontrado" });
     }
 
-    // ✅ Email vem do middleware auth (req.user)
     const result = {
       ...profile,
       email: req.user.email ?? null,

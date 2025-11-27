@@ -214,7 +214,6 @@ export default function TabelaUsuariosAdmin() {
         <thead>
           <tr className="border-b border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300">
             <th className="py-2">Nome</th>
-            <th>Email</th>
             <th>Campus</th>
             <th>Status</th>
             <th className="text-center">Ações</th>

@@ -149,16 +149,6 @@ export default function TabelaUsuariosAdmin() {
                 </div>
 
                 <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-neutral-900 rounded-lg">
-                  <Mail className="text-green-600" size={20} />
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
-                    <p className="font-semibold text-gray-800 dark:text-gray-200">
-                      {visualizando.email || "—"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-neutral-900 rounded-lg">
                   <IdCard className="text-purple-600" size={20} />
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Matrícula</p>
@@ -235,7 +225,6 @@ export default function TabelaUsuariosAdmin() {
           {usuarios.map((u) => (
             <tr key={u.id} className="border-b border-gray-200 dark:border-gray-700">
               <td className="py-2">{u.name}</td>
-              <td>{u.email || "—"}</td>
               <td>{u.campus?.nome || "Não informado"}</td>
               <td>{papel(u)}</td>
               <td className="py-2 flex justify-center gap-2">
@@ -291,15 +280,6 @@ export default function TabelaUsuariosAdmin() {
                   <input
                     value={editando.name}
                     onChange={(e) => setEditando({ ...editando, name: e.target.value })}
-                    className="w-full mt-1 p-2 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-neutral-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm text-gray-600 dark:text-gray-300">Email</label>
-                  <input
-                    value={editando.email}
-                    onChange={(e) => setEditando({ ...editando, email: e.target.value })}
                     className="w-full mt-1 p-2 rounded-lg border border-gray-300 dark:border-gray-700 dark:bg-neutral-800"
                   />
                 </div>

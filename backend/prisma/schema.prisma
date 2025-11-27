@@ -11,7 +11,6 @@ model Profile {
   id           String           @id
   name         String
   matricula    String           @unique
-  email        String? 
   profilePic   String?
   createdAt    DateTime         @default(now())
   isAdmin      Boolean          @default(false)

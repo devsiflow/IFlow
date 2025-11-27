@@ -322,3 +322,27 @@ router.delete("/campus/:id", authenticateToken, onlyAdmin, async (req, res) => {
 });
 
 export default router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// COMMIT MASTER

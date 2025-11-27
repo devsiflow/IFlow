@@ -108,8 +108,6 @@ router.delete(
 
       console.log("🗑️ === INICIANDO EXCLUSÃO DE USUÁRIO ===");
       console.log("📝 ID do usuário a excluir:", id);
-      console.log("👤 Usuário logado:", req.user.id);
-      console.log("🎯 É superadmin?", req.user.isSuperAdmin);
 
       // Verificar se o usuário existe
       const usuario = await prisma.profile.findUnique({
@@ -120,13 +118,6 @@ router.delete(
         console.log("❌ Usuário não encontrado");
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
-
-      console.log("📋 Usuário encontrado:", {
-        id: usuario.id,
-        name: usuario.name,
-        isAdmin: usuario.isAdmin,
-        isSuperAdmin: usuario.isSuperAdmin,
-      });
 
       // Não permitir que o usuário exclua a si mesmo
       if (id === req.user.id) {
@@ -144,69 +135,57 @@ router.delete(
         });
       }
 
-      console.log("💾 Executando exclusão no banco...");
+      console.log("🔄 Excluindo dependências...");
 
-      // Primeiro, verificar se há dependências
-      try {
-        // Verificar se o usuário tem itens
-        const itensCount = await prisma.item.count({
-          where: { userId: id },
+      // 🔥 CORREÇÃO: Ordem correta de exclusão para evitar violação de chave estrangeira
+
+      // 1. Primeiro: Excluir as VALIDAÇÕES do usuário
+      console.log("📋 Excluindo validações...");
+      await prisma.itemValidation.deleteMany({
+        where: { userId: id },
+      });
+      console.log("✅ Validações excluídas");
+
+      // 2. Segundo: Buscar os ITENS do usuário
+      console.log("📋 Buscando itens do usuário...");
+      const itensDoUsuario = await prisma.item.findMany({
+        where: { userId: id },
+        select: { id: true },
+      });
+      console.log(`📦 ${itensDoUsuario.length} itens encontrados`);
+
+      // 3. Terceiro: Para cada item, excluir primeiro as IMAGENS e depois VALIDAÇÕES vinculadas ao ITEM
+      for (const item of itensDoUsuario) {
+        console.log(`🗂️ Processando item ${item.id}...`);
+
+        // Excluir imagens do item
+        await prisma.itemImage.deleteMany({
+          where: { itemId: item.id },
         });
+        console.log(`   ✅ Imagens do item ${item.id} excluídas`);
 
-        // Verificar se o usuário tem validações
-        const validacoesCount = await prisma.itemValidation.count({
-          where: { userId: id },
+        // 🔥 IMPORTANTE: Excluir também as validações que referenciam este item
+        // (mesmo que sejam de outros usuários)
+        await prisma.itemValidation.deleteMany({
+          where: { itemId: item.id },
         });
-
-        console.log("📊 Dependências encontradas:");
-        console.log("   Itens:", itensCount);
-        console.log("   Validações:", validacoesCount);
-
-        if (itensCount > 0 || validacoesCount > 0) {
-          console.log("🔄 Excluindo dependências primeiro...");
-
-          // Excluir validações primeiro
-          if (validacoesCount > 0) {
-            await prisma.itemValidation.deleteMany({
-              where: { userId: id },
-            });
-            console.log("✅ Validações excluídas");
-          }
-
-          // Excluir itens e suas imagens
-          if (itensCount > 0) {
-            // Primeiro excluir as imagens dos itens
-            const itens = await prisma.item.findMany({
-              where: { userId: id },
-              select: { id: true },
-            });
-
-            for (const item of itens) {
-              await prisma.itemImage.deleteMany({
-                where: { itemId: item.id },
-              });
-            }
-
-            // Depois excluir os itens
-            await prisma.item.deleteMany({
-              where: { userId: id },
-            });
-            console.log("✅ Itens e imagens excluídos");
-          }
-        }
-      } catch (dependencyError) {
-        console.error("❌ Erro ao excluir dependências:", dependencyError);
-        throw new Error(
-          `Erro ao limpar dependências: ${dependencyError.message}`
-        );
+        console.log(`   ✅ Validações do item ${item.id} excluídas`);
       }
 
-      // Agora excluir o usuário
+      // 4. Quarto: Agora podemos excluir os ITENS
+      console.log("🗂️ Excluindo itens...");
+      await prisma.item.deleteMany({
+        where: { userId: id },
+      });
+      console.log("✅ Itens excluídos");
+
+      // 5. Finalmente: Excluir o USUÁRIO
+      console.log("👤 Excluindo usuário...");
       await prisma.profile.delete({
         where: { id },
       });
-
       console.log("✅ Usuário excluído com sucesso");
+
       console.log("=== FIM DA EXCLUSÃO ===");
 
       res.json({
@@ -227,7 +206,7 @@ router.delete(
       if (err.code === "P2003") {
         return res.status(400).json({
           error:
-            "Não é possível excluir usuário com dados vinculados. Tente novamente.",
+            "Não foi possível excluir usuário devido a dependências. Tente novamente.",
         });
       }
 

@@ -17,7 +17,7 @@ function onlyAdmin(req, res, next) {
 router.get("/usuarios", authenticateToken, onlyAdmin, async (req, res) => {
   try {
     console.log("🟢 BACKEND: Iniciando busca de usuários...");
-    
+
     const profiles = await prisma.profile.findMany({
       select: {
         id: true,
@@ -31,15 +31,15 @@ router.get("/usuarios", authenticateToken, onlyAdmin, async (req, res) => {
         campus: {
           select: {
             id: true,
-            nome: true
-          }
-        }
+            nome: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
     console.log(`🟢 BACKEND: ${profiles.length} usuários encontrados`);
-    
+
     // DEBUG: Verificar se o campus está sendo carregado
     profiles.forEach((profile, index) => {
       console.log(`👤 Usuário ${index + 1}: ${profile.name}`);
@@ -63,7 +63,6 @@ router.get("/usuarios", authenticateToken, onlyAdmin, async (req, res) => {
 
     console.log("🟢 BACKEND: Enviando resposta para frontend");
     res.json(mapped);
-    
   } catch (err) {
     console.error("❌ BACKEND: Erro GET /admin/usuarios:", err);
     res.status(500).json({ error: "Erro ao listar usuários" });
@@ -99,18 +98,68 @@ router.put("/usuarios/:id", authenticateToken, onlyAdmin, async (req, res) => {
 });
 
 // DELETE /admin/usuarios/:id
-router.delete("/usuarios/:id", authenticateToken, onlyAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.profile.delete({ where: { id } });
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("❌ Erro DELETE /admin/usuarios/:id:", err);
-    res.status(500).json({ error: "Erro ao remover usuário" });
+router.delete(
+  "/usuarios/:id",
+  authenticateToken,
+  onlyAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      console.log("🗑️ Tentando excluir usuário ID:", id);
+
+      // Verificar se o usuário existe
+      const usuario = await prisma.profile.findUnique({
+        where: { id },
+      });
+
+      if (!usuario) {
+        console.log("❌ Usuário não encontrado");
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      // Não permitir que o usuário exclua a si mesmo
+      if (id === req.user.id) {
+        console.log("❌ Usuário tentou excluir a si mesmo");
+        return res
+          .status(400)
+          .json({ error: "Não é possível excluir seu próprio usuário" });
+      }
+
+      if (!req.user.isSuperAdmin && usuario.isSuperAdmin) {
+        return res.status(403).json({
+          error: "Apenas superadmins podem excluir outros superadmins",
+        });
+      }
+
+      // Excluir o usuário
+      await prisma.profile.delete({
+        where: { id },
+      });
+
+      console.log("✅ Usuário excluído com sucesso");
+      res.json({ ok: true, message: "Usuário excluído com sucesso" });
+    } catch (err) {
+      console.error("❌ Erro DELETE /admin/usuarios/:id:", err);
+
+      // Tratar erros específicos do Prisma
+      if (err.code === "P2025") {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      if (err.code === "P2003") {
+        return res.status(400).json({
+          error:
+            "Não é possível excluir usuário com itens ou solicitações vinculadas",
+        });
+      }
+
+      res
+        .status(500)
+        .json({ error: "Erro ao excluir usuário: " + err.message });
+    }
   }
-});
-
-
+);
 
 // ==========================
 // 🔍 Itens por usuário (para admins)
@@ -205,13 +254,13 @@ router.delete("/campus/:id", authenticateToken, onlyAdmin, async (req, res) => {
     res.json({ message: "Campus excluído com sucesso" });
   } catch (err) {
     console.error("❌ Erro DELETE /admin/campus/:id:", err);
-    
+
     if (err.code === "P2003") {
-      return res.status(400).json({ 
-        error: "Não é possível excluir campus com usuários ou itens vinculados" 
+      return res.status(400).json({
+        error: "Não é possível excluir campus com usuários ou itens vinculados",
       });
     }
-    
+
     res.status(500).json({ error: "Erro ao excluir campus" });
   }
 });

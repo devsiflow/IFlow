@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 import { User, X, ArchiveRestore } from "lucide-react";
 import logo from "../assets/logo.jpg";
 
+
 export default function MenuBancoItens() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);

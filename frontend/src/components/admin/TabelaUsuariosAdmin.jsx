@@ -94,10 +94,17 @@ export default function TabelaUsuariosAdmin() {
       console.log("📡 Status da resposta:", response.status);
 
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Erro desconhecido" }));
-        throw new Error(errorData.error || `Erro ${response.status}`);
+        // Tentar pegar a mensagem de erro do backend
+        let errorMessage = `Erro ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          // Se não conseguir parsear JSON, usar texto simples
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();

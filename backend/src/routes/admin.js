@@ -106,7 +106,10 @@ router.delete(
     try {
       const { id } = req.params;
 
-      console.log("🗑️ Tentando excluir usuário ID:", id);
+      console.log("🗑️ === INICIANDO EXCLUSÃO DE USUÁRIO ===");
+      console.log("📝 ID do usuário a excluir:", id);
+      console.log("👤 Usuário logado:", req.user.id);
+      console.log("🎯 É superadmin?", req.user.isSuperAdmin);
 
       // Verificar se o usuário existe
       const usuario = await prisma.profile.findUnique({
@@ -118,6 +121,13 @@ router.delete(
         return res.status(404).json({ error: "Usuário não encontrado" });
       }
 
+      console.log("📋 Usuário encontrado:", {
+        id: usuario.id,
+        name: usuario.name,
+        isAdmin: usuario.isAdmin,
+        isSuperAdmin: usuario.isSuperAdmin,
+      });
+
       // Não permitir que o usuário exclua a si mesmo
       if (id === req.user.id) {
         console.log("❌ Usuário tentou excluir a si mesmo");
@@ -126,21 +136,88 @@ router.delete(
           .json({ error: "Não é possível excluir seu próprio usuário" });
       }
 
+      // Não permitir que admins comuns excluam superadmins
       if (!req.user.isSuperAdmin && usuario.isSuperAdmin) {
+        console.log("❌ Admin comum tentou excluir superadmin");
         return res.status(403).json({
           error: "Apenas superadmins podem excluir outros superadmins",
         });
       }
 
-      // Excluir o usuário
+      console.log("💾 Executando exclusão no banco...");
+
+      // Primeiro, verificar se há dependências
+      try {
+        // Verificar se o usuário tem itens
+        const itensCount = await prisma.item.count({
+          where: { userId: id },
+        });
+
+        // Verificar se o usuário tem validações
+        const validacoesCount = await prisma.itemValidation.count({
+          where: { userId: id },
+        });
+
+        console.log("📊 Dependências encontradas:");
+        console.log("   Itens:", itensCount);
+        console.log("   Validações:", validacoesCount);
+
+        if (itensCount > 0 || validacoesCount > 0) {
+          console.log("🔄 Excluindo dependências primeiro...");
+
+          // Excluir validações primeiro
+          if (validacoesCount > 0) {
+            await prisma.itemValidation.deleteMany({
+              where: { userId: id },
+            });
+            console.log("✅ Validações excluídas");
+          }
+
+          // Excluir itens e suas imagens
+          if (itensCount > 0) {
+            // Primeiro excluir as imagens dos itens
+            const itens = await prisma.item.findMany({
+              where: { userId: id },
+              select: { id: true },
+            });
+
+            for (const item of itens) {
+              await prisma.itemImage.deleteMany({
+                where: { itemId: item.id },
+              });
+            }
+
+            // Depois excluir os itens
+            await prisma.item.deleteMany({
+              where: { userId: id },
+            });
+            console.log("✅ Itens e imagens excluídos");
+          }
+        }
+      } catch (dependencyError) {
+        console.error("❌ Erro ao excluir dependências:", dependencyError);
+        throw new Error(
+          `Erro ao limpar dependências: ${dependencyError.message}`
+        );
+      }
+
+      // Agora excluir o usuário
       await prisma.profile.delete({
         where: { id },
       });
 
       console.log("✅ Usuário excluído com sucesso");
-      res.json({ ok: true, message: "Usuário excluído com sucesso" });
+      console.log("=== FIM DA EXCLUSÃO ===");
+
+      res.json({
+        ok: true,
+        message: "Usuário excluído com sucesso",
+      });
     } catch (err) {
-      console.error("❌ Erro DELETE /admin/usuarios/:id:", err);
+      console.error("💥 ERRO NA EXCLUSÃO:");
+      console.error("Mensagem:", err.message);
+      console.error("Código:", err.code);
+      console.error("Stack:", err.stack);
 
       // Tratar erros específicos do Prisma
       if (err.code === "P2025") {
@@ -150,13 +227,13 @@ router.delete(
       if (err.code === "P2003") {
         return res.status(400).json({
           error:
-            "Não é possível excluir usuário com itens ou solicitações vinculadas",
+            "Não é possível excluir usuário com dados vinculados. Tente novamente.",
         });
       }
 
-      res
-        .status(500)
-        .json({ error: "Erro ao excluir usuário: " + err.message });
+      res.status(500).json({
+        error: "Erro interno ao excluir usuário: " + err.message,
+      });
     }
   }
 );

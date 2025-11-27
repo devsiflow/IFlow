@@ -104,9 +104,16 @@ export async function authenticateToken(req, res, next) {
     }
 
     // 🔥 ADICIONAR CAMPUS ID AO REQ.USER
-    req.user = {
-      ...profile,
+ req.user = {
+      id: profile.id,
+      email: decoded.email || supaUser?.email || null,
+      name: profile.name,
+      matricula: profile.matricula,
+      profilePic: profile.profilePic,
+      isAdmin: profile.isAdmin,
+      isSuperAdmin: profile.isSuperAdmin,
       campusId: profile.campusId,
+      campus: profile.campus
     };
 
     next();

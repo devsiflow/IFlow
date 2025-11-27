@@ -5,6 +5,30 @@ import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../hooks/useAuth";
 import { ArchiveRestore, Info } from "lucide-react";
 
+// 🔥 Lista de palavras proibidas (mesmo do SignPage)
+const palavrasProibidas = [
+  "porra",
+  "caralho",
+  "buceta",
+  "foder",
+  "foda-se",
+  "retardado",
+  "arrombado",
+  "fdp",
+  "viado",
+  "puta",
+  "cacete",
+  "krl",
+  "pnc",
+];
+
+// 🔥 Verificador igual do SignPage
+const contemPalavraRuim = (texto) => {
+  if (!texto) return false;
+  const lower = texto.toLowerCase();
+  return palavrasProibidas.some((p) => lower.includes(p));
+};
+
 // Função para gerar miniatura antes de subir
 async function generateThumbnail(file, maxSize = 400) {
   return new Promise((resolve) => {
@@ -99,6 +123,20 @@ export default function CadastrarItem() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // 🔥 MODERADOR AQUI — Igual SignPage
+    if (contemPalavraRuim(form.name)) {
+      alert("Remova palavras ofensivas do nome do item.");
+      return;
+    }
+    if (contemPalavraRuim(form.description)) {
+      alert("A descrição contém palavras ofensivas.");
+      return;
+    }
+    if (contemPalavraRuim(form.local)) {
+      alert("O campo LOCAL contém palavras ofensivas.");
+      return;
+    }
+
     if (!form.tipo) {
       alert("Escolha se você PERDEU ou ENCONTROU o item.");
       return;
@@ -110,17 +148,17 @@ export default function CadastrarItem() {
     }
 
     if (!token) {
-  const warning = document.getElementById("login-warning");
+      const warning = document.getElementById("login-warning");
 
-  if (warning) {
-    warning.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (warning) {
+        warning.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    setWarningBlink(true);
-    setTimeout(() => setWarningBlink(false), 1000);
-  }
+        setWarningBlink(true);
+        setTimeout(() => setWarningBlink(false), 1000);
+      }
 
-  return;
-}
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -197,7 +235,6 @@ export default function CadastrarItem() {
 
       alert("Item cadastrado com sucesso!");
 
-      // Redireciona conforme tipo
       navigate(
         form.tipo === "encontrei" ? "/catalogo" : "/itens-nao-encontrados"
       );
@@ -215,6 +252,7 @@ export default function CadastrarItem() {
 
       <div className="flex justify-center items-start px-4 pt-32 pb-16">
         <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl shadow-lg dark:shadow-md border border-gray-200 dark:border-gray-700 p-10 space-y-8">
+
           {!token && (
             <div
               id="login-warning"
@@ -232,7 +270,7 @@ export default function CadastrarItem() {
             Cadastrar Item
           </h2>
 
-          {/* 🔥 escolha ENCONTREI / PERDI */}
+          {/* escolha ENCONTREI / PERDI */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
               type="button"
@@ -280,26 +318,30 @@ export default function CadastrarItem() {
             {/* Descrição */}
             <div className="flex flex-col">
               <label className="mb-2 font-semibold">Descrição</label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                required
-                rows={4}
-                className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
-              />
+             <textarea
+  name="description"
+  value={form.description}
+  onChange={handleChange}
+  required
+  rows={4}
+  placeholder="Descreva o item detalhadamente: cor, marca, estado, detalhes únicos..."
+  className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700 placeholder-gray-400"
+/>
+
             </div>
 
             {/* Local */}
             <div className="flex flex-col">
               <label className="mb-2 font-semibold">Local</label>
-              <input
-                name="local"
-                value={form.local}
-                onChange={handleChange}
-                required
-                className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700"
-              />
+             <input
+  name="local"
+  value={form.local}
+  onChange={handleChange}
+  required
+  placeholder="Ex: Quadra, laboratório, corredor do bloco A..."
+  className="px-5 py-3 rounded-xl border bg-gray-50 dark:bg-gray-700 placeholder-gray-400"
+/>
+
             </div>
 
             {/* Categoria */}

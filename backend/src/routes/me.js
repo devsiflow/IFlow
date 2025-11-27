@@ -1,4 +1,4 @@
-// src/routes/me.js
+// src/routes/me.js - VERSÃO CORRIGIDA
 import express from "express";
 import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
@@ -14,57 +14,33 @@ const PROFILE_SELECT = {
   isAdmin: true,
   isSuperAdmin: true,
   createdAt: true,
-  campusId: true, // 🔥 ADICIONAR CAMPUS ID
-  campus: { // 🔥 INCLUIR DADOS DO CAMPUS
+  campusId: true,
+  campus: {
     select: {
       id: true,
-      nome: true
-    }
-  }
+      nome: true,
+    },
+  },
 };
-
-function isNonEmptyString(v) {
-  return typeof v === "string" && v.trim().length > 0;
-}
-
-function isValidProfilePic(url) {
-  if (url === null) return true;
-  if (!isNonEmptyString(url)) return false;
-  // aceita URLs simples (http/https) ou data URLs (base64). Ajuste se necessário.
-  return /^(https?:\/\/|data:)/i.test(url) && url.length <= 2000;
-}
 
 // GET /me → retorna perfil com campos de admin
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req?.user?.id;
-    if (!userId) return res.status(401).json({ error: "Usuário não autenticado" });
+    if (!userId)
+      return res.status(401).json({ error: "Usuário não autenticado" });
 
+    // ✅ CORREÇÃO: Remover email da query do Prisma
     const profile = await prisma.profile.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        matricula: true,
-        email: true,
-        profilePic: true,
-        isAdmin: true,
-        isSuperAdmin: true,
-        createdAt: true,
-        campusId: true,
-        campus: { // ✅ INCLUIR DADOS DO CAMPUS
-          select: {
-            id: true,
-            nome: true
-          }
-        }
-      },
+      select: PROFILE_SELECT, // ✅ Usar o SELECT corrigido
     });
 
     if (!profile) {
       return res.status(404).json({ error: "Perfil não encontrado" });
     }
 
+    // ✅ Email vem do middleware auth (req.user)
     const result = {
       ...profile,
       email: req.user.email ?? null,
@@ -81,20 +57,34 @@ router.get("/", authenticateToken, async (req, res) => {
 router.put("/", authenticateToken, async (req, res) => {
   try {
     const userId = req?.user?.id;
-    if (!userId) return res.status(401).json({ error: "Usuário não autenticado" });
+    if (!userId)
+      return res.status(401).json({ error: "Usuário não autenticado" });
 
     const { name, matricula, profilePic } = req.body ?? {};
 
     // validações básicas
-    if (name !== undefined && !(typeof name === "string" && name.length <= 200)) {
-      return res.status(400).json({ error: "Nome inválido (máx 200 caracteres)" });
+    if (
+      name !== undefined &&
+      !(typeof name === "string" && name.length <= 200)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Nome inválido (máx 200 caracteres)" });
     }
 
-    if (matricula !== undefined && !(typeof matricula === "string" && matricula.length <= 100)) {
-      return res.status(400).json({ error: "Matrícula inválida (máx 100 caracteres)" });
+    if (
+      matricula !== undefined &&
+      !(typeof matricula === "string" && matricula.length <= 100)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Matrícula inválida (máx 100 caracteres)" });
     }
 
-    if (req.body.hasOwnProperty("profilePic") && !isValidProfilePic(profilePic)) {
+    if (
+      req.body.hasOwnProperty("profilePic") &&
+      !isValidProfilePic(profilePic)
+    ) {
       return res.status(400).json({ error: "profilePic inválido" });
     }
 
@@ -122,7 +112,8 @@ router.put("/", authenticateToken, async (req, res) => {
     const updateData = {};
     if (req.body.hasOwnProperty("name")) updateData.name = name;
     if (req.body.hasOwnProperty("matricula")) updateData.matricula = matricula;
-    if (req.body.hasOwnProperty("profilePic")) updateData.profilePic = profilePic;
+    if (req.body.hasOwnProperty("profilePic"))
+      updateData.profilePic = profilePic;
 
     // se nenhum campo para atualizar, retorna o perfil atual
     if (Object.keys(updateData).length === 0) {
@@ -142,7 +133,10 @@ router.put("/", authenticateToken, async (req, res) => {
     if (err && err.code === "P2002") {
       return res
         .status(409)
-        .json({ error: "Conflito de valor único (matrícula já existe)", details: err.meta });
+        .json({
+          error: "Conflito de valor único (matrícula já existe)",
+          details: err.meta,
+        });
     }
     return res.status(500).json({ error: "Erro interno do servidor" });
   }

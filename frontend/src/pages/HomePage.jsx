@@ -11,11 +11,10 @@ import Footer from "../components/sections/Footer";
 
 function HomePage() {
   return (
-    <div className="dark:bg-gray-900 w-full overflow-x-hidden">
-
+    <div className="dark:bg-gray-900 w-screen overflow-hidden">
       {/* Seção inicial com vídeo de fundo e logo */}
       <section
-        className="h-screen w-full relative overflow-x-hidden"
+        className="h-screen w-screen relative overflow-hidden"
         data-aos="fade-in"
       >
         <Menu />

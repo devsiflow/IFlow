@@ -77,3 +77,9 @@ html, body, #root{
 }
 
 
+html, body {
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+
+

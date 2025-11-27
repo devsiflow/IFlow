@@ -69,9 +69,12 @@ export default function SolicitacaoDetalhes() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // 🔥 ADICIONAR TOKEN
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: novoStatus }),
+        body: JSON.stringify({
+          status: novoStatus,
+          // ✅ REMOVER: atualizarItem não é mais necessário, pois é automático
+        }),
       });
 
       if (!res.ok) {
@@ -86,6 +89,15 @@ export default function SolicitacaoDetalhes() {
 
       const data = await res.json();
 
+      // ✅ ATUALIZAR: Mostrar mensagem informando que o item foi marcado como devolvido
+      let mensagem = `Validação ${
+        novoStatus === "aprovada" ? "aprovada" : "negada"
+      } com sucesso!`;
+
+      if (novoStatus === "aprovada" && data._itemAtualizado) {
+        mensagem += " O item foi marcado automaticamente como DEVOLVIDO.";
+      }
+
       // Atualiza localmente com os dados retornados do servidor
       setSolicitacao((prev) => ({
         ...prev,
@@ -96,11 +108,7 @@ export default function SolicitacaoDetalhes() {
       setShowModal(false);
 
       // Mostra mensagem de sucesso
-      alert(
-        `Validação ${
-          novoStatus === "aprovada" ? "aprovada" : "negada"
-        } com sucesso!`
-      );
+      alert(mensagem);
     } catch (err) {
       console.error("Erro ao atualizar status:", err);
       alert(err.message || "Erro ao atualizar status da validação");

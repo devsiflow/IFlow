@@ -119,7 +119,7 @@ router.get("/:id", async (req, res) => {
 router.put("/:id/status", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, atualizarItem } = req.body;
+    const { status } = req.body;
 
     console.log(`🔄 Atualizando status da validação ${id} para: ${status}`);
     console.log(`👤 Usuário solicitante: ${req.user.id}`);
@@ -130,6 +130,9 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
         .status(403)
         .json({ error: "Acesso restrito a administradores" });
     }
+
+    // ✅ CORREÇÃO: Sempre atualizar o item para "devolvido" quando a validação for aprovada
+    const atualizarItem = status === "aprovada";
 
     // Iniciar transação para atualizar validação E item
     const result = await prisma.$transaction(async (tx) => {
@@ -155,15 +158,15 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
         },
       });
 
-      // 2. Se for aprovação E foi solicitado atualizar o item, marcar como "devolvido"
+      // ✅ CORREÇÃO: SEMPRE atualizar o item para "devolvido" quando aprovar
       let updatedItem = null;
-      if (status === "aprovada" && atualizarItem && updatedValidation.itemId) {
+      if (status === "aprovada" && updatedValidation.itemId) {
         updatedItem = await tx.item.update({
           where: { id: updatedValidation.itemId },
           data: { status: "devolvido" },
         });
         console.log(
-          `✅ Item ${updatedValidation.itemId} marcado como devolvido`
+          `✅ Item ${updatedValidation.itemId} marcado automaticamente como devolvido`
         );
       }
 
@@ -186,7 +189,9 @@ router.put("/:id/status", authenticateToken, async (req, res) => {
 
     console.log(`✅ Status da validação ${id} atualizado para: ${status}`);
     if (status === "aprovada") {
-      console.log(`📦 Item ${result.validation.itemId} marcado como devolvido`);
+      console.log(
+        `📦 Item ${result.validation.itemId} marcado automaticamente como devolvido`
+      );
     }
 
     res.json(response);

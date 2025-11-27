@@ -175,11 +175,7 @@ function CarrosselImagens({ imagens = [], nome }) {
 /* ------------------------
    COMPONENTE DE FILTROS
 ------------------------- */
-function FiltrosSolicitacoes({ 
-  filtros, 
-  onFiltrosChange,
-  contadores 
-}) {
+function FiltrosSolicitacoes({ filtros, onFiltrosChange, contadores }) {
   return (
     <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg p-4 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -190,7 +186,9 @@ function FiltrosSolicitacoes({
           </label>
           <select
             value={filtros.status}
-            onChange={(e) => onFiltrosChange({ ...filtros, status: e.target.value })}
+            onChange={(e) =>
+              onFiltrosChange({ ...filtros, status: e.target.value })
+            }
             className="w-full p-2 border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-900 dark:text-white"
           >
             <option value="todos">Todos ({contadores.total})</option>
@@ -208,7 +206,9 @@ function FiltrosSolicitacoes({
           <input
             type="date"
             value={filtros.dataInicio}
-            onChange={(e) => onFiltrosChange({ ...filtros, dataInicio: e.target.value })}
+            onChange={(e) =>
+              onFiltrosChange({ ...filtros, dataInicio: e.target.value })
+            }
             className="w-full p-2 border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-900 dark:text-white"
           />
         </div>
@@ -221,7 +221,9 @@ function FiltrosSolicitacoes({
           <input
             type="date"
             value={filtros.dataFim}
-            onChange={(e) => onFiltrosChange({ ...filtros, dataFim: e.target.value })}
+            onChange={(e) =>
+              onFiltrosChange({ ...filtros, dataFim: e.target.value })
+            }
             className="w-full p-2 border border-gray-300 dark:border-neutral-600 rounded-md bg-white dark:bg-neutral-700 text-gray-900 dark:text-white"
           />
         </div>
@@ -229,11 +231,13 @@ function FiltrosSolicitacoes({
         {/* Botão Limpar Filtros */}
         <div className="flex items-end">
           <button
-            onClick={() => onFiltrosChange({
-              status: 'todos',
-              dataInicio: '',
-              dataFim: ''
-            })}
+            onClick={() =>
+              onFiltrosChange({
+                status: "todos",
+                dataInicio: "",
+                dataFim: "",
+              })
+            }
             className="w-full p-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors"
           >
             Limpar Filtros
@@ -256,32 +260,47 @@ export default function TabelaSolicitacoes({
 
   const [expandedRow, setExpandedRow] = useState(null);
   const navigate = useNavigate();
-  
+
+  // ✅ ADICIONAR: Definir API_URL
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
   // Estado para os filtros
   const [filtros, setFiltros] = useState({
-    status: 'todos',
-    dataInicio: '',
-    dataFim: ''
+    status: "todos",
+    dataInicio: "",
+    dataFim: "",
   });
 
   // 🔥 FUNÇÃO: Obter data da solicitação para filtro
   const getDataSolicitacao = (solicitacao) => {
-    const dataRaw = solicitacao.data_solicitacao ?? solicitacao.createdAt ?? solicitacao.data ?? solicitacao.date ?? null;
-    
+    const dataRaw =
+      solicitacao.data_solicitacao ??
+      solicitacao.createdAt ??
+      solicitacao.data ??
+      solicitacao.date ??
+      null;
+
     if (!dataRaw) return null;
-    
+
     if (dataRaw instanceof Date) {
       return isNaN(dataRaw.getTime()) ? null : dataRaw;
     }
-    
-    if (typeof dataRaw === 'object') {
-      const campos = ["data_solicitacao", "createdAt", "created_at", "data", "date", "dataSolicitacao"];
+
+    if (typeof dataRaw === "object") {
+      const campos = [
+        "data_solicitacao",
+        "createdAt",
+        "created_at",
+        "data",
+        "date",
+        "dataSolicitacao",
+      ];
       for (const c of campos) {
         if (dataRaw[c]) return new Date(dataRaw[c]);
       }
       return null;
     }
-    
+
     const d = new Date(dataRaw);
     return isNaN(d.getTime()) ? null : d;
   };
@@ -290,7 +309,7 @@ export default function TabelaSolicitacoes({
   const solicitacoesFiltradas = useMemo(() => {
     return solicitacoes.filter((s) => {
       // Filtro por status
-      if (filtros.status !== 'todos' && s.status !== filtros.status) {
+      if (filtros.status !== "todos" && s.status !== filtros.status) {
         return false;
       }
 
@@ -316,18 +335,57 @@ export default function TabelaSolicitacoes({
   // 🔥 CALCULAR CONTADORES PARA OS FILTROS
   const contadores = useMemo(() => {
     const total = solicitacoes.length;
-    const pendente = solicitacoes.filter(s => s.status === 'pendente').length;
-    const aprovada = solicitacoes.filter(s => s.status === 'aprovada').length;
-    const negada = solicitacoes.filter(s => s.status === 'negada').length;
+    const pendente = solicitacoes.filter((s) => s.status === "pendente").length;
+    const aprovada = solicitacoes.filter((s) => s.status === "aprovada").length;
+    const negada = solicitacoes.filter((s) => s.status === "negada").length;
 
     return { total, pendente, aprovada, negada };
   }, [solicitacoes]);
 
   // 🔥 NOVA FUNÇÃO: Atualizar status
   const handleStatusUpdate = async (id, novoStatus) => {
-    const success = await updateStatus(id, novoStatus);
-    if (success) {
-      console.log(`Status da solicitação ${id} atualizado para ${novoStatus}`);
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        console.error("Token não encontrado");
+        return false;
+      }
+
+      const res = await fetch(`${API_URL}/solicitacoes/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: novoStatus }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Erro: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // ✅ ATUALIZAR: Recarregar a lista para refletir as mudanças
+      if (typeof updateStatus === "function") {
+        updateStatus(id, novoStatus);
+      }
+
+      // Mostrar mensagem informativa
+      if (novoStatus === "aprovada") {
+        alert(
+          "Validação aprovada! O item foi marcado automaticamente como DEVOLVIDO."
+        );
+      } else {
+        alert("Validação negada com sucesso!");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      alert("Erro ao atualizar status: " + error.message);
+      return false;
     }
   };
 
@@ -341,7 +399,7 @@ export default function TabelaSolicitacoes({
   return (
     <div>
       {/* Componente de Filtros */}
-      <FiltrosSolicitacoes 
+      <FiltrosSolicitacoes
         filtros={filtros}
         onFiltrosChange={setFiltros}
         contadores={contadores}
@@ -349,7 +407,8 @@ export default function TabelaSolicitacoes({
 
       {/* Informação sobre resultados filtrados */}
       <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        Mostrando {solicitacoesFiltradas.length} de {solicitacoes.length} solicitações
+        Mostrando {solicitacoesFiltradas.length} de {solicitacoes.length}{" "}
+        solicitações
       </div>
 
       <div className="overflow-x-auto bg-white dark:bg-neutral-800 rounded-lg shadow-lg">
@@ -369,7 +428,8 @@ export default function TabelaSolicitacoes({
           <tbody>
             {solicitacoesFiltradas.map((s) => {
               const isOpen = expandedRow === s.id;
-              const dataRaw = s.data_solicitacao ?? s.createdAt ?? s.data ?? s.date ?? null;
+              const dataRaw =
+                s.data_solicitacao ?? s.createdAt ?? s.data ?? s.date ?? null;
 
               return (
                 <React.Fragment key={s.id}>
@@ -407,7 +467,9 @@ export default function TabelaSolicitacoes({
                       <div className="flex justify-center gap-2">
                         <button
                           className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition-colors"
-                          onClick={() => navigate(`/admin/solicitacoes/${s.id}`)}
+                          onClick={() =>
+                            navigate(`/admin/solicitacoes/${s.id}`)
+                          }
                         >
                           Analisar
                         </button>
@@ -464,7 +526,9 @@ export default function TabelaSolicitacoes({
                               {nomeAluno(s)}
                             </p>
                             <p className="flex items-center gap-2">
-                              <span className="font-medium">Status do Item:</span>
+                              <span className="font-medium">
+                                Status do Item:
+                              </span>
                               <span
                                 className={`px-2 py-1 rounded text-white text-xs font-semibold ${
                                   s.item?.status === "encontrado"

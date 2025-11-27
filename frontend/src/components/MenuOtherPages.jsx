@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabaseClient";
 import logo from "../assets/logo.jpg";
 import { User, X } from "lucide-react";
 
+
 export default function MenuOtherPages() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);

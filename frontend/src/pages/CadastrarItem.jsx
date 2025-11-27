@@ -233,8 +233,6 @@ export default function CadastrarItem() {
         throw new Error(responseData.error);
       }
 
-      alert("Item cadastrado com sucesso!");
-
       navigate(
         form.tipo === "encontrei" ? "/catalogo" : "/itens-nao-encontrados"
       );

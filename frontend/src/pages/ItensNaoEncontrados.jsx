@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import MenuCatalogo from "../components/MenuCatalogo";
+import MenuOtherPages from "../components/MenuOtherPages";
 import { Search } from "lucide-react";
 import LogoLoader from "../components/LogoLoader";
 import ItemCard from "../components/ItemCard";
@@ -81,7 +81,7 @@ export default function ItensNaoEncontrados() {
 
   return (
     <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
-      <MenuCatalogo />
+      <MenuOtherPages />
 
       <div className="pt-32 px-6 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Itens não encontrados</h1>

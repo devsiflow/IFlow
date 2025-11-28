@@ -378,7 +378,7 @@ router.put(
 
       // Pegar URL pública
       const { data: publicUrlData } = supabaseAdmin.storage
-        .from("items")
+        .from("iflow-item")
         .getPublicUrl(fileName);
 
       const imageUrl = publicUrlData.publicUrl;

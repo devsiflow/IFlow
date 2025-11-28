@@ -365,7 +365,7 @@ router.put(
 
       // Upload para Supabase Storage (bucket "items")
       const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-        .from("items")
+        .from("iflow-itens")
         .upload(fileName, req.file.buffer, {
           contentType: req.file.mimetype,
           upsert: true,

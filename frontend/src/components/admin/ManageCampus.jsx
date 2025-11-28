@@ -1,14 +1,26 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Building } from "lucide-react";
+import { Plus, Edit, Trash2, Building, X } from "lucide-react";
+import { supabase } from "../../lib/supabaseClient";
 
 export default function ManageCampus() {
   const [campus, setCampus] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editando, setEditando] = useState(null);
+
   const [form, setForm] = useState({ nome: "" });
+  const [campusSelecionado, setCampusSelecionado] = useState(null);
+
+  const [toast, setToast] = useState(null);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     carregarCampus();
@@ -22,8 +34,8 @@ export default function ManageCampus() {
       const data = await res.json();
       setCampus(data);
     } catch (error) {
-      console.error("Erro:", error);
-      alert("Erro ao carregar campus");
+      console.error(error);
+      showToast("Erro ao carregar campus", "error");
     } finally {
       setLoading(false);
     }
@@ -31,18 +43,25 @@ export default function ManageCampus() {
 
   const salvarCampus = async (e) => {
     e.preventDefault();
-    
+
     if (!form.nome.trim()) {
-      alert("Nome do campus é obrigatório");
+      showToast("O nome do campus é obrigatório", "error");
       return;
     }
 
     try {
-      const token = localStorage.getItem("token");
-      const url = editando 
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        showToast("Sessão expirada. Faça login novamente.", "error");
+        return;
+      }
+
+      const url = editando
         ? `${API_URL}/campus/${editando.id}`
         : `${API_URL}/campus`;
-      
+
       const method = editando ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -60,41 +79,59 @@ export default function ManageCampus() {
       setForm({ nome: "" });
       setEditando(null);
       carregarCampus();
-      
-      alert(`Campus ${editando ? 'atualizado' : 'criado'} com sucesso!`);
+
+      showToast(`Campus ${editando ? "atualizado" : "criado"} com sucesso!`);
     } catch (error) {
-      console.error("Erro:", error);
-      alert("Erro ao salvar campus");
+      console.error(error);
+      showToast("Erro ao salvar campus", "error");
     }
   };
 
-  const excluirCampus = async (campusId) => {
-    if (!window.confirm("Tem certeza que deseja excluir este campus? Esta ação não pode ser desfeita.")) {
-      return;
-    }
+  const abrirModalExcluir = (camp) => {
+    setCampusSelecionado(camp);
+    setShowDeleteModal(true);
+  };
+
+  const excluirCampus = async () => {
+    if (!campusSelecionado) return;
 
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/campus/${campusId}`, {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        showToast("Sessão expirada. Faça login novamente.", "error");
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/campus/${campusSelecionado.id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!res.ok) throw new Error("Erro ao excluir campus");
+      const result = await res.json();
+
+      if (!res.ok) {
+        showToast(result.error || "Erro ao excluir campus", "error");
+        return;
+      }
 
       carregarCampus();
-      alert("Campus excluído com sucesso!");
+      showToast("Campus excluído com sucesso!");
+
+      setShowDeleteModal(false);
+      setCampusSelecionado(null);
     } catch (error) {
-      console.error("Erro:", error);
-      alert("Erro ao excluir campus");
+      console.error(error);
+      showToast("Erro ao excluir campus", "error");
     }
   };
 
-  const editarCampus = (campus) => {
-    setEditando(campus);
-    setForm({ nome: campus.nome });
+  const editarCampus = (camp) => {
+    setEditando(camp);
+    setForm({ nome: camp.nome });
     setShowModal(true);
   };
 
@@ -113,108 +150,145 @@ export default function ManageCampus() {
   }
 
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg p-6">
+    <div className="relative bg-white dark:bg-neutral-800 rounded-lg shadow-lg p-6">
+
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 px-4 py-3 rounded-lg shadow-lg text-white z-50 animate-fade-in
+          ${toast.type === "error" ? "bg-red-600" : "bg-green-600"}`}
+        >
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">
-            Gerenciar Campus
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Adicione, edite ou remova campus do sistema
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Gerenciar Campus</h3>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Adicione, edite ou remova campus do sistema.
           </p>
         </div>
+
         <button
           onClick={novoCampus}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md"
         >
           <Plus className="w-5 h-5" />
           Novo Campus
         </button>
       </div>
 
+      {/* Lista */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {campus.map((camp) => (
           <div
             key={camp.id}
-            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 mb-3">
               <Building className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-              <h4 className="font-semibold text-gray-800 dark:text-gray-200">
-                {camp.nome}
-              </h4>
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200">{camp.nome}</h4>
             </div>
-            
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">
               ID: {camp.id}
             </div>
 
             <div className="flex gap-2">
               <button
                 onClick={() => editarCampus(camp)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm flex items-center justify-center gap-1 transition-colors"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm flex items-center justify-center gap-2"
               >
-                <Edit className="w-4 h-4" />
-                Editar
+                <Edit className="w-4 h-4" /> Editar
               </button>
+
               <button
-                onClick={() => excluirCampus(camp.id)}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm flex items-center justify-center gap-1 transition-colors"
+                onClick={() => abrirModalExcluir(camp)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-md text-sm flex items-center justify-center gap-2"
               >
-                <Trash2 className="w-4 h-4" />
-                Excluir
+                <Trash2 className="w-4 h-4" /> Excluir
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Modal para adicionar/editar campus */}
+      {/* Modal Criar/Editar */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-gray-200">
-              {editando ? "Editar Campus" : "Novo Campus"}
-            </h3>
-            
-            <form onSubmit={salvarCampus}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nome do Campus
-                </label>
-                <input
-                  type="text"
-                  value={form.nome}
-                  onChange={(e) => setForm({ nome: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Digite o nome do campus"
-                  required
-                />
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 w-full max-w-md shadow-xl animate-scale-in">
 
-              <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setEditando(null);
-                    setForm({ nome: "" });
-                  }}
-                  className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors"
-                >
-                  {editando ? "Atualizar" : "Criar"}
-                </button>
-              </div>
+            <div className="flex justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">
+                {editando ? "Editar Campus" : "Novo Campus"}
+              </h3>
+
+              <button onClick={() => setShowModal(false)}>
+                <X className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+              </button>
+            </div>
+
+            <form onSubmit={salvarCampus}>
+              <label className="text-sm text-gray-600 dark:text-gray-300">Nome do Campus</label>
+
+              <input
+                type="text"
+                value={form.nome}
+                onChange={(e) => setForm({ nome: e.target.value })}
+                className="w-full mt-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                  dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500"
+                placeholder="Digite o nome"
+              />
+
+              <button
+                type="submit"
+                className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-2 rounded-md shadow"
+              >
+                {editando ? "Salvar Alterações" : "Criar Campus"}
+              </button>
             </form>
+
           </div>
         </div>
       )}
+
+      {/* Modal Exclusão */}
+      {showDeleteModal && campusSelecionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-6 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-neutral-800 rounded-lg p-6 w-full max-w-sm shadow-xl animate-scale-in">
+
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-2">
+              Excluir Campus
+            </h3>
+
+            <p className="text-gray-700 dark:text-gray-300 mb-4">
+              Tem certeza que deseja excluir o campus{" "}
+              <strong>{campusSelecionado.nome}</strong>?  
+              Esta ação não pode ser desfeita.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-2 rounded-md bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={excluirCampus}
+                className="flex-1 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white"
+              >
+                Excluir
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

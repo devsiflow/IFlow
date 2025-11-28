@@ -12,7 +12,7 @@ export default function LogoLoader() {
     updateDarkMode();
 
     const observer = new MutationObserver(updateDarkMode);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });0
     return () => observer.disconnect();
   }, []);
 

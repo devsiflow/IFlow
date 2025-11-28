@@ -1,18 +1,19 @@
+// routes/item.js
 import express from "express";
 import prisma from "../lib/prismaClient.js";
 import { authenticateToken } from "../middleware/auth.js";
 import jwt from "jsonwebtoken";
 import supabaseAdmin from "../lib/supabaseAdmin.js";
+import multer from "multer";
 
 const router = express.Router();
-
+const upload = multer({ storage: multer.memoryStorage() }); // arquivo em buffer
 
 /* ============================================================
    LISTAR ITENS (PÚBLICO + ADMIN)
    ============================================================ */
 router.get("/", async (req, res) => {
   try {
-
     const {
       status,
       category,
@@ -72,7 +73,6 @@ router.get("/", async (req, res) => {
     }
 
     /* ========= CORREÇÃO DO PROBLEMA =========== */
-
     if (status && status !== "Todos") {
       where.status = status;
     }
@@ -81,7 +81,6 @@ router.get("/", async (req, res) => {
       where.status = "encontrado";
     }
     // Se for admin (dashboard), não filtra status!
-
     /* =========================================== */
 
     if (category && category !== "Todos") {
@@ -99,8 +98,7 @@ router.get("/", async (req, res) => {
       where.userId = user;
     }
 
-    console.log("🟥 WHERE FINAL =", where); // <--- AQUI
-
+    console.log("🟥 WHERE FINAL =", where);
 
     const items = await prisma.item.findMany({
       where,
@@ -346,5 +344,77 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Erro interno do servidor: " + err.message });
   }
 });
+
+/* ============================================================
+   CONFIRMAR ITEM COMO ENCONTRADO + FOTO
+   ============================================================ */
+router.put(
+  "/:id/confirmar-encontrado",
+  authenticateToken,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!req.file) {
+        return res.status(400).json({ error: "A foto é obrigatória!" });
+      }
+
+      // Nome único do arquivo
+      const fileName = `item-${id}-${Date.now()}.jpg`;
+
+      // Upload para Supabase Storage (bucket "items")
+      const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+        .from("items")
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype,
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.error("Supabase upload error:", uploadError);
+        return res.status(500).json({ error: "Erro ao salvar imagem" });
+      }
+
+      // Pegar URL pública
+      const { data: publicUrlData } = supabaseAdmin.storage
+        .from("items")
+        .getPublicUrl(fileName);
+
+      const imageUrl = publicUrlData.publicUrl;
+
+      // Criar registro na tabela itemImage
+      await prisma.itemImage.create({
+        data: {
+          itemId: Number(id),
+          url: imageUrl,
+        },
+      });
+
+      // Atualizar status do item para "encontrado"
+      const updatedItem = await prisma.item.update({
+        where: { id: Number(id) },
+        data: { status: "encontrado" },
+        include: {
+          images: true,
+          category: true,
+          campus: true,
+          user: {
+            select: { id: true, name: true, profilePic: true, campusId: true },
+          },
+        },
+      });
+
+      return res.json({
+        message: "Item confirmado como encontrado!",
+        item: updatedItem,
+      });
+
+    } catch (err) {
+      console.error("❌ Erro ao confirmar item:", err);
+      return res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  }
+);
 
 export default router;

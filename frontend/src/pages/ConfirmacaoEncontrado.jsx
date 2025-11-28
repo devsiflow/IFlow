@@ -10,6 +10,7 @@ export default function ConfirmacaoEncontrado() {
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [confirming, setConfirming] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null); // 🔥 estado da foto
 
     const API_URL =
         import.meta.env.VITE_API_URL || "https://iflow-zdbx.onrender.com";
@@ -35,7 +36,6 @@ export default function ConfirmacaoEncontrado() {
     const getImage = () => {
         if (!item) return livroImg;
 
-        // backend retorna images como array de objetos [{id,url},...]
         if (Array.isArray(item.images) && item.images.length > 0) {
             return item.images[0].url;
         }
@@ -45,46 +45,52 @@ export default function ConfirmacaoEncontrado() {
         return livroImg;
     };
 
-    // 🔥 FUNÇÃO DE CONFIRMAÇÃO (ATUALIZA O STATUS)
+    // 🔥 NOVA FUNÇÃO DE CONFIRMAÇÃO COM ENVIO DE FOTO
     const confirmar = async () => {
+        if (!selectedImage) {
+            alert("Você precisa tirar/enviar uma foto para confirmar!");
+            return;
+        }
+
         setConfirming(true);
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
-
             if (!session) {
-                alert("Você precisa estar logado para confirmar!");
+                alert("Você precisa estar logado!");
                 return;
             }
 
             const token = session.access_token;
 
-            const res = await fetch(`${API_URL}/item-perdido-solicitacao`, {
-                method: "POST",
+            const formData = new FormData();
+            formData.append("status", "found");
+            formData.append("image", selectedImage); // 📸 foto enviada
+            formData.append("itemId", id);
+
+            const res = await fetch(`${API_URL}/items/${id}/confirmar-encontrado`, {
+                method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ itemId: id }),
+                body: formData,
             });
 
             const result = await res.json();
 
             if (!res.ok) {
-                throw new Error(result.error || "Erro ao criar solicitação");
+                console.error(result);
+                throw new Error(result.error || "Erro ao enviar foto");
             }
 
-            navigate(`/itempage/${id}?solicitacao=criada`);
-
+            navigate(`/itempage/${id}?confirmado=true`);
         } catch (err) {
             console.error("Erro:", err);
-            alert("Erro ao criar solicitação!");
+            alert("Erro ao confirmar item!");
         }
 
         setConfirming(false);
     };
-
-
 
     if (loading) {
         return (
@@ -116,13 +122,40 @@ export default function ConfirmacaoEncontrado() {
                     Confirme para registrarmos que alguém encontrou este item perdido.
                 </p>
 
-                {/* FOTO */}
+                {/* FOTO ORIGINAL */}
                 <div className="w-full h-60 rounded-lg overflow-hidden mb-5 shadow-md">
                     <img
                         src={getImage()}
                         alt={item.title}
                         className="w-full h-full object-cover"
                     />
+                </div>
+
+                {/* INPUT DE FOTO NOVA */}
+                <div className="mb-6">
+                    <label className="block mb-2 text-neutral-800 dark:text-neutral-200 font-medium">
+                        Tire ou envie uma foto para confirmar:
+                    </label>
+
+                    <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => setSelectedImage(e.target.files[0])}
+                        className="w-full p-2 rounded-lg border bg-neutral-200 dark:bg-neutral-700"
+                    />
+
+                    {selectedImage && (
+                        <div className="mt-4">
+                            <p className="text-neutral-700 dark:text-neutral-300 text-sm mb-2">
+                                Prévia da foto enviada:
+                            </p>
+                            <img
+                                src={URL.createObjectURL(selectedImage)}
+                                className="w-full h-40 object-cover rounded-lg shadow"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* INFORMAÇÕES DO ITEM */}
@@ -146,18 +179,16 @@ export default function ConfirmacaoEncontrado() {
                     disabled={confirming}
                     onClick={confirmar}
                     className={`
-    w-full py-3 rounded-lg text-white font-semibold text-lg shadow-md 
-    transition-all duration-300 relative overflow-hidden
-    ${confirming ? "bg-red-400" : "bg-red-600 hover:bg-red-700 active:scale-[0.97]"}
-  `}
+                        w-full py-3 rounded-lg text-white font-semibold text-lg shadow-md 
+                        transition-all duration-300 relative overflow-hidden
+                        ${confirming ? "bg-red-400" : "bg-red-600 hover:bg-red-700 active:scale-[0.97]"}
+                    `}
                 >
                     {confirming ? (
                         <div className="flex items-center justify-center gap-3">
                             <div
                                 className="w-6 h-6 border-4 border-white border-t-transparent rounded-full"
-                                style={{
-                                    animation: "spinInsano 0.7s linear infinite",
-                                }}
+                                style={{ animation: "spinInsano 0.7s linear infinite" }}
                             ></div>
                             <span className="opacity-90">Confirmando...</span>
                         </div>
